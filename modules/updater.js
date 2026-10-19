@@ -34,7 +34,12 @@ async function startUpdateDownload(downloadUrl, version) {
     return { status: 'already_running', progress: currentDownload };
   }
 
-  const fileName = path.basename(downloadUrl.split('?')[0]) || `KoRForge-Setup-${version || 'update'}.exe`;
+  // Si la URL es un endpoint de API (ej. /releases/assets/656295835), forzar nombre KoRForge-Setup-[ver].exe
+  let fileName = `KoRForge-Setup-${version || 'update'}.exe`;
+  const urlBase = path.basename(downloadUrl.split('?')[0]);
+  if (urlBase && urlBase.toLowerCase().endsWith('.exe')) {
+    fileName = urlBase;
+  }
   const targetPath = path.join(os.tmpdir(), fileName);
 
   currentDownload = {
@@ -133,11 +138,24 @@ function applyUpdateAndRestart(electronApp = null) {
     throw new Error('No hay ninguna actualización descargada lista para aplicar.');
   }
 
-  const installerPath = currentDownload.filePath;
-  const isExe = installerPath.toLowerCase().endsWith('.exe');
+  let installerPath = currentDownload.filePath;
+  let isExe = installerPath.toLowerCase().endsWith('.exe');
 
-  if (!isExe) {
-    throw new Error(`Formato no ejecutable directo: ${path.basename(installerPath)}`);
+  // Si no tiene extensión .exe (p.ej. id numérico de asset de GitHub), comprobar y convertir a .exe
+  if (!isExe && fs.existsSync(installerPath)) {
+    try {
+      const fixedPath = path.join(path.dirname(installerPath), `KoRForge-Setup-${currentDownload.version || 'update'}.exe`);
+      fs.copyFileSync(installerPath, fixedPath);
+      installerPath = fixedPath;
+      currentDownload.filePath = fixedPath;
+      isExe = true;
+    } catch (e) {
+      console.warn('[KoRForge Updater] Error al asegurar extensión .exe:', e.message);
+    }
+  }
+
+  if (!isExe || !fs.existsSync(installerPath)) {
+    throw new Error(`Instalador no válido o inexistente: ${path.basename(installerPath)}`);
   }
 
   // Detect installed executable path
@@ -165,14 +183,14 @@ taskkill /F /IM KoRForge.exe /T >nul 2>&1
 taskkill /F /IM electron.exe /T >nul 2>&1
 
 :: 3. Esperar que Windows libere los archivos
-ping 127.0.0.1 -n 2 >nul
+ping 127.0.0.1 -n 3 >nul
 
 :: 4. Ejecutar el instalador oficial silenciosamente y esperar a que finalice
 echo Instalando version oficial actualizada...
 start /wait "" "${installerPath}" /S
 
-:: 5. Si la instalacion silenciosa finalizo, dar un breve margen
-ping 127.0.0.1 -n 2 >nul
+:: 5. Margen de espera para que la instalación y registro terminen
+ping 127.0.0.1 -n 4 >nul
 
 :: 6. Volver a arrancar KoRForge actualizado
 echo Abriendo KoRForge actualizado...

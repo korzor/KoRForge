@@ -900,18 +900,54 @@ async function checkGitHubRelease() {
   }
 }
 
+async function checkUpdatesRelease() {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const res = await fetch('https://updates.example.invalid/api/wow/korforge/releases', {
+      signal: controller.signal,
+      headers: { 'User-Agent': `KoRForge-Desktop/${APP_VERSION}` }
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !Array.isArray(data.releases) || data.releases.length === 0) return null;
+    const latest = data.releases.find(r => r.esUltima) || data.releases[0];
+    const remoteVersion = (latest.version || '').replace(/^v/i, '').trim();
+    const updateAvailable = compareVersions(remoteVersion, APP_VERSION) > 0;
+    const installer = latest.descargas && latest.descargas.find(d => d.tipo === 'instalador');
+    const downloadUrl = installer ? `https://updates.example.invalid${installer.url}` : '';
+    return {
+      source: 'updates',
+      checked: true,
+      updateAvailable,
+      currentVersion: APP_VERSION,
+      remoteVersion,
+      downloadUrl,
+      releaseNotes: Array.isArray(latest.cambios) ? latest.cambios.map(c => `- ${c}`).join('\n') : (latest.descripcion || ''),
+      date: latest.fecha || ''
+    };
+  } catch (err) {
+    console.warn('[KoRForge Updates] Error consultando wow.updates:', err.message);
+    return null;
+  }
+}
+
 app.get('/api/app-updates/check', async (req, res) => {
-  const ghResult = await checkGitHubRelease();
-  if (ghResult && ghResult.checked) {
-    return res.json(ghResult);
+  let result = await checkGitHubRelease();
+  if (!result || !result.checked) {
+    result = await checkUpdatesRelease();
+  }
+  if (result && result.checked) {
+    return res.json(result);
   }
 
   return res.json({
-    source: 'github',
+    source: 'none',
     checked: false,
     updateAvailable: false,
     currentVersion: APP_VERSION,
-    error: 'No se pudo conectar con GitHub Releases.'
+    error: 'No se pudo conectar con los servidores de actualización.'
   });
 });
 
