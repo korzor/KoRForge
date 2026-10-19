@@ -1,0 +1,41 @@
+# Dependencias de Node
+node_modules/
+package-lock.json.bak
+
+# Compilaciones y binarios de release (GitHub rechaza archivos > 100 MB)
+release/
+dist/
+build/
+*.exe
+*.zip
+*.blockmap
+
+# Carpetas de datos locales del usuario
+backups/
+cache/
+*.log
+*.tmp
+korforge_apply_update.bat
+
+# Configuración personal del usuario (rutas de sus discos duros locales)
+config.json
+installed-registry.json
+
+# Entorno y variables
+.env
+.env.*
+!.env.example
+
+# Archivos temporales del sistema operativo
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj

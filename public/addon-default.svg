@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#182030"/>
+      <stop offset="100%" stop-color="#0c1017"/>
+    </linearGradient>
+    <linearGradient id="cubeTop" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+    <linearGradient id="cubeLeft" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#b45309"/>
+      <stop offset="100%" stop-color="#78350f"/>
+    </linearGradient>
+    <linearGradient id="cubeRight" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d97706"/>
+      <stop offset="100%" stop-color="#92400e"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="12" fill="url(#boxGrad)" stroke="rgba(245, 158, 11, 0.2)" stroke-width="1.5"/>
+  <!-- 3D Isometric Addon Module -->
+  <polygon points="32,16 48,25 32,34 16,25" fill="url(#cubeTop)"/>
+  <polygon points="16,25 32,34 32,48 16,39" fill="url(#cubeLeft)"/>
+  <polygon points="32,34 48,25 48,39 32,48" fill="url(#cubeRight)"/>
+  <circle cx="32" cy="25" r="2.5" fill="#fef3c7" opacity="0.9"/>
+</svg>

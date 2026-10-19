@@ -1,0 +1,69 @@
+{
+  "name": "korforge",
+  "version": "1.0.1",
+  "description": "KoRForge - Standalone WoW Addon Manager",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "server": "node server.js",
+    "build": "node build.js",
+    "compile": "electron-builder --win dir",
+    "package:installer": "electron-builder --win nsis",
+    "package:zip": "electron-builder --win zip",
+    "package:release": "electron-builder --win nsis zip",
+    "release": "node scripts/release-github.js"
+  },
+  "keywords": [
+    "wow",
+    "addons",
+    "curseforge",
+    "wow-forever"
+  ],
+  "author": "KoRZoR",
+  "license": "ISC",
+  "build": {
+    "appId": "com.korzor.korforge",
+    "productName": "KoRForge",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": [
+        "dir",
+        "nsis",
+        "zip"
+      ],
+      "icon": "korforge.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "KoRForge",
+      "artifactName": "KoRForge-Setup-${version}.${ext}",
+      "installerIcon": "korforge.ico",
+      "uninstallerIcon": "korforge.ico"
+    },
+    "asar": false,
+    "files": [
+      "main.js",
+      "server.js",
+      "preload.js",
+      "config.json",
+      "korforge.ico",
+      "korforge.png",
+      "modules/**/*",
+      "public/**/*"
+    ]
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "express": "^4.21.2"
+  },
+  "devDependencies": {
+    "electron": "^44.9.0",
+    "electron-builder": "^26.15.3"
+  }
+}

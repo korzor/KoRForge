@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KoRForge - WoW Forever Addon Forge</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-shell">
+    
+    <!-- Topbar -->
+    <header class="app-topbar">
+      <div class="topbar-left">
+        <div class="brand" id="brandLogoBtn" title="KoRForge - Ir al Explorador">
+          <img src="korforge.png" alt="KoRForge" class="app-brand-icon">
+          <span class="app-brand-title">ORFORGE</span>
+        </div>
+
+        <!-- Browser-Style Navigation Bar (Bigger buttons right next to the brand) -->
+        <div class="browser-nav-bar">
+          <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
+            <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Game Version Filters in Title Bar (Filling the bar towards the right) -->
+      <div class="topbar-game-tabs" id="topbarGameTabs">
+        <button class="game-version-pill active highlight-forever" data-game-id="forever" data-flavor="88568" title="WoW Forever (1.60.1)">
+          <span class="pill-icon">⚔️</span>
+          <span class="pill-name">WoW Forever</span>
+          <span class="pill-badge">1.60.1</span>
+        </button>
+        <button class="game-version-pill" data-game-id="retail" data-flavor="517" title="World of Warcraft: The War Within (Retail)">
+          <span class="pill-icon">🛡️</span>
+          <span class="pill-name">WoW Retail</span>
+          <span class="pill-badge">TWW</span>
+        </button>
+        <button class="game-version-pill" data-game-id="classic_era" data-flavor="67408" title="WoW Classic Era (Vanilla 1.15)">
+          <span class="pill-icon">📜</span>
+          <span class="pill-name">Classic Era</span>
+          <span class="pill-badge">1.15</span>
+        </button>
+        <button class="game-version-pill" data-game-id="classic" data-flavor="79434,77522,73713,81212" title="WoW Classic Progression (MoP / Cataclysm)">
+          <span class="pill-icon">🔮</span>
+          <span class="pill-name">Classic Prog</span>
+          <span class="pill-badge">MoP / Cata</span>
+        </button>
+      </div>
+
+      <!-- App Update Alert Button (GitHub Releases) -->
+      <button class="btn-app-update" id="btnAppUpdate" style="display: none;" title="¡Nueva versión de KoRForge disponible!">
+        <span class="update-pulse-ring"></span>
+        <span class="update-icon">🚀</span>
+        <span class="update-label">Actualizar KoRForge</span>
+        <span class="update-ver" id="appUpdateVerBadge">v1.0.1</span>
+      </button>
+
+      <!-- Native-Style Frameless Window Controls -->
+      <div class="window-controls">
+        <button class="win-btn win-min" id="btnWinMinimize" title="Minimizar">
+          <svg viewBox="0 0 10 10"><path d="M0,5 L10,5" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+        <button class="win-btn win-max" id="btnWinMaximize" title="Maximizar / Restaurar">
+          <svg class="icon-max" viewBox="0 0 10 10"><rect x="1.5" y="1.5" width="7" height="7" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+          <svg class="icon-restore" viewBox="0 0 10 10"><path d="M3,1.5 L8.5,1.5 L8.5,7 M1.5,3 L7,3 L7,8.5 L1.5,8.5 Z" fill="none" stroke="currentColor" stroke-width="1.1"/></svg>
+        </button>
+        <button class="win-btn win-close" id="btnWinClose" title="Cerrar">
+          <svg viewBox="0 0 10 10"><path d="M1.5,1.5 L8.5,8.5 M8.5,1.5 L1.5,8.5" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Body Layout -->
+    <div class="app-body">
+      
+      <!-- Main Sidebar -->
+      <aside class="app-sidebar">
+        <nav class="nav-menu">
+          <button class="nav-item active" data-tab="search">
+            <span class="nav-icon"><img src="magnifier-rune.png" alt="Buscar" class="nav-icon-img"></span>
+            <span class="nav-label" data-i18n="nav_search">Search Addons</span>
+          </button>
+          <button class="nav-item" data-tab="favorites">
+            <span class="nav-icon"><img src="icon-favorites.png" alt="Favoritos" class="nav-icon-img"></span>
+            <span class="nav-label" data-i18n="nav_favorites">Favorite Addons</span>
+            <span class="badge" id="favoritesBadge">0</span>
+          </button>
+          <button class="nav-item" data-tab="addons">
+            <span class="nav-icon"><img src="icon-installed.png" alt="Instalados" class="nav-icon-img"></span>
+            <span class="nav-label" data-i18n="nav_installed">Installed Addons</span>
+            <span class="badge" id="addonCountBadge">0</span>
+          </button>
+          <button class="nav-item" data-tab="backups">
+            <span class="nav-icon"><img src="icon-wtf-vault.png" alt="WTF Vault" class="nav-icon-img"></span>
+            <span class="nav-label" data-i18n="nav_backups">WTF Vault</span>
+            <span class="badge" id="backupsCountBadge">0</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button class="nav-item btn-settings-nav" data-tab="settings" title="Settings" data-i18n-title="nav_settings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label" data-i18n="nav_settings">Settings</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Workspace View -->
+      <main class="app-content">
+        
+        <!-- View: Mis Addons -->
+        <section class="tab-pane" id="pane-addons">
+          <div class="content-header">
+            <div>
+              <h1 class="page-title">Mis Addons Instalados</h1>
+              <p class="page-subtitle">Addons detectados en tiempo real en tu carpeta de WoW Forever.</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" id="btnExportProfile" title="Exportar y compartir tu pack de addons con amigos o tu hermandad">
+                📤 Compartir Pack
+              </button>
+              <button class="btn btn-secondary" id="btnImportProfile" title="Importar un código de pack para instalarlo en 1 clic">
+                📥 Cargar Pack
+              </button>
+              <button class="btn btn-gold" id="btnCheckAddonUpdates" title="Comprobar si hay versiones más recientes de tus addons en CurseForge">
+                ⚡ Buscar Actualizaciones
+              </button>
+              <button class="btn btn-secondary" id="btnOpenAddonsFolder" title="Abrir la carpeta Interface/AddOns en Windows Explorer">
+                📁 Abrir Carpeta
+              </button>
+              <button class="btn btn-primary" id="btnScanAddons" title="Volver a escanear la carpeta de addons">
+                🔍 Re-escanear
+              </button>
+            </div>
+          </div>
+
+          <!-- Banner dinámico de actualizaciones masivas (El Botón Mágico) -->
+          <div class="bulk-update-banner" id="bulkUpdateBanner" style="display: none;">
+            <div class="bulk-update-info">
+              <span class="bulk-update-icon">⚡</span>
+              <div>
+                <strong>Actualizaciones de Addons Disponibles</strong>
+                <span id="bulkUpdateSummary">Hay addons con nueva versión lista en CurseForge.</span>
+              </div>
+            </div>
+            <button class="btn btn-gold" id="btnUpdateAllAddons">
+              ⚡ Actualizar Todos en 1 Clic
+            </button>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="searchInput" placeholder="Filtrar addons instalados...">
+            </div>
+            <div class="filter-pills">
+              <button class="pill active" data-filter="all">Todos</button>
+              <button class="pill" data-filter="enabled">Activos</button>
+              <button class="pill" data-filter="disabled">Desactivados</button>
+              <button class="pill" data-filter="alerts">⚠️ Con Alertas</button>
+            </div>
+          </div>
+
+          <div class="addons-grid" id="addonsGrid">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+
+        <!-- View: Addons Favoritos -->
+        <section class="tab-pane" id="pane-favorites">
+          <div class="content-header">
+            <div>
+              <h1 class="page-title">Addons Favoritos</h1>
+              <p class="page-subtitle">Colección de tus addons guardados para tenerlos a mano y actualizados.</p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" id="btnExploreFromFav">
+                ⚡ Explorar Catálogo
+              </button>
+            </div>
+          </div>
+
+          <div class="toolbar">
+            <div class="search-box">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="favSearchInput" placeholder="Buscar en mis favoritos guardados...">
+            </div>
+          </div>
+
+          <div class="cf-results-grid" id="favoritesTabGrid">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+
+        <!-- View: Explorador de Addons -->
+        <section class="tab-pane active" id="pane-search">
+          
+          <!-- Subview 1: Catalog & Search Grid -->
+          <div class="cf-layout" id="cfCatalogLayout">
+            
+            <!-- Filters Sidebar -->
+            <aside class="cf-filters-sidebar">
+              <div class="cf-filters-header">
+                <div class="cf-filters-title">
+                  <span>Filtros</span>
+                  <span class="cf-active-count" id="cfActiveFilterCount" style="display:none;">0</span>
+                </div>
+                <button class="cf-clear-all" id="btnClearAllFilters" title="Desmarcar todos los filtros y restablecer el catálogo">🔄 Resetear filtros</button>
+              </div>
+
+              <div class="cf-filter-sections">
+
+                <!-- Section: Categories -->
+                <div class="cf-accordion open" data-accordion="categories">
+                  <div class="cf-accordion-header">
+                    <span>Categories</span>
+                    <span class="accordion-arrow">▲</span>
+                  </div>
+                  <div class="cf-accordion-body" id="cfCategoriesList">
+
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1067"><span class="cf-custom-box"></span><span class="cf-check-label">Achievements</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1018"><span class="cf-custom-box"></span><span class="cf-check-label">Action Bars</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1006"><span class="cf-custom-box"></span><span class="cf-check-label">Artwork</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1002"><span class="cf-custom-box"></span><span class="cf-check-label">Auction & Economy</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1003"><span class="cf-custom-box"></span><span class="cf-check-label">Audio & Video</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1009"><span class="cf-custom-box"></span><span class="cf-check-label">Bags & Inventory</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1014"><span class="cf-custom-box"></span><span class="cf-check-label">Boss Encounters</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1005"><span class="cf-custom-box"></span><span class="cf-check-label">Buffs & Debuffs</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="11739"><span class="cf-custom-box"></span><span class="cf-check-label">Camping</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1001"><span class="cf-custom-box"></span><span class="cf-check-label">Chat & Communication</span></label>
+
+                    <!-- Group: Class (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1020"><span class="cf-custom-box"></span><span class="cf-check-label">Class</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-class">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-class">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1036"><span class="cf-custom-box"></span><span class="cf-check-label">Death Knight</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1502"><span class="cf-custom-box"></span><span class="cf-check-label">Demon Hunters</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1023"><span class="cf-custom-box"></span><span class="cf-check-label">Druid</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="6137"><span class="cf-custom-box"></span><span class="cf-check-label">Evoker</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1024"><span class="cf-custom-box"></span><span class="cf-check-label">Hunter</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1021"><span class="cf-custom-box"></span><span class="cf-check-label">Mage</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1242"><span class="cf-custom-box"></span><span class="cf-check-label">Monk</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1022"><span class="cf-custom-box"></span><span class="cf-check-label">Paladin</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1026"><span class="cf-custom-box"></span><span class="cf-check-label">Priest</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1027"><span class="cf-custom-box"></span><span class="cf-check-label">Rogue</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1025"><span class="cf-custom-box"></span><span class="cf-check-label">Shaman</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1029"><span class="cf-custom-box"></span><span class="cf-check-label">Warlock</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1028"><span class="cf-custom-box"></span><span class="cf-check-label">Warrior</span></label>
+                      </div>
+                    </div>
+
+                    <!-- Group: Combat (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1019"><span class="cf-custom-box"></span><span class="cf-check-label">Combat</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-combat">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-combat">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1034"><span class="cf-custom-box"></span><span class="cf-check-label">Caster</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1035"><span class="cf-custom-box"></span><span class="cf-check-label">Damage Dealer</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1032"><span class="cf-custom-box"></span><span class="cf-check-label">Healer</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1033"><span class="cf-custom-box"></span><span class="cf-check-label">Tank</span></label>
+                      </div>
+                    </div>
+
+                    <!-- Group: Companions (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1085"><span class="cf-custom-box"></span><span class="cf-check-label">Companions</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-companions">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-companions">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1243"><span class="cf-custom-box"></span><span class="cf-check-label">Battle Pets</span></label>
+                      </div>
+                    </div>
+
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1007"><span class="cf-custom-box"></span><span class="cf-check-label">Data Export</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1031"><span class="cf-custom-box"></span><span class="cf-check-label">Development Tools</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1469"><span class="cf-custom-box"></span><span class="cf-check-label">Garrison</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1008"><span class="cf-custom-box"></span><span class="cf-check-label">Guild</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="9338"><span class="cf-custom-box"></span><span class="cf-check-label">Housing</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1010"><span class="cf-custom-box"></span><span class="cf-check-label">Libraries</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1012"><span class="cf-custom-box"></span><span class="cf-check-label">Mail</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1011"><span class="cf-custom-box"></span><span class="cf-check-label">Map & Minimap</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1038"><span class="cf-custom-box"></span><span class="cf-check-label">Minigames</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1017"><span class="cf-custom-box"></span><span class="cf-check-label">Miscellaneous</span></label>
+
+                    <!-- Group: Plugins (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1063"><span class="cf-custom-box"></span><span class="cf-check-label">Plugins</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-plugins">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-plugins">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1066"><span class="cf-custom-box"></span><span class="cf-check-label">Data Broker</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1064"><span class="cf-custom-box"></span><span class="cf-check-label">FuBar</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1065"><span class="cf-custom-box"></span><span class="cf-check-label">Titan Panel</span></label>
+                      </div>
+                    </div>
+
+                    <!-- Group: Professions (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1015"><span class="cf-custom-box"></span><span class="cf-check-label">Professions</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-professions">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-professions">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1042"><span class="cf-custom-box"></span><span class="cf-check-label">Alchemy</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1103"><span class="cf-custom-box"></span><span class="cf-check-label">Archaeology</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1043"><span class="cf-custom-box"></span><span class="cf-check-label">Blacksmithing</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1044"><span class="cf-custom-box"></span><span class="cf-check-label">Cooking</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1045"><span class="cf-custom-box"></span><span class="cf-check-label">Enchanting</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1046"><span class="cf-custom-box"></span><span class="cf-check-label">Engineering</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1047"><span class="cf-custom-box"></span><span class="cf-check-label">First Aid</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1048"><span class="cf-custom-box"></span><span class="cf-check-label">Fishing</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1049"><span class="cf-custom-box"></span><span class="cf-check-label">Herbalism</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1059"><span class="cf-custom-box"></span><span class="cf-check-label">Inscription</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1050"><span class="cf-custom-box"></span><span class="cf-check-label">Jewelcrafting</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1051"><span class="cf-custom-box"></span><span class="cf-check-label">Leatherworking</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1052"><span class="cf-custom-box"></span><span class="cf-check-label">Mining</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1053"><span class="cf-custom-box"></span><span class="cf-check-label">Skinning</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1054"><span class="cf-custom-box"></span><span class="cf-check-label">Tailoring</span></label>
+                      </div>
+                    </div>
+
+                    <!-- Group: PvP (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1004"><span class="cf-custom-box"></span><span class="cf-check-label">PvP</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-pvp">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-pvp">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1040"><span class="cf-custom-box"></span><span class="cf-check-label">Arena</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1041"><span class="cf-custom-box"></span><span class="cf-check-label">Battleground</span></label>
+                      </div>
+                    </div>
+
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1013"><span class="cf-custom-box"></span><span class="cf-check-label">Quests & Leveling</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1060"><span class="cf-custom-box"></span><span class="cf-check-label">Roleplay</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1171"><span class="cf-custom-box"></span><span class="cf-check-label">Transmogrification</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1055"><span class="cf-custom-box"></span><span class="cf-check-label">Tooltip</span></label>
+                    <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="4675"><span class="cf-custom-box"></span><span class="cf-check-label">Twitch Integration</span></label>
+
+                    <!-- Group: Unit Frames (+) -->
+                    <div class="cf-cat-group">
+                      <div class="cf-cat-group-header">
+                        <label class="cf-checkbox-item"><input type="checkbox" name="cf-cat" value="1016"><span class="cf-custom-box"></span><span class="cf-check-label">Unit Frames</span></label>
+                        <button class="btn-toggle-sub" data-target="sub-unitframes">+</button>
+                      </div>
+                      <div class="cf-sub-list" id="sub-unitframes">
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1039"><span class="cf-custom-box"></span><span class="cf-check-label">HUDs</span></label>
+                        <label class="cf-checkbox-item sub"><input type="checkbox" name="cf-cat" value="1037"><span class="cf-custom-box"></span><span class="cf-check-label">Raid Frames</span></label>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            </aside>
+
+            <!-- Main Results Area -->
+            <div class="cf-main-area">
+              
+              <!-- Search & Sort Top Toolbar -->
+              <div class="cf-top-toolbar">
+                <div class="cf-search-input-wrap">
+                  <span class="cf-search-icon">🔍</span>
+                  <input type="text" id="cfSearchInput" placeholder="Buscar por nombre (ej. Details, Questie, Decursive, OmniBar, Plater)...">
+                  <button class="cf-clear-search-btn" id="btnClearSearchText" style="display:none;">✕</button>
+                </div>
+                
+                <div class="cf-sort-wrap">
+                  <span class="sort-label">Ordenar:</span>
+                  <select id="cfSortSelect" class="cf-select">
+                    <option value="2|desc">Popularidad (Tendencia)</option>
+                    <option value="6|desc">Total de descargas</option>
+                    <option value="1|desc" id="optRelevance">Destacados (Featured)</option>
+                    <option value="3|desc">Recientemente actualizado</option>
+                    <option value="4|asc">Nombre (A - Z)</option>
+                    <option value="4|desc">Nombre (Z - A)</option>
+                  </select>
+                </div>
+
+                <div class="cf-toolbar-btns">
+                  <button class="btn btn-primary" id="btnCfSearch">
+                    Buscar
+                  </button>
+                </div>
+              </div>
+
+              <!-- Active Filter Chips Bar -->
+              <div class="cf-active-filters-bar" id="cfActiveFiltersBar"></div>
+
+              <!-- Results Header Info -->
+              <div class="cf-results-info" id="cfResultsInfo">
+                <span>Cargando catálogo de addons...</span>
+              </div>
+
+              <!-- Cards Grid -->
+              <div class="cf-results-grid" id="cfResultsGrid">
+                <!-- Cards populated by app.js -->
+              </div>
+
+            </div>
+
+          </div>
+
+          <!-- Subview 2: Addon Detail Page (Opens when clicking an addon card) -->
+          <div class="cf-detail-view" id="cfDetailView" style="display:none;">
+            <div class="detail-nav-bar">
+              <button class="btn btn-secondary btn-back-to-catalog" id="btnBackToCatalog">
+                ← Volver al catálogo
+              </button>
+              <div class="detail-quick-actions">
+                <button class="btn btn-secondary btn-translate" id="btnTranslateToggle" title="Traducir descripción al español">
+                  <span class="translate-icon">🇪🇸</span>
+                  <span class="translate-label">Traducir a Español</span>
+                </button>
+                <button class="btn btn-secondary btn-fav-detail" id="btnDetailToggleFav">
+                  <span class="star-icon">☆</span>
+                  <span class="fav-label">Añadir a Favoritos</span>
+                </button>
+                <button class="btn btn-gold btn-install-detail" id="btnDetailInstall">
+                  ⚡ Instalar Addon
+                </button>
+              </div>
+            </div>
+
+            <!-- Detail Hero Card -->
+            <div class="detail-hero-card" id="detailHeroCard">
+              <!-- Rendered by app.js -->
+            </div>
+
+            <!-- Detail Navigation Tabs -->
+            <div class="detail-tabs-bar">
+              <button class="detail-tab-btn active" data-detail-tab="desc">📝 Descripción</button>
+              <button class="detail-tab-btn" data-detail-tab="files">📁 Versiones y Archivos</button>
+              <button class="detail-tab-btn" data-detail-tab="gallery">🖼️ Galería / Capturas</button>
+            </div>
+
+            <!-- Detail Tab Contents -->
+            <div class="detail-tab-content active" id="detailTabDesc">
+              <div class="detail-html-content" id="detailHtmlBody">
+                <!-- Rendered description -->
+              </div>
+            </div>
+
+            <div class="detail-tab-content" id="detailTabFiles">
+              <div class="detail-files-list" id="detailFilesList">
+                <!-- Rendered files -->
+              </div>
+            </div>
+
+            <div class="detail-tab-content" id="detailTabGallery">
+              <div class="detail-gallery-grid" id="detailGalleryGrid">
+                <!-- Rendered screenshots -->
+              </div>
+            </div>
+
+            <!-- Bottom Back Navigation Bar -->
+            <div class="detail-bottom-nav">
+              <button class="btn btn-secondary btn-back-to-catalog" id="btnBackToCatalogBottom">
+                ← Volver al catálogo
+              </button>
+            </div>
+
+          </div>
+
+        </section>
+
+        <!-- View: Bóveda WTF -->
+        <section class="tab-pane" id="pane-backups">
+          <div class="content-header">
+            <div>
+              <h1 class="page-title">Bóveda de Configuración (WTF)</h1>
+              <p class="page-subtitle">Snapshots limpios de tus macros, barras y perfiles de interfaz. Si la beta crashea, restauras en 1 clic.</p>
+            </div>
+            <button class="btn btn-gold" id="btnCreateBackup">
+              💾 Crear Nuevo Backup Ahora
+            </button>
+          </div>
+
+          <div class="backups-list" id="backupsList">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+
+        <!-- View: Configuración -->
+        <section class="tab-pane" id="pane-settings">
+          <div class="content-header">
+            <div>
+              <h1 class="page-title">Configuración de KoRForge</h1>
+              <p class="page-subtitle">Ajustes del sistema, comportamiento de ventana y directorio de WoW Forever.</p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+
+            <!-- Card 1: Comportamiento de Ventana y Sistema -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>🖥️ Comportamiento de la Aplicación</h3>
+                <p class="settings-desc">Controla el arranque con el sistema y la bandeja de tareas.</p>
+              </div>
+
+              <div class="settings-options-list">
+
+                <!-- Option: Idioma de la Aplicación -->
+                <div class="settings-option-item">
+                  <div class="option-info">
+                    <span class="option-title" data-i18n="settings_lang_title">Application Language</span>
+                    <span class="option-desc" data-i18n="settings_lang_desc">Choose the display language for KoRForge.</span>
+                  </div>
+                  <select id="settingAppLanguage" class="settings-select" style="background: var(--bg-card); border: 1px solid var(--border-subtle); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
+                    <option value="en">English (Default)</option>
+                    <option value="es">Español</option>
+                    <option value="gl">Galego</option>
+                    <option value="fr">Français</option>
+                    <option value="it">Italiano</option>
+                  </select>
+                </div>
+                <div class="settings-option-item">
+                  <div class="option-info">
+                    <span class="option-title">Arrancar con Windows</span>
+                    <span class="option-desc">Iniciar KoRForge automáticamente en segundo plano al encender el PC.</span>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="settingAutoStart">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Option: Arrancar Minimizado -->
+                <div class="settings-option-item">
+                  <div class="option-info">
+                    <span class="option-title">Arrancar minimizado en segundo plano</span>
+                    <span class="option-desc">No abrir la ventana en primer plano al iniciar KoRForge hasta que tú la abras.</span>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="settingStartMinimized">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+                <!-- Option: Minimizar al cerrar -->
+                <div class="settings-option-item">
+                  <div class="option-info">
+                    <span class="option-title">Minimizar a la bandeja al pulsar Cerrar</span>
+                    <span class="option-desc">Al hacer clic en Cerrar, la app permanece activa en la barra de tareas junto al reloj.</span>
+                  </div>
+                  <label class="switch">
+                    <input type="checkbox" id="settingCloseToTray">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Card 2: Gestor de Versiones y Rutas de World of Warcraft -->
+            <div class="settings-card full-width" id="settingsCardGames">
+              <div class="settings-card-header">
+                <h3>🎮 Gestor de Versiones y Rutas de World of Warcraft</h3>
+                <p class="settings-desc">Gestiona tus clientes (Forever, Retail, Classic). Puedes usar la auto-detección mediante la carpeta raíz o configurar la ruta independiente de cada versión.</p>
+              </div>
+
+              <!-- Sub-bloque 1: Auto-Detección con Carpeta Raíz General -->
+              <div class="autodetect-box">
+                <div class="autodetect-header">
+                  <span class="autodetect-badge">🔍 Auto-Detección por Directorio Raíz</span>
+                  <span class="autodetect-tip">Recomendado si tus clientes comparten carpeta</span>
+                </div>
+                <p class="autodetect-desc">Introduce la carpeta general de World of Warcraft (ej: <code>C:\Program Files (x86)\World of Warcraft</code> o <code>C:\World of Warcraft</code>). KoRForge detectará automáticamente <code>_forever_</code>, <code>_retail_</code>, <code>_classic_era_</code> y <code>_classic_</code>.</p>
+                <div class="input-group">
+                  <input type="text" id="rootWoWPath" placeholder="C:\Program Files (x86)\World of Warcraft">
+                  <button class="btn btn-primary" id="btnAutoDetectGames">🔍 Auto-detectar Clientes</button>
+                </div>
+              </div>
+
+              <!-- Sub-bloque 2: Rutas Individuales por Versión -->
+              <div class="games-management-list" id="gamesManagementList">
+                <!-- Se poblará dinámicamente por app.js con el estado de cada cliente -->
+              </div>
+            </div>
+
+            <!-- Card 3: Instalación manual (URL / ZIP / GitHub) -->
+            <div class="settings-card">
+              <div class="settings-card-header">
+                <h3>📥 Instalar Addon Manual (GitHub o ZIP)</h3>
+                <p class="settings-desc">Pega la URL de un repositorio de GitHub o enlace directo a un archivo <code>.zip</code>.</p>
+              </div>
+
+              <div class="input-group">
+                <input type="text" id="installUrlInput" placeholder="https://github.com/usuario/repo o https://.../addon.zip">
+                <button class="btn btn-primary" id="btnInstallUrl">Descargar e Instalar</button>
+              </div>
+
+              <div class="install-console" id="installConsole" style="display:none;">
+                <div class="log-line info">[KoRForge] Conexión nativa lista.</div>
+              </div>
+            </div>
+
+            <!-- Card 4: Acerca de KoRForge -->
+            <div class="settings-card about-card">
+              <div class="about-hero-logo-wrap">
+                <img src="korforge.png" alt="KoRForge" class="about-hero-logo">
+              </div>
+              <div class="settings-card-header text-center">
+                <h3>⚡ Acerca de KoRForge</h3>
+                <p class="settings-desc">Gestor ultra-rápido diseñado para la comunidad de WoW Forever.</p>
+              </div>
+              <div class="about-grid">
+                <div class="about-item">
+                  <span class="about-label">Versión</span>
+                  <span class="about-val">v1.0.0 (Beta Stress Test Ready)</span>
+                </div>
+                <div class="about-item">
+                  <span class="about-label">Telemetría</span>
+                  <span class="about-val" style="color:var(--status-green);">0% (Fuck Them)</span>
+                </div>
+                <div class="about-item">
+                  <span class="about-label">Publicidad</span>
+                  <span class="about-val" style="color:var(--status-green);">0% (Limpio y Ligero)</span>
+                </div>
+                <div class="about-item">
+                  <span class="about-label">Traducción</span>
+                  <span class="about-val">Castellano (ES) bajo demanda</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- In-App Webview / External Links Browser View -->
+        <section class="inapp-browser-view" id="inAppBrowserView" style="display: none;">
+          <div class="inapp-browser-toolbar">
+            <button class="btn btn-secondary btn-sm" id="btnBrowserBack">← Volver al Addon</button>
+            <div class="browser-url-pill">
+              <span class="url-lock">🔒</span>
+              <span class="url-host" id="browserCurrentUrl">https://github.com/...</span>
+            </div>
+            <div class="browser-actions">
+              <button class="btn btn-secondary btn-sm" id="btnBrowserReload" title="Recargar página">🔄</button>
+              <button class="btn btn-secondary btn-sm" id="btnBrowserOpenExternal" title="Abrir en tu navegador web externo">↗ Abrir fuera</button>
+            </div>
+          </div>
+          <div class="inapp-browser-frame-wrap" id="browserFrameWrap">
+            <!-- Dynamic webview / iframe created here -->
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Modal: Actualización de la Aplicación -->
+  <div class="app-modal-backdrop" id="updateModal" style="display: none;">
+    <div class="app-modal-dialog">
+      <div class="app-modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">🚀</span>
+          <div>
+            <h3>Nueva Versión de KoRForge</h3>
+            <span class="modal-sub">GitHub Releases Oficial</span>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btnCloseUpdateModal">✕</button>
+      </div>
+      <div class="app-modal-body">
+        <div class="update-version-card">
+          <div class="ver-col">
+            <span class="ver-meta">Versión instalada</span>
+            <span class="ver-num current" id="modalCurrentVer">v1.0.0</span>
+          </div>
+          <span class="ver-arrow">➔</span>
+          <div class="ver-col">
+            <span class="ver-meta">Nueva versión en GitHub</span>
+            <span class="ver-num new" id="modalNewVer">v1.0.1</span>
+          </div>
+        </div>
+        <div class="update-notes-box">
+          <h4>Novedades y Cambios:</h4>
+          <div class="update-notes-text" id="modalReleaseNotes">
+            Cargando notas de la versión...
+          </div>
+        </div>
+
+        <!-- In-App Download Progress Bar -->
+        <div class="update-progress-wrap" id="updateProgressWrap" style="display: none;">
+          <div class="update-progress-bar">
+            <div class="update-progress-fill" id="updateProgressFill" style="width: 0%;"></div>
+          </div>
+          <div class="update-progress-info" id="updateProgressInfo">Descargando... 0% (0.0 MB / 0.0 MB)</div>
+        </div>
+      </div>
+      <div class="app-modal-footer">
+        <button class="btn btn-secondary" id="btnDismissUpdate">Más tarde</button>
+        <button class="btn btn-gold" id="btnDownloadUpdate">
+          ⚡ Actualizar dentro de la App
+        </button>
+        <button class="btn btn-success" id="btnApplyUpdateRestart" style="display: none;">
+          🔄 Reiniciar y Aplicar Actualización
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Exportar Pack de Addons -->
+  <div class="app-modal-backdrop" id="exportProfileModal" style="display: none;">
+    <div class="app-modal-dialog">
+      <div class="app-modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">📤</span>
+          <div>
+            <h3>Compartir Pack de Addons</h3>
+            <span class="modal-sub">Exporta tu configuración activa para que cualquier compañero la instale en 1 clic</span>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btnCloseExportModal">✕</button>
+      </div>
+      <div class="app-modal-body">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 6px; display: block;">Título del Pack:</label>
+          <input type="text" id="exportProfileTitle" style="width: 100%; padding: 8px 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" placeholder="Ej: Mi Pack Raider WoW Forever">
+        </div>
+        <div class="update-notes-box">
+          <h4>Código del Pack (copia y comparte por chat o Discord):</h4>
+          <textarea id="exportProfileCode" readonly style="width: 100%; height: 110px; background: #0c0d12; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #f59e0b; font-family: monospace; font-size: 0.8rem; padding: 10px; resize: none;"></textarea>
+        </div>
+      </div>
+      <div class="app-modal-footer">
+        <button class="btn btn-secondary" id="btnDismissExport">Cerrar</button>
+        <button class="btn btn-gold" id="btnCopyProfileCode">📋 Copiar Código</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Importar Pack de Addons -->
+  <div class="app-modal-backdrop" id="importProfileModal" style="display: none;">
+    <div class="app-modal-dialog" style="max-width: 620px;">
+      <div class="app-modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">📥</span>
+          <div>
+            <h3>Cargar Pack de Addons</h3>
+            <span class="modal-sub">Pega el código de pack que te haya pasado un compañero</span>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btnCloseImportModal">✕</button>
+      </div>
+      <div class="app-modal-body">
+        <div id="importInputPhase">
+          <label style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 6px; display: block;">Pega aquí el código del pack (KORP-...):</label>
+          <textarea id="importProfileInput" style="width: 100%; height: 95px; background: #0c0d12; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-family: monospace; font-size: 0.82rem; padding: 10px; resize: none;" placeholder="Pega el código KORP-... aquí"></textarea>
+          <button class="btn btn-primary" id="btnAnalyzeProfile" style="margin-top: 10px; width: 100%;">🔍 Analizar Pack</button>
+        </div>
+
+        <div id="importAnalysisPhase" style="display: none; margin-top: 15px;">
+          <div id="profileAnalysisSummary" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 0.88rem; color: #fef3c7;"></div>
+          <div style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px; background: rgba(0,0,0,0.3);" id="profileMissingList"></div>
+
+          <div class="update-progress-wrap" id="importProgressWrap" style="display: none; margin-top: 12px;">
+            <div class="update-progress-bar">
+              <div class="update-progress-fill" id="importProgressFill" style="width: 0%;"></div>
+            </div>
+            <div class="update-progress-info" id="importProgressInfo">Instalando addons faltantes...</div>
+          </div>
+        </div>
+      </div>
+      <div class="app-modal-footer">
+        <button class="btn btn-secondary" id="btnDismissImport">Cancelar</button>
+        <button class="btn btn-gold" id="btnInstallMissingAddons" style="display: none;">⚡ Instalar Addons Faltantes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Progreso de Actualización Masiva de Addons (El Botón Mágico) -->
+  <div class="app-modal-backdrop" id="bulkUpdateModal" style="display: none;">
+    <div class="app-modal-dialog">
+      <div class="app-modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon">⚡</span>
+          <div>
+            <h3>Actualización Masiva de Addons</h3>
+            <span class="modal-sub" id="bulkModalSub">Actualizando tus addons a la última versión...</span>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btnCloseBulkModalX" style="display: none;">✕</button>
+      </div>
+      <div class="app-modal-body">
+        <div class="update-progress-wrap" style="margin-bottom: 15px;">
+          <div class="update-progress-bar">
+            <div class="update-progress-fill" id="bulkProgressFill" style="width: 0%;"></div>
+          </div>
+          <div class="update-progress-info" id="bulkProgressInfo">Iniciando actualización en lote...</div>
+        </div>
+        <div id="bulkUpdateResultsList" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 10px; background: rgba(0,0,0,0.3);"></div>
+      </div>
+      <div class="app-modal-footer">
+        <button class="btn btn-primary" id="btnCloseBulkModal" style="display: none;">✓ Listo</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

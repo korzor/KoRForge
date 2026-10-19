@@ -1,0 +1,50 @@
+{
+  "activeGame": "forever",
+  "rootWoWDir": "C:\\Program Files (x86)\\World of Warcraft",
+  "games": {
+    "forever": {
+      "id": "forever",
+      "name": "WoW Forever",
+      "subtitle": "Cliente 1.60.1",
+      "icon": "⚔️",
+      "path": "C:\\Program Files (x86)\\World of Warcraft\\_forever_",
+      "subfolder": "_forever_",
+      "flavorId": "88568",
+      "flavorName": "Forever"
+    },
+    "retail": {
+      "id": "retail",
+      "name": "WoW Retail",
+      "subtitle": "The War Within",
+      "icon": "🛡️",
+      "path": "",
+      "subfolder": "_retail_",
+      "flavorId": "517",
+      "flavorName": "Retail"
+    },
+    "classic_era": {
+      "id": "classic_era",
+      "name": "WoW Classic Era",
+      "subtitle": "Vanilla 1.15",
+      "icon": "📜",
+      "path": "",
+      "subfolder": "_classic_era_",
+      "flavorId": "67408",
+      "flavorName": "Classic"
+    },
+    "classic": {
+      "id": "classic",
+      "name": "WoW Classic Progression",
+      "subtitle": "Cataclysm / MoP / Titan",
+      "icon": "🔮",
+      "path": "",
+      "subfolder": "_classic_",
+      "flavorId": "79434,77522,73713,81212",
+      "flavorName": "Classic Prog"
+    }
+  },
+  "wowDir": "C:\\Program Files (x86)\\World of Warcraft\\_forever_",
+  "closeToTray": true,
+  "startMinimized": false,
+  "favorites": []
+}
