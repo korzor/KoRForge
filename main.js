@@ -34,23 +34,13 @@ global.quitAndApplyUpdate = function() {
   app.exit(0);
 };
 
-// Prevent duplicate running instances and recover from zombie processes
+// Prevent duplicate running instances
 const gotTheLock = app.requestSingleInstanceLock();
 logBoot('Single instance lock acquired: ' + gotTheLock);
 
 if (!gotTheLock) {
-  logBoot('Duplicate instance detected. Silently terminating previous instance and relaunching fresh one...');
-  const { execSync } = require('child_process');
-  try {
-    execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
-    execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM electron.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
-  } catch (_) {}
-
-  // Allow Windows a brief moment to release file handles and relaunch
-  setTimeout(() => {
-    app.relaunch();
-    app.exit(0);
-  }, 250);
+  logBoot('Duplicate instance detected. Quitting duplicate instance...');
+  app.quit();
   return;
 }
 
