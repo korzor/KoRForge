@@ -59,17 +59,15 @@ if (fs.existsSync(zipSrc)) {
 console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRForge)...`);
 
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
-const notesContent = `## KoRForge ${tagName} - Official Release
+const notesContent = `## KoRForge ${tagName}
 
-Gestor de addons oficial, autónomo y optimizado para **World of Warcraft: Forever**, **Retail**, **Classic Era** y **Classic Progression**.
-
-### 🌟 Novedades y Características
-- **Multicliente Total:** Cambia entre versiones de WoW con 1 solo clic.
-- **Catálogo de CurseForge:** Búsqueda en tiempo real, filtros avanzados, galería y traductor a español.
-- **Instalación y Actualización en 1 Clic:** Detección de dependencias automática sin descomprimir zips a mano.
-- **Bóveda WTF:** Snapshots limpios de macros y perfiles de interfaz para restaurar ante fallos.
-- **Internacionalización (i18n):** Selector de idioma (English default, Español, Galego, Français, Italiano) con 0 consumo de tokens.
-- **Auto-actualizador integrado:** Actualización automática desde GitHub Releases.
+### 🌟 Cambios y Novedades (v1.0.1 ➔ v1.0.2)
+- **Esquinas 100% Transparentes:** Eliminados los bordes y esquinas grises exteriores de la ventana en Windows.
+- **Iconos Temáticos en Menú Lateral:** Nuevos iconos ilustrados de Warcraft para Favoritos (Estrella Alianza/Horda), Addons Instalados (Cofre) y Bóveda WTF (Relicario acorazado).
+- **Botón de Actualización Integrado:** Reubicado en el menú lateral sobre Configuración, adaptativo en altura y con indicador de versión.
+- **Modal de Actualización Rediseñado:** Notas de actualización con diseño amplio, ordenado y viñetas estructuradas.
+- **Reinicio Automático al Actualizar:** Cierre forzoso de procesos bloqueados, instalación silenciosa y reapertura automática sin congelarse en "Reiniciando".
+- **Gestión Silenciosa de Instancias:** Cierre automático de procesos previos o zombies al abrir la aplicación sin alertas ni cuadros de diálogo.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
