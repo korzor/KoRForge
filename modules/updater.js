@@ -140,39 +140,77 @@ function applyUpdateAndRestart(electronApp = null) {
     throw new Error(`Formato no ejecutable directo: ${path.basename(installerPath)}`);
   }
 
+  // Detect installed executable path
+  let appExePath = process.execPath;
+  const standardInstalledExe = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'KoRForge', 'KoRForge.exe');
+  if (fs.existsSync(standardInstalledExe)) {
+    appExePath = standardInstalledExe;
+  }
+
   // Generate automated runner batch script in temp dir
   const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.bat');
   const batContent = `@echo off
 chcp 65001 >nul
+title KoRForge Updater
+
 echo ==============================================
-echo [KoRForge] Aplicando actualización v${currentDownload.version || ''}...
-echo Esperando cierre de la aplicación previa...
+echo [KoRForge] Aplicando actualizacion v${currentDownload.version || ''}...
 echo ==============================================
-timeout /t 2 /nobreak >nul
-echo Ejecutando instalador oficial: "${installerPath}"
-start "" "${installerPath}"
+
+:: 1. Esperar un instante para que el servidor responda a la petición HTTP
+ping 127.0.0.1 -n 2 >nul
+
+:: 2. Matar por la fuerza todos los procesos previos de KoRForge y Electron
+taskkill /F /IM KoRForge.exe /T >nul 2>&1
+taskkill /F /IM electron.exe /T >nul 2>&1
+
+:: 3. Esperar que Windows libere los archivos
+ping 127.0.0.1 -n 2 >nul
+
+:: 4. Ejecutar el instalador oficial silenciosamente y esperar a que finalice
+echo Instalando version oficial actualizada...
+start /wait "" "${installerPath}" /S
+
+:: 5. Si la instalacion silenciosa finalizo, dar un breve margen
+ping 127.0.0.1 -n 2 >nul
+
+:: 6. Volver a arrancar KoRForge actualizado
+echo Abriendo KoRForge actualizado...
+if exist "${appExePath}" (
+  start "" "${appExePath}"
+) else (
+  start "" "${installerPath}"
+)
+
+:: 7. Limpiar el script temporal y salir
+(goto) 2>nul & del "%~f0"
 exit
 `;
 
   fs.writeFileSync(runnerScript, batContent, 'utf-8');
 
-  // Launch detached batch file
+  // Launch detached batch file completely independent of parent process
   const child = spawn('cmd.exe', ['/c', runnerScript], {
     detached: true,
-    stdio: 'ignore'
+    stdio: 'ignore',
+    windowsHide: false
   });
   child.unref();
 
-  // If electron app provided, quit cleanly
+  // Cerrar la aplicación principal limpiamente
   setTimeout(() => {
-    if (electronApp && typeof electronApp.quit === 'function') {
-      try {
-        electronApp.quit();
-      } catch (_) {}
-    } else {
+    try {
+      if (global.quitAndApplyUpdate) {
+        global.quitAndApplyUpdate();
+      } else if (electronApp && typeof electronApp.exit === 'function') {
+        electronApp.exit(0);
+      } else {
+        process.exit(0);
+      }
+    } catch (_) {
       process.exit(0);
     }
-  }, 300);
+  }, 400);
 
   return { success: true, message: 'Actualizador lanzado. Cerrando KoRForge...' };
 }

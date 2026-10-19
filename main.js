@@ -17,23 +17,81 @@ function logBoot(msg) {
 
 logBoot('--- Process launch (PID: ' + process.pid + ') ---');
 
-// Prevent duplicate running instances
+// Global hook for in-app updater to cleanly terminate before installer runs
+global.quitAndApplyUpdate = function() {
+  logBoot('[quitAndApplyUpdate] Cerrando KoRForge para aplicar actualizacion...');
+  isQuitting = true;
+  try {
+    if (tray) {
+      tray.destroy();
+      tray = null;
+    }
+    if (win && !win.isDestroyed()) {
+      win.destroy();
+      win = null;
+    }
+  } catch (_) {}
+  app.exit(0);
+};
+
+// Prevent duplicate running instances and recover from zombie processes
 const gotTheLock = app.requestSingleInstanceLock();
 logBoot('Single instance lock acquired: ' + gotTheLock);
+
 if (!gotTheLock) {
-  logBoot('Duplicate instance detected, quitting.');
-  app.quit();
-  process.exit(0);
+  logBoot('Duplicate instance detected. Verifying existing process health...');
+  const { execSync } = require('child_process');
+  
+  // Check if existing instance is responding on localhost:3847
+  let isResponsive = false;
+  try {
+    const pingReq = http.get('http://127.0.0.1:3847/api/ping', { timeout: 600 }, (res) => {
+      isResponsive = (res.statusCode >= 200 && res.statusCode < 400);
+    });
+    pingReq.on('error', () => { isResponsive = false; });
+  } catch (_) {
+    isResponsive = false;
+  }
+
+  setTimeout(() => {
+    if (!isResponsive) {
+      logBoot('Existing instance is dead or unresponsive. Killing stale processes and restarting...');
+      try {
+        execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+        execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM electron.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+      } catch (_) {}
+      app.relaunch();
+      app.exit(0);
+    } else {
+      logBoot('Existing instance is alive. Notifying user and exiting.');
+      try {
+        const { dialog } = require('electron');
+        dialog.showMessageBox({
+          type: 'info',
+          title: 'KoRForge',
+          message: 'KoRForge ya está abierto en tu ordenador.',
+          detail: 'Hemos traído la ventana al frente. Si estaba minimizada, puedes abrirla también desde la bandeja del sistema junto al reloj.',
+          buttons: ['Entendido']
+        }).catch(() => {});
+      } catch (_) {}
+      setTimeout(() => {
+        app.exit(0);
+      }, 300);
+    }
+  }, 350);
+  return;
 }
+
 app.on('second-instance', () => {
   logBoot('second-instance triggered');
-  if (win) {
-    if (!win.isVisible()) win.show();
+  if (win && !win.isDestroyed()) {
     if (win.isMinimized()) win.restore();
+    if (!win.isVisible()) win.show();
+    win.setAlwaysOnTop(true);
     win.focus();
+    win.setAlwaysOnTop(false);
     try {
-      win.setAlwaysOnTop(true);
-      win.setAlwaysOnTop(false);
+      win.flashFrame(true);
     } catch (_) {}
   }
 });

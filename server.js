@@ -190,6 +190,11 @@ function getWtfDir(gameId) {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
+// API: Health check ping
+app.get('/api/ping', (req, res) => {
+  res.json({ pong: true, pid: process.pid, time: Date.now() });
+});
+
 // API: Config
 app.get('/api/config', (req, res) => {
   const activeGame = config.activeGame || 'forever';

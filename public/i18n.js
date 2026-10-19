@@ -14,6 +14,7 @@
       nav_installed: 'Installed Addons',
       nav_backups: 'WTF Vault',
       nav_settings: 'Settings',
+      nav_update_to: 'Update to',
 
       // Address Bar / Topbar
       topbar_search: 'KoRForge / Search Addons',
@@ -137,6 +138,7 @@
       nav_installed: 'Addons Instalados',
       nav_backups: 'Bóveda WTF',
       nav_settings: 'Configuración',
+      nav_update_to: 'Actualizar a',
 
       // Address Bar / Topbar
       topbar_search: 'KoRForge / Buscar Addons',
@@ -260,6 +262,7 @@
       nav_installed: 'Addons Instalados',
       nav_backups: 'Bóveda WTF',
       nav_settings: 'Axustes',
+      nav_update_to: 'Actualizar a',
 
       // Address Bar / Topbar
       topbar_search: 'KoRForge / Buscar Addons',
@@ -383,6 +386,7 @@
       nav_installed: 'Addons Installés',
       nav_backups: 'Coffre-fort WTF',
       nav_settings: 'Paramètres',
+      nav_update_to: 'Mettre à jour vers',
 
       // Address Bar / Topbar
       topbar_search: 'KoRForge / Rechercher des Addons',
@@ -506,6 +510,7 @@
       nav_installed: 'Addon Installati',
       nav_backups: 'Cassaforte WTF',
       nav_settings: 'Impostazioni',
+      nav_update_to: 'Aggiorna a',
 
       // Address Bar / Topbar
       topbar_search: 'KoRForge / Cerca Addon',

@@ -2015,7 +2015,7 @@ document.addEventListener('DOMContentLoaded', () => {
           appUpdateVerBadge.textContent = formattedVer;
         }
         if (btnAppUpdate) {
-          btnAppUpdate.style.display = 'inline-flex';
+          btnAppUpdate.style.display = 'flex';
           btnAppUpdate.title = `¡Nueva versión KoRForge ${formattedVer} disponible! Haz clic para actualizar`;
         }
       } else {
@@ -2029,6 +2029,55 @@ document.addEventListener('DOMContentLoaded', () => {
         btnAppUpdate.style.display = 'none';
       }
     }
+  }
+
+  function formatInlineMd(str) {
+    if (!str) return '';
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/`([^`]+)`/g, '<code>$1</code>');
+  }
+
+  function formatReleaseNotes(rawMarkdown) {
+    if (!rawMarkdown) return '<p>Hay una nueva versión disponible para descargar desde GitHub Releases.</p>';
+
+    const lines = rawMarkdown.split('\n');
+    let html = '';
+    let inList = false;
+
+    for (let rawLine of lines) {
+      let line = rawLine.trim();
+      if (!line) continue;
+
+      // Omitir títulos principales redundantes (ya mostrados en la cabecera del modal)
+      if (line.match(/^##\s+KoRForge/i)) continue;
+
+      // Subtítulos
+      if (line.startsWith('### ') || line.startsWith('## ')) {
+        if (inList) { html += '</ul>'; inList = false; }
+        const title = line.replace(/^#+\s*/, '');
+        html += `<h3>${formatInlineMd(title)}</h3>`;
+        continue;
+      }
+
+      // Elementos de lista
+      if (line.startsWith('- ') || line.startsWith('* ')) {
+        if (!inList) { html += '<ul>'; inList = true; }
+        const item = line.replace(/^[-*]\s+/, '');
+        html += `<li>${formatInlineMd(item)}</li>`;
+        continue;
+      }
+
+      // Texto normal
+      if (inList) { html += '</ul>'; inList = false; }
+      html += `<p style="margin-bottom: 6px; color: #94a3b8;">${formatInlineMd(line)}</p>`;
+    }
+
+    if (inList) html += '</ul>';
+    return html || '<p>Hay una nueva versión disponible para descargar desde GitHub Releases.</p>';
   }
 
   function closeUpdateModal() {
@@ -2047,9 +2096,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (modalCurrentVer) modalCurrentVer.textContent = 'v' + String(appUpdateData.currentVersion || '1.0.0').replace(/^v/, '');
       if (modalNewVer) modalNewVer.textContent = 'v' + String(appUpdateData.remoteVersion || '').replace(/^v/, '');
       if (modalReleaseNotes) {
-        modalReleaseNotes.innerHTML = appUpdateData.releaseNotes 
-          ? appUpdateData.releaseNotes.replace(/\n/g, '<br>')
-          : 'Hay una nueva versión disponible para descargar desde GitHub Releases.';
+        modalReleaseNotes.innerHTML = formatReleaseNotes(appUpdateData.releaseNotes);
       }
       if (updateProgressWrap) updateProgressWrap.style.display = 'none';
       if (btnDownloadUpdate) {
@@ -2140,9 +2187,15 @@ document.addEventListener('DOMContentLoaded', () => {
       btnApplyUpdateRestart.textContent = 'Reiniciando KoRForge...';
       showToast('Cerrando KoRForge y aplicando actualización...', 'info');
 
-      await fetch('/api/app-updates/apply', { method: 'POST' });
+      const res = await fetch('/api/app-updates/apply', { method: 'POST' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || `HTTP ${res.status}`);
+      }
     } catch (err) {
       showToast(`Error al reiniciar: ${err.message}`, 'error');
+      btnApplyUpdateRestart.disabled = false;
+      btnApplyUpdateRestart.textContent = '🔄 Reintentar Reinicio';
     }
   });
 

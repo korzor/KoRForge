@@ -59,13 +59,6 @@
         </button>
       </div>
 
-      <!-- App Update Alert Button (GitHub Releases) -->
-      <button class="btn-app-update" id="btnAppUpdate" style="display: none;" title="¡Nueva versión de KoRForge disponible!">
-        <span class="update-pulse-ring"></span>
-        <span class="update-icon">🚀</span>
-        <span class="update-label">Actualizar KoRForge</span>
-        <span class="update-ver" id="appUpdateVerBadge">v1.0.1</span>
-      </button>
 
       <!-- Native-Style Frameless Window Controls -->
       <div class="window-controls">
@@ -110,6 +103,16 @@
         </nav>
 
         <div class="sidebar-footer">
+          <button class="nav-item btn-app-update-nav" id="btnAppUpdate" style="display: none;" title="¡Nueva versión de KoRForge disponible!">
+            <span class="nav-icon update-nav-icon">
+              <span class="update-pulse-ring"></span>
+              <span class="update-emoji">🚀</span>
+            </span>
+            <div class="update-nav-text">
+              <span class="update-nav-label" data-i18n="nav_update_to">Actualizar a</span>
+              <span class="update-nav-ver" id="appUpdateVerBadge">v1.0.1</span>
+            </div>
+          </button>
           <button class="nav-item btn-settings-nav" data-tab="settings" title="Settings" data-i18n-title="nav_settings">
             <span class="nav-icon">⚙️</span>
             <span class="nav-label" data-i18n="nav_settings">Settings</span>
