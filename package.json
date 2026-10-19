@@ -51,7 +51,7 @@
       "main.js",
       "server.js",
       "preload.js",
-      "config.json",
+      "config.example.json",
       "korforge.ico",
       "korforge.png",
       "modules/**/*",
