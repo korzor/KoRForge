@@ -111,7 +111,7 @@ function loadConfig() {
     rootWoWDir: '',
     games: JSON.parse(JSON.stringify(DEFAULT_GAMES)),
     wowDir: defaultDir,
-    closeToTray: true,
+    closeToTray: false,
     startMinimized: false,
     language: 'en',
     favorites: []
@@ -218,7 +218,7 @@ app.get('/api/config', (req, res) => {
     addonsExists: activeGameStatus.addonsExists,
     wtfExists: activeGameStatus.wtfExists,
     favoritesCount: (config.favorites || []).length,
-    closeToTray: config.closeToTray !== false,
+    closeToTray: config.closeToTray === true,
     startMinimized: !!config.startMinimized,
     language: config.language || 'en',
     autoStart: isAutoStartEnabled()

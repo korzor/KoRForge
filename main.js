@@ -34,6 +34,27 @@ global.quitAndApplyUpdate = function() {
   app.exit(0);
 };
 
+// Terminar cualquier proceso previo o zombie antes de comprobar la instancia única
+const isMainProcess = !process.argv.some(arg => arg.startsWith('--type='));
+
+if (isMainProcess && process.platform === 'win32') {
+  try {
+    const { execSync } = require('child_process');
+    execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+  } catch (_) {}
+
+  // Eliminar archivos de bloqueo huérfanos dejados por procesos colgados
+  try {
+    const lockFiles = ['SingletonLock', 'SingletonCookie', 'SingletonSocket'];
+    for (const f of lockFiles) {
+      const p = path.join(userDataPath, f);
+      if (fs.existsSync(p)) {
+        try { fs.unlinkSync(p); } catch (_) {}
+      }
+    }
+  } catch (_) {}
+}
+
 // Prevent duplicate running instances
 const gotTheLock = app.requestSingleInstanceLock();
 logBoot('Single instance lock acquired: ' + gotTheLock);
@@ -88,7 +109,7 @@ function loadConfigSync() {
   } catch (_) {}
   return {
     wowDir: '',
-    closeToTray: true,
+    closeToTray: false,
     startMinimized: false,
     favorites: []
   };
@@ -307,11 +328,12 @@ function createWindow() {
   // Window Close Behavior (Close to Tray vs Quit)
   win.on('close', (e) => {
     const currentCfg = loadConfigSync();
-    if (!isQuitting && currentCfg.closeToTray !== false) {
+    if (!isQuitting && currentCfg.closeToTray === true) {
       e.preventDefault();
       win.hide();
       return false;
     }
+    isQuitting = true;
   });
 
   normalBounds = win.getBounds();
@@ -405,7 +427,7 @@ ipcMain.on('window-maximize', () => {
 ipcMain.on('window-close', () => {
   if (!win) return;
   const currentCfg = loadConfigSync();
-  if (currentCfg.closeToTray !== false && !isQuitting) {
+  if (currentCfg.closeToTray === true && !isQuitting) {
     win.hide();
   } else {
     isQuitting = true;
@@ -447,11 +469,20 @@ app.on('before-quit', () => {
 
 app.on('will-quit', () => {
   logBoot('app will-quit event fired');
+  try {
+    if (tray) {
+      tray.destroy();
+      tray = null;
+    }
+  } catch (_) {}
+  // Salida forzosa para garantizar que ningún proceso quede zombi
+  setTimeout(() => process.exit(0), 100);
 });
 
 app.on('window-all-closed', () => {
   logBoot('app window-all-closed event fired. isQuitting: ' + isQuitting);
-  if (process.platform !== 'darwin' && isQuitting) {
+  if (process.platform !== 'darwin') {
+    isQuitting = true;
     app.quit();
   }
 });

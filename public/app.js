@@ -344,7 +344,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (settingAutoStart) settingAutoStart.checked = !!data.autoStart;
       if (settingStartMinimized) settingStartMinimized.checked = !!data.startMinimized;
-      if (settingCloseToTray) settingCloseToTray.checked = data.closeToTray !== false;
+      if (settingCloseToTray) settingCloseToTray.checked = data.closeToTray === true;
 
       const appLang = data.language || 'en';
       if (window.I18N) {

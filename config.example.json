@@ -44,7 +44,7 @@
     }
   },
   "wowDir": "C:\\Program Files (x86)\\World of Warcraft\\_forever_",
-  "closeToTray": true,
+  "closeToTray": false,
   "startMinimized": false,
   "favorites": []
 }
