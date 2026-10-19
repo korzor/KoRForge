@@ -39,46 +39,18 @@ const gotTheLock = app.requestSingleInstanceLock();
 logBoot('Single instance lock acquired: ' + gotTheLock);
 
 if (!gotTheLock) {
-  logBoot('Duplicate instance detected. Verifying existing process health...');
+  logBoot('Duplicate instance detected. Silently terminating previous instance and relaunching fresh one...');
   const { execSync } = require('child_process');
-  
-  // Check if existing instance is responding on localhost:3847
-  let isResponsive = false;
   try {
-    const pingReq = http.get('http://127.0.0.1:3847/api/ping', { timeout: 600 }, (res) => {
-      isResponsive = (res.statusCode >= 200 && res.statusCode < 400);
-    });
-    pingReq.on('error', () => { isResponsive = false; });
-  } catch (_) {
-    isResponsive = false;
-  }
+    execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+    execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM electron.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+  } catch (_) {}
 
+  // Allow Windows a brief moment to release file handles and relaunch
   setTimeout(() => {
-    if (!isResponsive) {
-      logBoot('Existing instance is dead or unresponsive. Killing stale processes and restarting...');
-      try {
-        execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
-        execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM electron.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
-      } catch (_) {}
-      app.relaunch();
-      app.exit(0);
-    } else {
-      logBoot('Existing instance is alive. Notifying user and exiting.');
-      try {
-        const { dialog } = require('electron');
-        dialog.showMessageBox({
-          type: 'info',
-          title: 'KoRForge',
-          message: 'KoRForge ya está abierto en tu ordenador.',
-          detail: 'Hemos traído la ventana al frente. Si estaba minimizada, puedes abrirla también desde la bandeja del sistema junto al reloj.',
-          buttons: ['Entendido']
-        }).catch(() => {});
-      } catch (_) {}
-      setTimeout(() => {
-        app.exit(0);
-      }, 300);
-    }
-  }, 350);
+    app.relaunch();
+    app.exit(0);
+  }, 250);
   return;
 }
 
