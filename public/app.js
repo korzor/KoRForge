@@ -2085,7 +2085,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const verInstaladaTxt = versionLimpia((appUpdateData && appUpdateData.currentVersion) || versionInstalada) || '?';
     const verRemotaTxt = versionLimpia(appUpdateData && appUpdateData.remoteVersion);
 
-    if (modalIcon) modalIcon.textContent = hayNueva ? '🚀' : '✅';
+    /* Icono del modal: el cohete goblin cuando hay versión nueva y la marca verde cuando ya
+       estás al día (dueño, 20-10-2026: fuera los emojis de cohete de la interfaz). */
+    if (modalIcon) {
+      const iconCohete = modalIcon.querySelector('.modal-icon-img');
+      const iconOk = modalIcon.querySelector('.modal-icon-ok');
+      if (iconCohete && iconOk) {
+        iconCohete.hidden = !hayNueva;
+        iconOk.hidden = hayNueva;
+      }
+    }
     if (modalTitle) modalTitle.textContent = hayNueva ? 'Nueva Versión de KoRForge' : 'KoRForge al día';
     if (modalSub) {
       modalSub.textContent = hayNueva

@@ -2598,6 +2598,26 @@ input:checked + .slider:before {
   z-index: 2;
 }
 
+/* Iconos de actualización con imagen en vez de emoji 🚀 (dueño, 20-10-2026).
+   El hueco del botón son 22x22 px (`.update-nav-icon`), así que la imagen se ajusta a ese
+   cuadro sin deformarse. */
+.update-nav-icon .update-emoji-goblin {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+}
+
+.update-nav-icon .update-emoji-goblin img {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: 22px;
+  max-height: 22px;
+  object-fit: contain;
+}
+
 .update-nav-icon .update-pulse-ring {
   position: absolute;
   inset: -2px;
@@ -2722,6 +2742,23 @@ input:checked + .slider:before {
 
 .modal-title-wrap .modal-icon {
   font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+}
+
+/* Cohete goblin del modal y marca verde de «al día» (dueño, 20-10-2026).
+   El `[hidden]` explícito es necesario: si no, el `display:block` de la imagen pisaría el
+   atributo y el cohete saldría también cuando ya estás al día. */
+.modal-title-wrap .modal-icon-img {
+  display: block;
+  width: auto;
+  height: 26px;
+  max-width: 84px;
+  object-fit: contain;
+}
+
+.modal-title-wrap .modal-icon-img[hidden] {
+  display: none;
 }
 
 .modal-title-wrap h3 {
