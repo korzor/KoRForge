@@ -61,10 +61,11 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.2 ➔ v1.0.4)
-- **Corregido el scroll de la ficha de addon:** la página de detalle no se podía desplazar y no mostraba barra lateral cuando la descripción, la lista de versiones o la galería eran largas. Ahora tiene su propia área de scroll con barra visible y la barra de acciones (Volver, Traducir, Favoritos, Instalar) queda fija arriba mientras se lee.
-- **La ficha siempre abre desde arriba:** al entrar en un addon o al cambiar entre Descripción, Versiones y Galería, el contenido empieza por el principio en vez de heredar el desplazamiento anterior.
-- **Navegación de la ficha intacta:** las tres pestañas, los botones de volver, el traductor, favoritos e instalar siguen funcionando igual, también con el teclado (Esc).
+### 🌟 Cambios y Novedades (v1.0.4 ➔ v1.0.5)
+- **La ficha de addon ocupa todo el ancho de la ventana:** antes se quedaba clavada en 1.080 px y centrada con huecos a los lados; ahora es flexible y aprovecha el tamaño de la ventana (también al redimensionarla).
+- **El HTML de la descripción se respeta igual:** imágenes, vídeos, tablas, bloques de código y citas del addon se pintan tal cual llegan, pero con ancho máximo y scroll propio si no caben (nada desborda ni rompe la ficha).
+- **La barra de acciones (Volver, Traducir, Favoritos, Instalar) sigue fija arriba** mientras se lee.
+- **Corregido el scroll de la ficha de addon** (venía de la 1.0.3): la página de detalle ya se puede desplazar y muestra su barra lateral.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})

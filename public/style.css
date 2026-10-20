@@ -2043,8 +2043,9 @@ input:checked + .slider:before {
   flex-direction: column;
   gap: 18px;
   width: 100%;
-  max-width: 1080px;
-  margin: 0 auto;
+  /* Flexible: ocupa todo el ancho disponible de la ventana (antes se quedaba clavada en 1080px) */
+  max-width: none;
+  margin: 0;
   /* Área de scroll propia: el pane del catálogo tiene altura fija y overflow:hidden */
   flex: 1;
   min-height: 0;
@@ -2064,10 +2065,6 @@ input:checked + .slider:before {
   margin-top: -24px;
   padding-top: 24px;
   padding-bottom: 14px;
-  margin-left: -32px;
-  margin-right: -32px;
-  padding-left: 32px;
-  padding-right: 32px;
   z-index: 40;
   background: var(--bg-base); /* 100% sólido #090c10 - CERO transparencias */
   border-bottom: 1px solid var(--border-subtle);
@@ -2272,6 +2269,9 @@ input:checked + .slider:before {
   color: #cbd5e1;
   line-height: 1.65;
   font-size: 0.9rem;
+  /* El HTML de CurseForge llega con anchos fijos: se respeta tal cual, pero nunca desborda la ficha */
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .detail-html-content img {
@@ -2279,6 +2279,44 @@ input:checked + .slider:before {
   height: auto;
   border-radius: 8px;
   margin: 12px 0;
+}
+
+.detail-html-content video,
+.detail-html-content iframe,
+.detail-html-content embed,
+.detail-html-content object {
+  max-width: 100%;
+  height: auto;
+}
+
+.detail-html-content table {
+  max-width: 100%;
+  border-collapse: collapse;
+  display: block;
+  overflow-x: auto;
+}
+
+.detail-html-content td,
+.detail-html-content th {
+  border: 1px solid var(--border-subtle);
+  padding: 6px 10px;
+}
+
+.detail-html-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 12px 14px;
+  background: #090c10;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+}
+
+.detail-html-content blockquote {
+  margin: 12px 0;
+  padding: 8px 16px;
+  border-left: 3px solid var(--accent-gold);
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
 }
 
 .detail-html-content h1, .detail-html-content h2, .detail-html-content h3 {
