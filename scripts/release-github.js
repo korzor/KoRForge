@@ -61,9 +61,10 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.7 ➔ v1.0.8)
-- **Actualización de comprobación del actualizador silencioso:** si vienes de la 1.0.7, al aplicar esta versión ya no se abre ninguna ventana de consola ni se ejecutan pings. El cierre de la app, la instalación y la reapertura ocurren en segundo plano.
-- **¿Por qué viste la ventana al pasar de la 1.0.6 a la 1.0.7?** Porque la actualización la aplica el actualizador de la versión que tenías instalada: al venir de la 1.0.6, la ventana la abría el actualizador viejo (un .bat con ping como espera). Desde la 1.0.7, ese código ya es el nuevo.
+### 🌟 Cambios y Novedades (v1.0.8 ➔ v1.0.9)
+- **Botón de versión en el menú lateral:** ahora siempre está visible. Cuando no hay novedades muestra la versión que tienes instalada (apagado) y, al pulsarlo, abre un panel con «KoRForge al día» y un botón para comprobar de nuevo. Cuando GitHub tiene una versión nueva, el mismo botón se enciende en verde con «Actualizar a vX» y lleva al panel de actualización de siempre.
+- **Actualizador más robusto:** el runner ahora escribe un registro en %TEMP%\korforge_apply_update.log (paso a paso y versión que quedó instalada), espera a que el instalador termine de verdad antes de reabrir la app y, si KoRForge no sigue vivo a los 8 segundos, lo vuelve a abrir. Esto cubre el caso de la 1.0.8 en la que la app se cerraba sola justo después de actualizar.
+- **Sin ventanas ni pings** (como en la 1.0.7): cierre, instalación silenciosa y reapertura en segundo plano.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})

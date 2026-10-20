@@ -1998,41 +1998,122 @@ document.addEventListener('DOMContentLoaded', () => {
   // App Update System (GitHub Releases)
   const btnAppUpdate = document.getElementById('btnAppUpdate');
   const appUpdateVerBadge = document.getElementById('appUpdateVerBadge');
+  const appUpdateLabel = document.getElementById('appUpdateLabel');
   const updateModal = document.getElementById('updateModal');
   const btnCloseUpdateModal = document.getElementById('btnCloseUpdateModal');
   const btnDismissUpdate = document.getElementById('btnDismissUpdate');
+  const btnRecheckUpdate = document.getElementById('btnRecheckUpdate');
   const btnDownloadUpdate = document.getElementById('btnDownloadUpdate');
+  const modalIcon = document.getElementById('modalIcon');
+  const modalTitle = document.getElementById('modalTitle');
+  const modalSub = document.getElementById('modalSub');
   const modalCurrentVer = document.getElementById('modalCurrentVer');
   const modalNewVer = document.getElementById('modalNewVer');
+  const modalNewVerCol = document.getElementById('modalNewVerCol');
+  const modalVerArrow = document.getElementById('modalVerArrow');
+  const modalNotesTitle = document.getElementById('modalNotesTitle');
   const modalReleaseNotes = document.getElementById('modalReleaseNotes');
   let appUpdateData = null;
+  let versionInstalada = '';
+
+  function versionLimpia(v) {
+    const s = String(v || '').trim();
+    if (!s) return '';
+    return s.toLowerCase().startsWith('v') ? s : `v${s}`;
+  }
+
+  function textoI18n(clave, porDefecto) {
+    try {
+      if (window.I18N && typeof window.I18N.t === 'function') {
+        const trad = window.I18N.t(clave);
+        if (trad) return trad;
+      }
+    } catch (_) {}
+    return porDefecto;
+  }
+
+  /**
+   * Pinta el botón del menú lateral. Dos estados:
+   *  - 'latest': apagado, mostrando la versión instalada.
+   *  - 'update': encendido (verde, con pulso), «Actualizar a vX».
+   */
+  function pintarBotonVersion(modo, verInstalada, verRemota) {
+    if (!btnAppUpdate) return;
+    btnAppUpdate.style.display = 'flex';
+
+    if (modo === 'update' && verRemota) {
+      btnAppUpdate.classList.remove('is-latest');
+      if (appUpdateLabel) appUpdateLabel.textContent = textoI18n('nav_update_to', 'Actualizar a');
+      if (appUpdateVerBadge) appUpdateVerBadge.textContent = versionLimpia(verRemota);
+      btnAppUpdate.title = `¡Nueva versión KoRForge ${versionLimpia(verRemota)} disponible! Haz clic para actualizar`;
+    } else {
+      const ver = versionLimpia(verInstalada || versionInstalada);
+      btnAppUpdate.classList.add('is-latest');
+      if (appUpdateLabel) appUpdateLabel.textContent = textoI18n('nav_update_latest', 'Versión');
+      if (appUpdateVerBadge) appUpdateVerBadge.textContent = ver || 'v…';
+      btnAppUpdate.title = ver
+        ? `KoRForge ${ver} — última versión. Haz clic para comprobar de nuevo`
+        : 'Haz clic para comprobar si hay una versión nueva';
+    }
+  }
 
   async function checkAppUpdates() {
     try {
       const res = await fetch('/api/app-updates/check');
-      if (!res.ok) return;
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      if (data && data.currentVersion) versionInstalada = String(data.currentVersion);
       if (data && data.updateAvailable) {
         appUpdateData = data;
-        const formattedVer = 'v' + String(data.remoteVersion).replace(/^v/, '');
-        if (appUpdateVerBadge) {
-          appUpdateVerBadge.textContent = formattedVer;
-        }
-        if (btnAppUpdate) {
-          btnAppUpdate.style.display = 'flex';
-          btnAppUpdate.title = `¡Nueva versión KoRForge ${formattedVer} disponible! Haz clic para actualizar`;
-        }
+        pintarBotonVersion('update', versionInstalada, data.remoteVersion);
       } else {
-        if (btnAppUpdate) {
-          btnAppUpdate.style.display = 'none';
-        }
+        appUpdateData = data || null;
+        pintarBotonVersion('latest', versionInstalada);
       }
+      return data;
     } catch (err) {
       console.warn('[KoRForge Updates] Comprobación de actualizaciones fallida:', err.message);
-      if (btnAppUpdate) {
-        btnAppUpdate.style.display = 'none';
+      appUpdateData = null;
+      pintarBotonVersion('latest', versionInstalada);
+      return null;
+    }
+  }
+
+  // Abre el modal en el estado que toque: con versión nueva o en «al día»
+  function abrirModalActualizacion() {
+    if (!updateModal) return;
+    const hayNueva = !!(appUpdateData && appUpdateData.updateAvailable);
+    const verInstaladaTxt = versionLimpia((appUpdateData && appUpdateData.currentVersion) || versionInstalada) || '?';
+    const verRemotaTxt = versionLimpia(appUpdateData && appUpdateData.remoteVersion);
+
+    if (modalIcon) modalIcon.textContent = hayNueva ? '🚀' : '✅';
+    if (modalTitle) modalTitle.textContent = hayNueva ? 'Nueva Versión de KoRForge' : 'KoRForge al día';
+    if (modalSub) {
+      modalSub.textContent = hayNueva
+        ? 'GitHub Releases Oficial'
+        : `Estás usando la última versión disponible (${verInstaladaTxt})`;
+    }
+    if (modalCurrentVer) modalCurrentVer.textContent = verInstaladaTxt;
+    if (modalNewVer) modalNewVer.textContent = verRemotaTxt || verInstaladaTxt;
+    if (modalVerArrow) modalVerArrow.style.display = hayNueva ? '' : 'none';
+    if (modalNewVerCol) modalNewVerCol.style.display = hayNueva ? '' : 'none';
+    if (modalNotesTitle) modalNotesTitle.textContent = hayNueva ? 'Novedades y Cambios:' : 'Novedades de esta versión:';
+    if (modalReleaseNotes) {
+      if (hayNueva || (appUpdateData && appUpdateData.releaseNotes)) {
+        modalReleaseNotes.innerHTML = formatReleaseNotes(appUpdateData && appUpdateData.releaseNotes);
+      } else {
+        modalReleaseNotes.innerHTML = '<p style="color:#94a3b8;">No se pudo consultar GitHub Releases (sin conexión). La versión instalada es la última que conocía la app.</p>';
       }
     }
+    if (updateProgressWrap) updateProgressWrap.style.display = 'none';
+    if (btnDownloadUpdate) {
+      btnDownloadUpdate.style.display = hayNueva ? 'inline-flex' : 'none';
+      btnDownloadUpdate.disabled = false;
+      btnDownloadUpdate.textContent = '⚡ Actualizar dentro de la App';
+    }
+    if (btnApplyUpdateRestart) btnApplyUpdateRestart.style.display = 'none';
+    if (btnRecheckUpdate) btnRecheckUpdate.style.display = hayNueva ? 'none' : 'inline-flex';
+    if (btnDismissUpdate) btnDismissUpdate.textContent = hayNueva ? 'Más tarde' : 'Cerrar';
+    updateModal.style.display = 'flex';
   }
 
   function formatInlineMd(str) {
@@ -2095,28 +2176,29 @@ document.addEventListener('DOMContentLoaded', () => {
   let updatePollInterval = null;
 
   if (btnAppUpdate) {
-    btnAppUpdate.addEventListener('click', () => {
-      if (!appUpdateData) return;
-      if (modalCurrentVer) modalCurrentVer.textContent = 'v' + String(appUpdateData.currentVersion || '1.0.0').replace(/^v/, '');
-      if (modalNewVer) modalNewVer.textContent = 'v' + String(appUpdateData.remoteVersion || '').replace(/^v/, '');
-      if (modalReleaseNotes) {
-        modalReleaseNotes.innerHTML = formatReleaseNotes(appUpdateData.releaseNotes);
-      }
-      if (updateProgressWrap) updateProgressWrap.style.display = 'none';
-      if (btnDownloadUpdate) {
-        btnDownloadUpdate.style.display = 'inline-flex';
-        btnDownloadUpdate.disabled = false;
-        btnDownloadUpdate.textContent = '⚡ Actualizar dentro de la App';
-      }
-      if (btnApplyUpdateRestart) btnApplyUpdateRestart.style.display = 'none';
-      if (updateModal) updateModal.style.display = 'flex';
-    });
+    btnAppUpdate.addEventListener('click', abrirModalActualizacion);
   }
 
   btnCloseUpdateModal?.addEventListener('click', closeUpdateModal);
   btnDismissUpdate?.addEventListener('click', closeUpdateModal);
   updateModal?.addEventListener('click', (e) => {
     if (e.target === updateModal) closeUpdateModal();
+  });
+
+  // «Comprobar de nuevo» (solo en el estado «al día»)
+  btnRecheckUpdate?.addEventListener('click', async () => {
+    if (!btnRecheckUpdate) return;
+    btnRecheckUpdate.disabled = true;
+    btnRecheckUpdate.textContent = '⏳ Comprobando...';
+    const data = await checkAppUpdates();
+    btnRecheckUpdate.disabled = false;
+    btnRecheckUpdate.textContent = '🔄 ' + textoI18n('nav_update_check', 'Comprobar de nuevo');
+    if (data && data.updateAvailable) {
+      showToast(`Nueva versión disponible: ${versionLimpia(data.remoteVersion)}`, 'success');
+    } else {
+      showToast('Estás en la última versión de KoRForge', 'info');
+    }
+    abrirModalActualizacion();
   });
 
   // In-App Download Trigger
@@ -2499,7 +2581,14 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Error cargando addons instalados:', err);
     }
     triggerCurseForgeSearch();
-    // Comprobar si hay nueva actualización de KoRForge en GitHub Releases
+    // Botón de versión del menú lateral: primero la versión local (instantánea),
+    // después se comprueba GitHub y, si hay una nueva, el botón se enciende.
+    if (window.electronAPI && typeof window.electronAPI.getAppVersion === 'function') {
+      try {
+        versionInstalada = String((await window.electronAPI.getAppVersion()) || '');
+        pintarBotonVersion('latest', versionInstalada);
+      } catch (_) {}
+    }
     checkAppUpdates();
   }
   initApp();

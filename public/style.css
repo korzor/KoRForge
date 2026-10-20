@@ -2641,6 +2641,39 @@ input:checked + .slider:before {
   white-space: nowrap;
 }
 
+/* Estado «al día»: el mismo botón, apagado, mostrando la versión instalada */
+.btn-app-update-nav.is-latest {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.10) 0%, rgba(100, 116, 139, 0.16) 100%);
+  border-color: rgba(148, 163, 184, 0.28);
+  color: var(--text-muted);
+  box-shadow: none;
+}
+
+.btn-app-update-nav.is-latest:hover {
+  background: linear-gradient(135deg, rgba(148, 163, 184, 0.18) 0%, rgba(100, 116, 139, 0.26) 100%);
+  border-color: rgba(148, 163, 184, 0.45);
+  box-shadow: 0 0 10px rgba(148, 163, 184, 0.15);
+  color: #e2e8f0;
+}
+
+.btn-app-update-nav.is-latest .update-pulse-ring {
+  display: none;
+}
+
+.btn-app-update-nav.is-latest .update-emoji {
+  opacity: 0.75;
+}
+
+.btn-app-update-nav.is-latest .update-nav-label {
+  color: var(--text-faint);
+}
+
+.btn-app-update-nav.is-latest .update-nav-ver {
+  background: rgba(148, 163, 184, 0.16);
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #e2e8f0;
+}
+
 /* App Update Modal Dialog */
 .app-modal-backdrop {
   position: fixed;

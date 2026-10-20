@@ -439,6 +439,15 @@ ipcMain.handle('window-is-maximized', () => {
   return isCustomMaximized;
 });
 
+// Versión instalada, para pintar el botón de versión del menú lateral al arrancar
+ipcMain.handle('app-version', () => {
+  try {
+    return app.getVersion();
+  } catch (_) {
+    return '';
+  }
+});
+
 ipcMain.on('open-external', (e, url) => {
   if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
     shell.openExternal(url);

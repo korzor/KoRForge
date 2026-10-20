@@ -103,14 +103,14 @@
         </nav>
 
         <div class="sidebar-footer">
-          <button class="nav-item btn-app-update-nav" id="btnAppUpdate" style="display: none;" title="¡Nueva versión de KoRForge disponible!">
+          <button class="nav-item btn-app-update-nav is-latest" id="btnAppUpdate" title="Estás en la última versión de KoRForge">
             <span class="nav-icon update-nav-icon">
               <span class="update-pulse-ring"></span>
               <span class="update-emoji">🚀</span>
             </span>
             <div class="update-nav-text">
-              <span class="update-nav-label" data-i18n="nav_update_to">Actualizar a</span>
-              <span class="update-nav-ver" id="appUpdateVerBadge">v1.0.1</span>
+              <span class="update-nav-label" data-i18n="nav_update_latest" id="appUpdateLabel">Versión</span>
+              <span class="update-nav-ver" id="appUpdateVerBadge">v…</span>
             </div>
           </button>
           <button class="nav-item btn-settings-nav" data-tab="settings" title="Settings" data-i18n-title="nav_settings">
@@ -678,10 +678,10 @@
     <div class="app-modal-dialog">
       <div class="app-modal-header">
         <div class="modal-title-wrap">
-          <span class="modal-icon">🚀</span>
+          <span class="modal-icon" id="modalIcon">🚀</span>
           <div>
-            <h3>Nueva Versión de KoRForge</h3>
-            <span class="modal-sub">GitHub Releases Oficial</span>
+            <h3 id="modalTitle">Nueva Versión de KoRForge</h3>
+            <span class="modal-sub" id="modalSub">GitHub Releases Oficial</span>
           </div>
         </div>
         <button class="btn-modal-close" id="btnCloseUpdateModal">✕</button>
@@ -692,14 +692,14 @@
             <span class="ver-meta">Versión instalada</span>
             <span class="ver-num current" id="modalCurrentVer">v1.0.0</span>
           </div>
-          <span class="ver-arrow">➔</span>
-          <div class="ver-col">
+          <span class="ver-arrow" id="modalVerArrow">➔</span>
+          <div class="ver-col" id="modalNewVerCol">
             <span class="ver-meta">Nueva versión en GitHub</span>
             <span class="ver-num new" id="modalNewVer">v1.0.1</span>
           </div>
         </div>
         <div class="update-notes-box">
-          <h4>Novedades y Cambios:</h4>
+          <h4 id="modalNotesTitle">Novedades y Cambios:</h4>
           <div class="update-notes-text" id="modalReleaseNotes">
             Cargando notas de la versión...
           </div>
@@ -715,6 +715,7 @@
       </div>
       <div class="app-modal-footer">
         <button class="btn btn-secondary" id="btnDismissUpdate">Más tarde</button>
+        <button class="btn btn-secondary" id="btnRecheckUpdate" style="display: none;">🔄 Comprobar de nuevo</button>
         <button class="btn btn-gold" id="btnDownloadUpdate">
           ⚡ Actualizar dentro de la App
         </button>
