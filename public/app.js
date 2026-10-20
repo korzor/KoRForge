@@ -1,5 +1,21 @@
 // KoRForge Client Application Logic
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Textos -----------------------------------------------------------
+  // REGLA (docs/REGLAS-IDIOMAS.md): aquí no se escribe NI UN texto visible a mano.
+  // Todo pasa por T('clave', {variables}) y vive en public/i18n.js, en los cinco idiomas.
+  const T = (key, vars) => (window.I18N ? window.I18N.t(key, vars) : key);
+  const LOCALE = () => (window.I18N ? window.I18N.getLocale() : 'en-US');
+  const fmtDate = (value, options) => (window.I18N ? window.I18N.fmtDate(value, options) : '');
+  const fmtDateTime = (value) => (window.I18N ? window.I18N.fmtDateTime(value) : '');
+  const fmtNumber = (value) => (window.I18N ? window.I18N.fmtNumber(value) : String(value || 0));
+  const relDate = (value) => (window.I18N ? window.I18N.relativeDate(value) : '');
+
+  // Nombre legible del cliente activo (los nombres son marcas, no se traducen).
+  const gameLabel = (gameId) => {
+    const g = currentGamesData[gameId] || currentGamesData[currentActiveGame];
+    return (g && g.name) || String(gameId || '');
+  };
+
   // Navigation & Shell
   const navItems = document.querySelectorAll('.nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
@@ -54,6 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let favoriteMods = [];
   let installedAddons = [];
   let availableAddonUpdates = [];
+  let lastBackups = [];
 
   // Folder & Addons Action Elements
   const btnOpenAddonsFolder = document.getElementById('btnOpenAddonsFolder');
@@ -276,6 +293,18 @@ document.addEventListener('DOMContentLoaded', () => {
     switchTabInternal(tabId);
   }
 
+  // Texto de la barra de dirección para cada pestaña
+  function addressBarFor(tabId) {
+    const labels = {
+      search: { icon: '🔍', text: T('topbar_search') },
+      addons: { icon: '📦', text: T('topbar_installed') },
+      favorites: { icon: '⭐', text: T('topbar_favorites') },
+      backups: { icon: '💾', text: T('topbar_backups') },
+      settings: { icon: '⚙️', text: T('topbar_settings') }
+    };
+    return labels[tabId] || { icon: '🔍', text: T('topbar_explorer') };
+  }
+
   function switchTabInternal(tabId) {
     navItems.forEach(i => i.classList.remove('active'));
     tabPanes.forEach(p => p.classList.remove('active'));
@@ -285,14 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (targetNav) targetNav.classList.add('active');
     if (targetPane) targetPane.classList.add('active');
 
-    const labels = {
-      search: { icon: '🔍', text: window.I18N ? window.I18N.t('topbar_search', 'KoRForge / Search Addons') : 'KoRForge / Search Addons' },
-      addons: { icon: '📦', text: window.I18N ? window.I18N.t('topbar_installed', 'KoRForge / Installed Addons') : 'KoRForge / Installed Addons' },
-      favorites: { icon: '⭐', text: window.I18N ? window.I18N.t('topbar_favorites', 'KoRForge / Favorite Addons') : 'KoRForge / Favorite Addons' },
-      backups: { icon: '💾', text: window.I18N ? window.I18N.t('topbar_backups', 'KoRForge / WTF Vault') : 'KoRForge / WTF Vault' },
-      settings: { icon: '⚙️', text: window.I18N ? window.I18N.t('topbar_settings', 'KoRForge / Settings') : 'KoRForge / Settings' }
-    };
-    const current = labels[tabId] || { icon: '🔍', text: `KoRForge / ${tabId}` };
+    const current = addressBarFor(tabId);
     setAddressBar(current.icon, current.text);
 
     if (tabId === 'addons') loadInstalledAddons();
@@ -350,6 +372,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.I18N) {
         window.I18N.initLanguage(appLang);
       }
+      // La bandeja del sistema usa el mismo idioma que la app
+      if (window.electronAPI && typeof window.electronAPI.setLanguage === 'function' && window.I18N) {
+        try { window.electronAPI.setLanguage(window.I18N.getLanguage()); } catch (_) {}
+      }
       const settingAppLanguage = document.getElementById('settingAppLanguage');
       if (settingAppLanguage) {
         settingAppLanguage.value = window.I18N ? window.I18N.getLanguage() : appLang;
@@ -371,28 +397,34 @@ document.addEventListener('DOMContentLoaded', () => {
       item.className = `game-manage-item ${isActive ? 'is-active' : ''}`;
       item.dataset.gameId = g.id;
 
+      const subKey = 'game_sub_' + key;
+      const gameSubtitle = (window.I18N && window.I18N.hasKey(subKey)) ? T(subKey) : (g.subtitle || '');
+      const statusTxt = g.addonsExists
+        ? T('game_status_connected', { path: g.path })
+        : (g.folderExists ? T('game_status_detected', { path: g.path }) : T('game_status_missing'));
+
       item.innerHTML = `
         <div class="game-manage-top">
           <div class="game-manage-badge">
             <span class="game-manage-icon">${g.icon}</span>
             <div>
               <h4 class="game-manage-title">${g.name}</h4>
-              <span class="game-manage-sub">${g.subtitle} • Carpeta típica: <code>${g.subfolder}</code></span>
+              <span class="game-manage-sub">${gameSubtitle} • ${T('game_typical_folder', { folder: g.subfolder })}</span>
             </div>
           </div>
           <div class="game-manage-actions-top">
-            ${isActive ? `<span class="active-pill-tag">● Cliente Activo</span>` : `<button class="btn btn-secondary btn-sm btn-activate-game" data-game-id="${g.id}">⚡ Usar como Activo</button>`}
+            ${isActive ? `<span class="active-pill-tag">${T('game_active_tag')}</span>` : `<button class="btn btn-secondary btn-sm btn-activate-game" data-game-id="${g.id}">${T('game_use_active')}</button>`}
           </div>
         </div>
         <div class="game-manage-input-row">
-          <input type="text" class="game-path-input" data-game-id="${g.id}" value="${g.path || ''}" placeholder="Ej: C:\\World of Warcraft\\${g.subfolder}">
-          <button class="btn btn-primary btn-sm btn-save-game-path" data-game-id="${g.id}">Guardar</button>
-          <button class="btn btn-secondary btn-sm btn-open-game-folder" data-game-id="${g.id}">📁 Abrir</button>
+          <input type="text" class="game-path-input" data-game-id="${g.id}" value="${g.path || ''}" placeholder="${T('game_path_placeholder', { folder: g.subfolder })}">
+          <button class="btn btn-primary btn-sm btn-save-game-path" data-game-id="${g.id}">${T('game_save')}</button>
+          <button class="btn btn-secondary btn-sm btn-open-game-folder" data-game-id="${g.id}">${T('game_open')}</button>
         </div>
         <div class="game-manage-status">
           <span class="pulse-dot ${g.addonsExists ? '' : 'error'}"></span>
           <span class="status-txt ${g.addonsExists ? 'connected' : (g.folderExists ? 'warning' : '')}">
-            ${g.addonsExists ? `Conectado a Interface/AddOns (${g.path})` : (g.folderExists ? `Carpeta detectada (${g.path}), pero no tiene Interface/AddOns todavía` : 'Ruta no configurada o no encontrada')}
+            ${statusTxt}
           </span>
         </div>
       `;
@@ -411,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ gameId: g.id })
         });
-        showToast(`Abriendo carpeta de ${g.name}`);
+        showToast(T('toast_folder_opening', { name: g.name }));
       });
 
       // Activate button
@@ -459,22 +491,22 @@ document.addEventListener('DOMContentLoaded', () => {
         await loadBackups(currentActiveGame);
 
         // Update page subtitles
-        const addonsSub = document.querySelector('#pane-addons .page-subtitle');
+        const addonsSub = document.getElementById('addonsSubtitle');
         if (addonsSub) {
-          addonsSub.textContent = `Addons detectados en tiempo real en tu carpeta de ${activeGameObj?.name || gameId}.`;
+          addonsSub.textContent = T('addons_subtitle', { game: gameLabel(currentActiveGame) });
         }
         const backupsSub = document.querySelector('#pane-backups .page-subtitle');
         if (backupsSub) {
-          backupsSub.textContent = `Snapshots limpios de configuración para ${activeGameObj?.name || gameId}.`;
+          backupsSub.textContent = T('vault_subtitle_game', { game: gameLabel(currentActiveGame) });
         }
 
         // Re-run search with new game version
         triggerCurseForgeSearch();
 
-        showToast(`🎮 Cliente activo cambiado a: ${activeGameObj?.name || gameId}`);
+        showToast(T('toast_game_switched', { name: gameLabel(currentActiveGame) }));
       }
     } catch (err) {
-      showToast(`Error al cambiar juego activo: ${err.message}`, 'error');
+      showToast(T('toast_game_switch_error', { message: err.message }), 'error');
     }
   }
 
@@ -494,13 +526,13 @@ document.addEventListener('DOMContentLoaded', () => {
         currentGamesData = data.games || {};
         renderGamesManagement(currentGamesData, currentActiveGame);
         if (gameId === currentActiveGame) {
-          if (detectedPathEl) detectedPathEl.textContent = newPath || 'No configurado';
+          if (detectedPathEl) detectedPathEl.textContent = newPath || T('game_path_empty');
           await loadInstalledAddons(true);
         }
-        showToast('Ruta guardada y verificada');
+        showToast(T('toast_path_saved'));
       }
     } catch (err) {
-      showToast(`Error guardando ruta: ${err.message}`, 'error');
+      showToast(T('toast_path_error', { message: err.message }), 'error');
     }
   }
 
@@ -508,11 +540,11 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAutoDetectGames?.addEventListener('click', async () => {
     const rootDir = rootWoWPath ? rootWoWPath.value.trim() : '';
     if (!rootDir) {
-      showToast('Introduce una carpeta raíz para escanear', 'error');
+      showToast(T('toast_enter_root'), 'error');
       return;
     }
     btnAutoDetectGames.disabled = true;
-    btnAutoDetectGames.textContent = 'Buscando...';
+    btnAutoDetectGames.textContent = T('settings_autodetect_detecting');
 
     try {
       const res = await fetch('/api/config/auto-detect', {
@@ -529,22 +561,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const count = data.detectedCount || 0;
         if (count > 0) {
           const names = Object.keys(data.detected || {}).map(k => currentGamesData[k]?.name || k).join(', ');
-          showToast(`¡Auto-detección completada! ${count} cliente(s) detectado(s): ${names}`);
+          showToast(T('toast_autodetect_ok', { count, names }));
         } else {
-          showToast('No se encontraron carpetas típicas (_forever_, _retail_...). Puedes configurar las rutas abajo.', 'warning');
+          showToast(T('toast_autodetect_none'), 'warning');
         }
 
         const activeGameObj = currentGamesData[currentActiveGame];
-        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.path || 'No configurado';
+        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.path || T('game_path_empty');
         await loadInstalledAddons();
       } else {
-        throw new Error(data.error || 'Error en auto-detección');
+        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_autodetect_error')));
       }
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       btnAutoDetectGames.disabled = false;
-      btnAutoDetectGames.textContent = '🔍 Auto-detectar Clientes';
+      btnAutoDetectGames.textContent = T('settings_autodetect_btn');
     }
   });
 
@@ -561,21 +593,21 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(`Ajuste guardado: ${label}`);
+        showToast(T('toast_setting_saved', { label }));
       }
     } catch (err) {
-      showToast(`Error guardando ajuste: ${err.message}`, 'error');
+      showToast(T('toast_setting_error', { message: err.message }), 'error');
     }
   }
 
   settingAutoStart?.addEventListener('change', () => {
-    updateSetting({ autoStart: settingAutoStart.checked }, 'Arrancar con Windows');
+    updateSetting({ autoStart: settingAutoStart.checked }, T('settings_autostart_title'));
   });
   settingStartMinimized?.addEventListener('change', () => {
-    updateSetting({ startMinimized: settingStartMinimized.checked }, 'Arrancar en segundo plano');
+    updateSetting({ startMinimized: settingStartMinimized.checked }, T('settings_minimized_title'));
   });
   settingCloseToTray?.addEventListener('change', () => {
-    updateSetting({ closeToTray: settingCloseToTray.checked }, 'Minimizar a la bandeja al pulsar Cerrar');
+    updateSetting({ closeToTray: settingCloseToTray.checked }, T('settings_closetotray_title'));
   });
 
   const settingAppLanguage = document.getElementById('settingAppLanguage');
@@ -584,13 +616,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.I18N) {
       window.I18N.setLanguage(lang);
     }
-    await updateSetting({ language: lang }, 'Language / Idioma');
+    await updateSetting({ language: lang }, T('settings_lang_title'));
   });
 
+  // Al cambiar de idioma se repinta TODO lo dinámico (listas, fichas, modales, barra de título).
   window.addEventListener('korforge:languageChanged', () => {
-    const activeTabEl = document.querySelector('.nav-item.active');
-    const curTab = activeTabEl ? activeTabEl.getAttribute('data-tab') : 'search';
-    switchTabInternal(curTab);
+    refrescarTextosDinamicos();
   });
 
   async function loadFavorites(gameId) {
@@ -617,10 +648,12 @@ document.addEventListener('DOMContentLoaded', () => {
       favoriteMods = data.favorites || [];
       if (sidebarFavoritesCount) sidebarFavoritesCount.textContent = favoriteMods.length;
       if (favoritesBadge) favoritesBadge.textContent = favoriteMods.length;
-      showToast(data.isFavorite ? `★ "${mod.name}" añadido a Favoritos` : `"${mod.name}" quitado de Favoritos`);
+      showToast(data.isFavorite
+        ? T('toast_fav_added', { name: mod.name })
+        : T('toast_fav_removed', { name: mod.name }));
       return data.isFavorite;
     } catch (err) {
-      showToast('Error al actualizar favoritos', 'error');
+      showToast(T('toast_fav_error'), 'error');
       return false;
     }
   }
@@ -643,17 +676,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filtered.length === 0) {
-      const activeGameObj = currentGamesData[currentActiveGame];
       favoritesTabGrid.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
           <span class="empty-icon">⭐</span>
-          <h3 class="empty-title">${favoriteMods.length === 0 ? `No tienes addons en favoritos para ${activeGameObj?.name || 'este juego'}` : 'No se encontraron favoritos con ese filtro'}</h3>
+          <h3 class="empty-title">${favoriteMods.length === 0
+            ? T('favorites_empty_title', { game: gameLabel(currentActiveGame) })
+            : T('favorites_empty_filter_title')}</h3>
           <p class="empty-desc">
-            ${favoriteMods.length === 0 
-              ? 'Guarda los addons que más te gusten pulsando la estrella dorada en cualquier tarjeta del catálogo para tenerlos aquí organizados.' 
-              : 'Prueba con otra palabra clave en el buscador.'}
+            ${favoriteMods.length === 0
+              ? T('favorites_empty_desc')
+              : T('favorites_empty_filter_desc')}
           </p>
-          ${favoriteMods.length === 0 ? `<button class="btn btn-primary" id="btnGoExploreFromEmptyFav">⚡ Abrir Explorador de Addons</button>` : ''}
+          ${favoriteMods.length === 0 ? `<button class="btn btn-primary" id="btnGoExploreFromEmptyFav">${T('favorites_open_explorer_btn')}</button>` : ''}
         </div>
       `;
       document.getElementById('btnGoExploreFromEmptyFav')?.addEventListener('click', () => {
@@ -681,9 +715,9 @@ document.addEventListener('DOMContentLoaded', () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ gameId: currentActiveGame })
       });
-      showToast('Carpeta abierta en el Explorador de Windows');
+      showToast(T('toast_open_folder_win'));
     } catch (_) {
-      showToast('Error al abrir la carpeta de addons', 'error');
+      showToast(T('toast_open_folder_error'), 'error');
     }
   });
 
@@ -703,16 +737,16 @@ document.addEventListener('DOMContentLoaded', () => {
       if (addonCountBadge) addonCountBadge.textContent = installedAddons.length;
 
       const activeGameObj = currentGamesData[g];
-      const addonsSub = document.querySelector('#pane-addons .page-subtitle');
+      const addonsSub = document.getElementById('addonsSubtitle');
       if (addonsSub) {
-        addonsSub.textContent = `Addons detectados en tiempo real en tu carpeta de ${activeGameObj?.name || g}.`;
+        addonsSub.textContent = T('addons_subtitle', { game: gameLabel(g) });
       }
 
       renderInstalledAddons();
-      if (notify) showToast(`Escaneo completado: ${installedAddons.length} addons`);
+      if (notify) showToast(T('toast_scan_done', { count: installedAddons.length }));
     } catch (err) {
       console.error('Error escaneando addons:', err);
-      showToast('Error al escanear la carpeta de addons', 'error');
+      showToast(T('toast_scan_error'), 'error');
     }
   }
 
@@ -735,16 +769,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const term = searchTerm.toLowerCase().trim();
 
     if (installedAddonsNoPath) {
-      const activeGameObj = currentGamesData[currentActiveGame];
       addonsGrid.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">📁</span>
-          <h3 class="empty-title">Ruta no configurada para ${activeGameObj?.name || currentActiveGame}</h3>
+          <h3 class="empty-title">${T('addons_no_path_title', { game: gameLabel(currentActiveGame) })}</h3>
           <p class="empty-desc">
-            No has configurado la carpeta de instalación para este cliente de juego.<br>
-            Añade la ruta en la pestaña de Configuración para poder gestionar e instalar addons aquí.
+            ${T('addons_no_path_desc')}
           </p>
-          <button class="btn btn-primary" id="btnGoToSettingsFromAddons">⚙️ Abrir Configuración</button>
+          <button class="btn btn-primary" id="btnGoToSettingsFromAddons">${T('addons_open_settings')}</button>
         </div>
       `;
       document.getElementById('btnGoToSettingsFromAddons')?.addEventListener('click', () => {
@@ -768,17 +800,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (filtered.length === 0) {
-      const activeGameObj = currentGamesData[currentActiveGame];
       addonsGrid.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">🛡️</span>
-          <h3 class="empty-title">${installedAddons.length === 0 ? `La forja está vacía para ${activeGameObj?.name || currentActiveGame}` : 'No hay addons con ese filtro'}</h3>
+          <h3 class="empty-title">${installedAddons.length === 0
+            ? T('addons_empty_title', { game: gameLabel(currentActiveGame) })
+            : T('addons_empty_filter_title')}</h3>
           <p class="empty-desc">
-            ${installedAddons.length === 0 
-              ? 'No tienes ningún addon instalado en este cliente de WoW. Explora el Explorador de Addons para equiparte en un clic.' 
-              : 'Prueba a buscar con otro término o limpia los filtros.'}
+            ${installedAddons.length === 0
+              ? T('addons_empty_desc')
+              : T('addons_empty_filter_desc')}
           </p>
-          ${installedAddons.length === 0 ? `<button class="btn btn-primary" id="btnGoToSearch">⚡ Abrir Explorador de Addons</button>` : ''}
+          ${installedAddons.length === 0 ? `<button class="btn btn-primary" id="btnGoToSearch">${T('addons_explore_btn')}</button>` : ''}
         </div>
       `;
 
@@ -794,14 +827,16 @@ document.addEventListener('DOMContentLoaded', () => {
       card.className = `cf-card installed-addon-card ${addon.enabled ? 'is-enabled' : 'is-disabled'}`;
 
       const compat = addon.compatibility;
-      const compatHtml = compat ? `<span class="compat-badge ${compat.status}" title="${compat.label}">${compat.badge}</span>` : '';
+      const compatHtml = compat
+        ? `<span class="compat-badge ${compat.status}" title="${compatLabel(compat)}">${compatBadge(compat)}</span>`
+        : '';
       const missingDepsHtml = (addon.missingDependencies && addon.missingDependencies.length > 0)
-        ? `<div class="missing-deps-alert" title="Faltan librerías requeridas en Interface/AddOns">⚠️ Requiere: <strong>${addon.missingDependencies.join(', ')}</strong></div>`
+        ? `<div class="missing-deps-alert" title="${T('missing_deps_hint')}">${T('missing_deps_label', { deps: `<strong>${addon.missingDependencies.join(', ')}</strong>` })}</div>`
         : '';
       const updateInfo = (availableAddonUpdates || []).find(u => (addon.modId && u.modId === addon.modId) || u.folderName === addon.folderName);
       const updatePillHtml = updateInfo ? `
-        <span class="addon-card-update-pill" title="Actualización a ${updateInfo.newVersion} disponible">⚡ v${updateInfo.newVersion}</span>
-        <button class="btn-card-update btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="Descargar e instalar actualización ahora">⚡ Actualizar</button>
+        <span class="addon-card-update-pill" title="${T('card_update_hint', { version: updateInfo.newVersion })}">⚡ v${updateInfo.newVersion}</span>
+        <button class="btn-card-update btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_now_hint')}">${T('card_btn_update')}</button>
       ` : '';
 
       const dispAddonVer = formatVersionDisplay(addon.version);
@@ -814,35 +849,35 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="cf-card-top">
               <h4 class="cf-title" title="${addon.title}">${addon.title}</h4>
               <div class="addon-status-toggle">
-                <label class="switch" title="${addon.enabled ? 'Desactivar addon' : 'Activar addon'}">
+                <label class="switch" title="${addon.enabled ? T('card_toggle_disable') : T('card_toggle_enable')}">
                   <input type="checkbox" ${addon.enabled ? 'checked' : ''} data-folder="${addon.folderName}">
                   <span class="slider"></span>
                 </label>
               </div>
             </div>
             <div class="cf-card-sub">
-              <div class="card-version-tag installed" title="Versión instalada: ${addon.version}">
-                <span class="ver-label">Ver:</span> <span class="ver-val">${prefixV}${dispAddonVer}</span>
+              <div class="card-version-tag installed" title="${T('card_ver_installed_hint', { version: addon.version })}">
+                <span class="ver-label">${T('card_ver_label')}</span> <span class="ver-val">${prefixV}${dispAddonVer}</span>
               </div>
               ${compatHtml}
               ${updatePillHtml}
             </div>
-            <p class="cf-summary" title="${addon.notes || ''}">${addon.notes || 'Addon instalado en World of Warcraft.'}</p>
+            <p class="cf-summary" title="${addon.notes || ''}">${addon.notes || T('addon_notes_fallback')}</p>
             ${missingDepsHtml}
           </div>
           <div class="cf-card-bottom">
             <div class="cf-card-meta-col">
               <div class="cf-card-stats">
-                <span class="installed-folder-tag" title="Carpeta en Interface/AddOns">📁 <code>${addon.folderName}</code></span>
-                ${addon.dependencies && addon.dependencies.length > 0 ? `<span class="installed-deps-tag" title="Librerías / Dependencias: ${addon.dependencies.join(', ')}">🔗 ${addon.dependencies.join(', ')}</span>` : ''}
+                <span class="installed-folder-tag" title="${T('card_folder_hint')}">📁 <code>${addon.folderName}</code></span>
+                ${addon.dependencies && addon.dependencies.length > 0 ? `<span class="installed-deps-tag" title="${T('card_deps_hint', { deps: addon.dependencies.join(', ') })}">🔗 ${addon.dependencies.join(', ')}</span>` : ''}
               </div>
             </div>
             <div class="installed-card-actions">
-              ${updateInfo ? `<button class="btn-card-update-action btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="Actualizar ${addon.title} a ${updateInfo.newVersion}">⚡ Actualizar</button>` : ''}
-              <button class="installed-btn-action btn-addon-folder" data-folder="${addon.folderName}" title="Abrir carpeta Interface/AddOns/${addon.folderName} en el Explorador de Windows">
+              ${updateInfo ? `<button class="btn-card-update-action btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_action_hint', { name: addon.title, version: updateInfo.newVersion })}">${T('card_btn_update')}</button>` : ''}
+              <button class="installed-btn-action btn-addon-folder" data-folder="${addon.folderName}" title="${T('card_open_folder_hint', { folder: addon.folderName })}">
                 <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
-              <button class="installed-btn-action btn-addon-trash" data-folder="${addon.folderName}" data-title="${addon.title}" title="Desinstalar addon">
+              <button class="installed-btn-action btn-addon-trash" data-folder="${addon.folderName}" data-title="${addon.title}" title="${T('card_uninstall_hint')}">
                 <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
@@ -872,11 +907,13 @@ document.addEventListener('DOMContentLoaded', () => {
           });
           const resData = await res.json();
           if (resData.newName) {
-            showToast(`${addon.title} ${resData.enabled ? 'activado' : 'desactivado'}`);
+            showToast(resData.enabled
+              ? T('toast_addon_enabled', { name: addon.title })
+              : T('toast_addon_disabled', { name: addon.title }));
             loadInstalledAddons();
           }
         } catch (err) {
-          showToast('Error al cambiar estado del addon', 'error');
+          showToast(T('toast_toggle_error'), 'error');
         }
       });
 
@@ -890,9 +927,9 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ gameId: currentActiveGame, folderName: addon.folderName })
           });
-          showToast(`Carpeta de "${addon.title}" abierta en el Explorador`);
+          showToast(T('toast_addon_folder_open', { name: addon.title }));
         } catch (err) {
-          showToast('Error al abrir carpeta del addon', 'error');
+          showToast(T('toast_addon_folder_error'), 'error');
         }
       });
 
@@ -900,18 +937,18 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnUninstall = card.querySelector('.btn-addon-trash');
       btnUninstall?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!confirm(`¿Seguro que deseas desinstalar "${addon.title}" de tu juego?\n\nSe eliminará la carpeta Interface/AddOns/${addon.folderName}.`)) return;
+        if (!confirm(T('confirm_uninstall', { name: addon.title, folder: addon.folderName }))) return;
         try {
           const res = await fetch(`/api/addons/${encodeURIComponent(addon.folderName)}?gameId=${encodeURIComponent(currentActiveGame)}`, {
             method: 'DELETE'
           });
           const resData = await res.json();
           if (resData.deleted) {
-            showToast(`"${addon.title}" desinstalado`);
+            showToast(T('toast_uninstall_done', { name: addon.title }));
             loadInstalledAddons();
           }
         } catch (err) {
-          showToast('Error al desinstalar addon', 'error');
+          showToast(T('toast_uninstall_error'), 'error');
         }
       });
 
@@ -1001,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
     categories.forEach(f => {
       const pill = document.createElement('span');
       pill.className = 'active-filter-pill';
-      pill.innerHTML = `<span>${f.name}</span><button data-id="${f.id}" title="Quitar filtro">✕</button>`;
+      pill.innerHTML = `<span>${f.name}</span><button data-id="${f.id}" title="${T('remove_filter_hint')}">✕</button>`;
       pill.querySelector('button').addEventListener('click', () => {
         f.el.checked = false;
         updateFiltersUI();
@@ -1018,11 +1055,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     cfSearchInput.value = '';
     btnClearSearchText.style.display = 'none';
-    if (optRelevance) optRelevance.textContent = 'Destacados (Featured)';
+    if (optRelevance) optRelevance.textContent = T('sort_featured');
     cfSortSelect.value = '2|desc';
     updateFiltersUI();
     triggerCurseForgeSearch();
-    showToast('Filtros y búsqueda restablecidos', 'success');
+    showToast(T('reset_filters_done'), 'success');
   }
 
   btnClearAllFilters?.addEventListener('click', resetAllFilters);
@@ -1042,7 +1079,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const hasText = cfSearchInput.value.trim().length > 0;
     btnClearSearchText.style.display = hasText ? 'block' : 'none';
     if (optRelevance) {
-      optRelevance.textContent = hasText ? 'Mejor coincidencia (Relevancia)' : 'Destacados (Featured)';
+      optRelevance.textContent = hasText ? T('sort_best_match') : T('sort_featured');
     }
   });
 
@@ -1094,16 +1131,16 @@ document.addEventListener('DOMContentLoaded', () => {
     cfResultsGrid.innerHTML = `
       <div class="empty-state">
         <span class="empty-icon">⚡</span>
-        <h3 class="empty-title">Explorando addons...</h3>
-        <p class="empty-desc">Consultando catálogo oficial con tus filtros aplicados.</p>
+        <h3 class="empty-title">${T('catalog_loading_title')}</h3>
+        <p class="empty-desc">${T('catalog_loading_desc')}</p>
       </div>
     `;
 
     const filterLabels = [];
     if (activeFlavor?.name) filterLabels.push(`${activeFlavor.name}`);
-    if (categories.length > 0) filterLabels.push(`Categoría: ${categories.map(c => c.name).join(', ')}`);
+    if (categories.length > 0) filterLabels.push(T('results_category_label', { cats: categories.map(c => c.name).join(', ') }));
 
-    let infoText = query ? `Resultados para "${query}"` : 'Addons destacados';
+    let infoText = query ? T('results_for', { query }) : T('results_featured');
     if (filterLabels.length > 0) infoText += ` (${filterLabels.join(' • ')})`;
     cfResultsInfo.textContent = infoText;
 
@@ -1113,28 +1150,36 @@ document.addEventListener('DOMContentLoaded', () => {
       const results = data.results || [];
 
       if (results.length === 0) {
+        lastCatalogResults = [];
+        lastCatalogMode = 'catalog';
         cfResultsGrid.innerHTML = `
           <div class="empty-state">
             <span class="empty-icon">🔎</span>
-            <h3 class="empty-title">Sin resultados para esta combinación</h3>
-            <p class="empty-desc">Prueba a desmarcar alguna categoría o buscar un término más amplio.</p>
+            <h3 class="empty-title">${T('catalog_no_results_title')}</h3>
+            <p class="empty-desc">${T('catalog_no_results_desc')}</p>
           </div>
         `;
         return;
       }
 
+      lastCatalogResults = results;
+      lastCatalogMode = 'catalog';
       renderCatalogCards(results);
     } catch (err) {
       console.error('Error al consultar addons:', err);
       cfResultsGrid.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">⚠️</span>
-          <h3 class="empty-title">Error al consultar addons</h3>
+          <h3 class="empty-title">${T('catalog_error_title')}</h3>
           <p class="empty-desc">${err.message}</p>
         </div>
       `;
     }
   }
+
+  // Estado de la última consulta: permite repintar tarjetas al cambiar de idioma
+  let lastCatalogResults = [];
+  let lastCatalogMode = 'catalog';
 
   function renderFavoritesCatalog(query = '') {
     const term = query.toLowerCase().trim();
@@ -1142,14 +1187,16 @@ document.addEventListener('DOMContentLoaded', () => {
       !term || f.name.toLowerCase().includes(term) || f.summary.toLowerCase().includes(term)
     );
 
-    cfResultsInfo.textContent = `Mis Favoritos guardados (${filtered.length})`;
+    lastCatalogResults = filtered;
+    lastCatalogMode = 'favorites';
+    cfResultsInfo.textContent = T('results_favorites', { count: filtered.length });
 
     if (filtered.length === 0) {
       cfResultsGrid.innerHTML = `
         <div class="empty-state">
           <span class="empty-icon">⭐</span>
-          <h3 class="empty-title">No tienes favoritos guardados todavía</h3>
-          <p class="empty-desc">Haz clic en la estrella ★ de cualquier tarjeta o dentro de su página para guardarlo aquí.</p>
+          <h3 class="empty-title">${T('favorites_empty_title', { game: gameLabel(currentActiveGame) })}</h3>
+          <p class="empty-desc">${T('favorites_empty_desc')}</p>
         </div>
       `;
       return;
@@ -1158,25 +1205,25 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCatalogCards(filtered);
   }
 
-  // Format relative date helper
+  // Format relative date helper (idioma activo, vía I18N)
   function formatRelativeDate(isoStr) {
-    if (!isoStr) return '';
-    try {
-      const date = new Date(isoStr);
-      const now = new Date();
-      const diffMs = now - date;
-      const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    return relDate(isoStr);
+  }
 
-      if (diffHours < 1) return 'hace unos minutos';
-      if (diffHours < 24) return `hace ${diffHours}h`;
-      if (diffDays === 1) return 'ayer';
-      if (diffDays < 30) return `hace ${diffDays}d`;
-      if (diffDays < 365) return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' });
-      return date.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
-    } catch (_) {
-      return '';
-    }
+  // Etiqueta e insignia de compatibilidad: el escáner manda un código y aquí se traduce.
+  function compatKey(compat) {
+    return 'compat_' + ((compat && compat.code) || 'generic_ok');
+  }
+
+  function compatBadge(compat) {
+    if (!compat) return '';
+    return T(compatKey(compat) + '_badge');
+  }
+
+  function compatLabel(compat) {
+    if (!compat) return '';
+    const value = (compat.interfaces && compat.interfaces.length) ? compat.interfaces.join(', ') : '';
+    return T(compatKey(compat) + '_label', { value });
   }
 
   function formatVersionString(v) {
@@ -1248,8 +1295,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let availPill = '';
       if (availVer) {
         availPill = `
-          <span class="cf-ver-pill cf-ver-avail" title="Versión disponible en el catálogo: ${availVer}">
-            <span class="ver-lbl">Versión:</span>
+          <span class="cf-ver-pill cf-ver-avail" title="${T('ver_available_hint', { version: availVer })}">
+            <span class="ver-lbl">${T('ver_available_label')}</span>
             <span class="ver-val">${dispAvailVer}</span>
           </span>
         `;
@@ -1257,12 +1304,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
       let myVerPill = '';
       if (isInstalled) {
-        const myVer = (installedMatch.version && installedMatch.version !== 'N/A') ? installedMatch.version : 'Instalado';
-        const dispMyVer = formatVersionDisplay(myVer);
-        const hasUpdate = !!(availVer && myVer && myVer !== 'Instalado' && availVer !== myVer && !availVer.includes(myVer) && !myVer.includes(availVer));
+        const myVerRaw = (installedMatch.version && installedMatch.version !== 'N/A') ? installedMatch.version : null;
+        const dispMyVer = myVerRaw ? formatVersionDisplay(myVerRaw) : T('status_installed');
+        const hasUpdate = !!(availVer && myVerRaw && availVer !== myVerRaw && !availVer.includes(myVerRaw) && !myVerRaw.includes(availVer));
+        const myVerPillTitle = hasUpdate
+          ? T('ver_update_hint', { version: availVer, current: myVerRaw })
+          : T('ver_mine_hint', { version: myVerRaw || T('status_installed') });
         myVerPill = `
-          <span class="cf-ver-pill cf-ver-mine ${hasUpdate ? 'has-update' : ''}" title="${hasUpdate ? `Actualización disponible: ${availVer} (tienes ${myVer})` : `Instalado en tu cliente: ${myVer}`}">
-            <span class="ver-lbl">${hasUpdate ? 'Tu ver:' : '✓ Tu ver:'}</span>
+          <span class="cf-ver-pill cf-ver-mine ${hasUpdate ? 'has-update' : ''}" title="${myVerPillTitle}">
+            <span class="ver-lbl">${hasUpdate ? T('ver_mine') : T('ver_mine_ok')}</span>
             <span class="ver-val">${dispMyVer}</span>
           </span>
         `;
@@ -1285,27 +1335,27 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="cf-card-main">
             <div class="cf-card-top">
               <h4 class="cf-title" title="${mod.name}">${mod.name}</h4>
-              <button class="btn-card-fav ${isFav ? 'is-fav' : ''}" data-id="${mod.id}" title="${isFav ? 'Quitar de favoritos' : 'Añadir a favoritos'}">
+              <button class="btn-card-fav ${isFav ? 'is-fav' : ''}" data-id="${mod.id}" title="${isFav ? T('fav_remove_hint') : T('fav_add_hint')}">
                 <svg class="fav-star-icon" viewBox="0 0 24 24">
                   <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
               </button>
             </div>
             <div class="cf-card-sub">
-              <span class="cf-author">por ${mod.author}${mod.categories && mod.categories[0] ? ` <span style="color:var(--text-faint); font-weight:normal;">• ${mod.categories[0].name}</span>` : ''}</span>
+              <span class="cf-author">${T('card_by', { author: mod.author })}${mod.categories && mod.categories[0] ? ` <span style="color:var(--text-faint); font-weight:normal;">• ${mod.categories[0].name}</span>` : ''}</span>
             </div>
-            <p class="cf-summary" title="${mod.summary || ''}">${mod.summary || 'Sin descripción disponible.'}</p>
+            <p class="cf-summary" title="${mod.summary || ''}">${mod.summary || T('card_no_summary')}</p>
           </div>
           <div class="cf-card-bottom">
             <div class="cf-card-meta-col">
               ${versionsRowHtml}
               <div class="cf-card-stats">
-                <span class="cf-downloads">📥 ${Number(mod.downloadCount || 0).toLocaleString()}</span>
-                ${updatedText ? `<span class="cf-updated" title="Actualizado: ${new Date(mod.dateModified).toLocaleString('es-ES')}">• 🕒 ${updatedText}</span>` : ''}
+                <span class="cf-downloads" title="${T('card_downloads_hint', { count: fmtNumber(mod.downloadCount) })}">📥 ${fmtNumber(mod.downloadCount)}</span>
+                ${updatedText ? `<span class="cf-updated" title="${T('card_updated_hint', { date: fmtDateTime(mod.dateModified) })}">• 🕒 ${updatedText}</span>` : ''}
               </div>
             </div>
             <button class="btn-install-cf ${isInstalled ? 'installed' : ''}" data-id="${mod.id}" data-name="${mod.name}">
-              ${isInstalled ? '✓ Instalado' : '⚡ Instalar'}
+              ${isInstalled ? T('btn_installed') : T('btn_install')}
             </button>
           </div>
         </div>
@@ -1323,7 +1373,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         const newFavState = await toggleFavorite(mod);
         btnFav.classList.toggle('is-fav', newFavState);
-        btnFav.title = newFavState ? 'Quitar de favoritos' : 'Añadir a favoritos';
+        btnFav.title = newFavState ? T('fav_remove_hint') : T('fav_add_hint');
 
         // If toggled inside the dedicated Favorites tab, animate card out smoothly
         if (targetContainer === favoritesTabGrid && !newFavState) {
@@ -1345,7 +1395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnInstall.addEventListener('click', async (e) => {
           e.stopPropagation();
           btnInstall.classList.add('loading');
-          btnInstall.textContent = '⏳ Descargando...';
+          btnInstall.textContent = T('btn_downloading');
 
           try {
             const installRes = await fetch('/api/install-curseforge', {
@@ -1358,8 +1408,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (installData.success) {
               btnInstall.classList.remove('loading');
               btnInstall.classList.add('installed');
-              btnInstall.textContent = '✓ Instalado';
-              showToast(`¡"${mod.name}" instalado en Interface/AddOns!`);
+              btnInstall.textContent = T('btn_installed');
+              showToast(T('toast_install_done', { name: mod.name }));
               await loadInstalledAddons();
 
               // Update version badge dynamically on card: remove from cf-card-sub and place beside VERSIÓN in cf-card-versions-row
@@ -1367,7 +1417,7 @@ document.addEventListener('DOMContentLoaded', () => {
               if (oldSubTag) oldSubTag.remove();
 
               const refreshedMatch = findInstalledAddon(mod);
-              const installedVer = (refreshedMatch && refreshedMatch.version !== 'N/A') ? refreshedMatch.version : 'Instalado';
+              const installedVer = (refreshedMatch && refreshedMatch.version !== 'N/A') ? refreshedMatch.version : null;
 
               let versionsRow = card.querySelector('.cf-card-versions-row');
               if (!versionsRow) {
@@ -1383,24 +1433,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 const existingMine = versionsRow.querySelector('.cf-ver-mine');
                 if (existingMine) existingMine.remove();
 
-                const hasUpdate = !!(availVer && installedVer && installedVer !== 'Instalado' && availVer !== installedVer && !availVer.includes(installedVer) && !installedVer.includes(availVer));
-                const dispInstalledVer = formatVersionDisplay(installedVer);
+                const hasUpdate = !!(availVer && installedVer && availVer !== installedVer && !availVer.includes(installedVer) && !installedVer.includes(availVer));
+                const dispInstalledVer = installedVer ? formatVersionDisplay(installedVer) : T('status_installed');
                 const myPillEl = document.createElement('span');
                 myPillEl.className = `cf-ver-pill cf-ver-mine ${hasUpdate ? 'has-update' : ''}`;
-                myPillEl.title = hasUpdate ? `Actualización disponible: ${availVer} (tienes ${installedVer})` : `Instalado en tu cliente: ${installedVer}`;
+                myPillEl.title = hasUpdate
+                  ? T('ver_update_hint', { version: availVer, current: installedVer })
+                  : T('ver_mine_hint', { version: installedVer || T('status_installed') });
                 myPillEl.innerHTML = `
-                  <span class="ver-lbl">${hasUpdate ? 'Tu ver:' : '✓ Tu ver:'}</span>
+                  <span class="ver-lbl">${hasUpdate ? T('ver_mine') : T('ver_mine_ok')}</span>
                   <span class="ver-val">${dispInstalledVer}</span>
                 `;
                 versionsRow.appendChild(myPillEl);
               }
             } else {
-              throw new Error(installData.error || 'Error al instalar');
+              throw new Error(installData.code ? T('err_' + installData.code) : (installData.error || T('toast_install_error', { message: '' })));
             }
           } catch (err) {
             btnInstall.classList.remove('loading');
-            btnInstall.textContent = 'Reintentar';
-            showToast(`Error: ${err.message}`, 'error');
+            btnInstall.textContent = T('btn_retry');
+            showToast(T('toast_install_error', { message: err.message }), 'error');
           }
         });
       }
@@ -1414,7 +1466,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inAppBrowserView) inAppBrowserView.style.display = 'none';
     cfDetailView.style.display = 'none';
     cfCatalogLayout.style.display = 'flex';
-    setAddressBar('⚡', 'KoRForge / Explorador de Addons');
+    setAddressBar('⚡', T('topbar_explorer'));
     pushNavState({ type: 'tab', tabId: 'search' });
   }
 
@@ -1438,14 +1490,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!btnTranslateToggle) return;
     if (loading) {
       btnTranslateToggle.classList.add('loading');
-      btnTranslateToggle.innerHTML = '<span class="translate-icon">⏳</span><span class="translate-label">Traduciendo...</span>';
+      btnTranslateToggle.innerHTML = `<span class="translate-icon">⏳</span><span class="translate-label">${T('detail_translating')}</span>`;
     } else if (translated) {
       btnTranslateToggle.classList.remove('loading');
       btnTranslateToggle.classList.add('translated');
-      btnTranslateToggle.innerHTML = '<span class="translate-icon">🇬🇧</span><span class="translate-label">Ver Original (EN)</span>';
+      btnTranslateToggle.innerHTML = `<span class="translate-icon">🇬🇧</span><span class="translate-label">${T('detail_original')}</span>`;
     } else {
       btnTranslateToggle.classList.remove('loading', 'translated');
-      btnTranslateToggle.innerHTML = '<span class="translate-icon">🇪🇸</span><span class="translate-label">Traducir a Español</span>';
+      btnTranslateToggle.innerHTML = `<span class="translate-icon">🇪🇸</span><span class="translate-label">${T('detail_translate')}</span>`;
     }
   }
 
@@ -1459,7 +1511,7 @@ document.addEventListener('DOMContentLoaded', () => {
         detailHtmlBody.innerHTML = currentTranslatedDesc;
         if (heroSummaryEl) heroSummaryEl.textContent = currentTranslatedSummary;
         updateTranslateButtonUI(false, true);
-        showToast('Descripción mostrada en español');
+        showToast(T('toast_translated'));
         return;
       }
 
@@ -1483,20 +1535,20 @@ document.addEventListener('DOMContentLoaded', () => {
           detailHtmlBody.innerHTML = currentTranslatedDesc;
           if (heroSummaryEl) heroSummaryEl.textContent = currentTranslatedSummary;
           updateTranslateButtonUI(false, true);
-          showToast('¡Addon traducido al español!');
+          showToast(T('toast_translated_ok'));
         } else {
-          throw new Error(data.error || 'Fallo al traducir');
+          throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_translate_error', { message: '' })));
         }
       } catch (err) {
         updateTranslateButtonUI(false, false);
-        showToast(`Error al traducir: ${err.message}`, 'error');
+        showToast(T('toast_translate_error', { message: err.message }), 'error');
       }
     } else {
       isTranslated = false;
       detailHtmlBody.innerHTML = currentOriginalDesc;
       if (heroSummaryEl) heroSummaryEl.textContent = currentOriginalSummary;
       updateTranslateButtonUI(false, false);
-      showToast('Mostrando descripción original en inglés');
+      showToast(T('toast_original'));
     }
   });
 
@@ -1517,7 +1569,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelector('.nav-item[data-tab="search"]')?.classList.add('active');
     document.getElementById('pane-search')?.classList.add('active');
 
-    setAddressBar('📦', `KoRForge / Addons / ${modName || 'Detalles'}`);
+    setAddressBar('📦', modName ? T('topbar_addon', { name: modName }) : T('topbar_details'));
 
     // Reset Tabs
     detailTabsBtns.forEach(b => b.classList.remove('active'));
@@ -1528,11 +1580,11 @@ document.addEventListener('DOMContentLoaded', () => {
     detailHeroCard.innerHTML = `
       <div class="empty-state" style="width:100%;">
         <span class="empty-icon">⏳</span>
-        <h3 class="empty-title">Cargando detalles de ${modName || 'Addon'}...</h3>
+        <h3 class="empty-title">${T('detail_loading_title', { name: modName || T('nav_search') })}</h3>
       </div>
     `;
-    detailHtmlBody.innerHTML = '<p>Cargando descripción oficial...</p>';
-    detailFilesList.innerHTML = '<p>Consultando versiones disponibles...</p>';
+    detailHtmlBody.innerHTML = `<p>${T('detail_loading_desc')}</p>`;
+    detailFilesList.innerHTML = `<p>${T('detail_loading_files')}</p>`;
     detailGalleryGrid.innerHTML = '';
 
     try {
@@ -1542,7 +1594,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const mod = data.mod;
       currentDetailMod = mod;
 
-      setAddressBar('📦', `KoRForge / Addons / ${mod.name}`);
+      setAddressBar('📦', T('topbar_addon', { name: mod.name }));
 
       currentOriginalSummary = mod.summary || '';
       currentTranslatedSummary = '';
@@ -1562,50 +1614,17 @@ document.addEventListener('DOMContentLoaded', () => {
         })
         .catch(() => {});
 
-      const isFav = isModFavorite(mod.id);
-      btnDetailToggleFav.className = `btn btn-secondary btn-fav-detail ${isFav ? 'is-fav' : ''}`;
-      btnDetailToggleFav.innerHTML = `<span class="star-icon">${isFav ? '★' : '☆'}</span><span class="fav-label">${isFav ? 'En Favoritos' : 'Añadir a Favoritos'}</span>`;
-
-      const installedMatch = findInstalledAddon(mod);
-      const isInstalled = !!installedMatch;
-
-      btnDetailInstall.className = `btn btn-gold btn-install-detail ${isInstalled ? 'installed' : ''}`;
-      btnDetailInstall.textContent = isInstalled ? '✓ Ya Instalado' : '⚡ Instalar Última Versión';
-
-      const availVer = formatVersionString(mod.version);
-      const myVer = installedMatch ? ((installedMatch.version && installedMatch.version !== 'N/A') ? installedMatch.version : 'Instalado') : '';
-
-      // Render Hero Card with Author Repo Links & Version details
-      detailHeroCard.innerHTML = `
-        <img class="detail-hero-logo" src="${mod.iconUrl || 'favicon.png'}" alt="${mod.name}" onerror="this.src='favicon.png'">
-        <div class="detail-hero-info">
-          <div>
-            <h2 class="detail-hero-title">${mod.name}</h2>
-            <div class="detail-hero-author">por <strong>${mod.author}</strong></div>
-            <p class="detail-hero-summary" id="detailHeroSummary">${mod.summary}</p>
-          </div>
-          <div class="detail-hero-meta">
-            <span class="meta-item">Descargas: <strong class="gold">${Number(mod.downloadCount).toLocaleString()}</strong></span>
-            ${availVer ? `<span class="meta-item">Versión catálogo: <strong>${availVer}</strong></span>` : ''}
-            ${isInstalled ? `<span class="meta-item">Tu versión instalada: <strong style="color:var(--status-green);">✓ ${myVer}</strong></span>` : ''}
-            <span class="meta-item">Actualizado: <strong>${new Date(mod.dateModified).toLocaleDateString('es-ES')}</strong></span>
-            <span class="meta-item">Creado: <strong>${new Date(mod.dateCreated).toLocaleDateString('es-ES')}</strong></span>
-            ${mod.sourceUrl ? `<span class="meta-item"><a href="${mod.sourceUrl}" class="repo-link" title="Ver código fuente y repositorio oficial">📦 Repositorio / Código ↗</a></span>` : ''}
-            ${mod.wikiUrl ? `<span class="meta-item"><a href="${mod.wikiUrl}" class="repo-link" title="Wiki oficial del autor">📖 Wiki ↗</a></span>` : ''}
-            ${mod.issuesUrl ? `<span class="meta-item"><a href="${mod.issuesUrl}" class="repo-link" title="Rastreador de incidencias">🐛 Reportar Bug ↗</a></span>` : ''}
-          </div>
-        </div>
-      `;
+      renderDetailHero(mod, findInstalledAddon(mod));
 
       // 2. Fetch Description
       fetch(`/api/mod/${modId}/description`)
         .then(r => r.json())
         .then(descData => {
-          currentOriginalDesc = descData.html || '<p>No hay descripción disponible.</p>';
+          currentOriginalDesc = descData.html || `<p>${T('detail_no_desc')}</p>`;
           detailHtmlBody.innerHTML = isTranslated && currentTranslatedDesc ? currentTranslatedDesc : currentOriginalDesc;
         })
         .catch(() => {
-          detailHtmlBody.innerHTML = '<p>Error al cargar la descripción.</p>';
+          detailHtmlBody.innerHTML = `<p>${T('detail_desc_error')}</p>`;
         });
 
       // 3. Fetch Files
@@ -1615,39 +1634,83 @@ document.addEventListener('DOMContentLoaded', () => {
           renderDetailFiles(filesData.files || [], mod.name);
         })
         .catch(() => {
-          detailFilesList.innerHTML = '<p>Error cargando archivos.</p>';
+          detailFilesList.innerHTML = `<p>${T('detail_files_error')}</p>`;
         });
 
       // 4. Render Gallery / Screenshots
-      if (mod.screenshots && mod.screenshots.length > 0) {
-        detailGalleryGrid.innerHTML = '';
-        mod.screenshots.forEach(s => {
-          const item = document.createElement('div');
-          item.className = 'gallery-thumb';
-          item.innerHTML = `
-            <a href="${s.url}" title="${s.title || mod.name}">
-              <img src="${s.thumbnailUrl || s.url}" alt="${s.title || mod.name}">
-            </a>
-            ${s.title ? `<div class="gallery-title">${s.title}</div>` : ''}
-          `;
-          detailGalleryGrid.appendChild(item);
-        });
-      } else {
-        detailGalleryGrid.innerHTML = `
-          <div class="empty-state" style="grid-column: 1 / -1;">
-            <span class="empty-icon">🖼️</span>
-            <p class="empty-desc">Este addon no tiene capturas de pantalla registradas.</p>
-          </div>
-        `;
-      }
+      renderDetailGallery(mod);
 
     } catch (err) {
       console.error('Error cargando detalle:', err);
       detailHeroCard.innerHTML = `
         <div class="empty-state" style="width:100%;">
           <span class="empty-icon">⚠️</span>
-          <h3 class="empty-title">Error al cargar el addon</h3>
+          <h3 class="empty-title">${T('detail_error_title')}</h3>
           <p class="empty-desc">${err.message}</p>
+        </div>
+      `;
+    }
+  }
+
+  // Pinta la cabecera de la ficha (y sus botones) con los datos ya cargados.
+  function renderDetailHero(mod, installedMatch) {
+    if (!mod) return;
+    const isFav = isModFavorite(mod.id);
+    const isInstalled = !!installedMatch;
+    const myVerRaw = (installedMatch && installedMatch.version && installedMatch.version !== 'N/A') ? installedMatch.version : null;
+
+    btnDetailToggleFav.className = `btn btn-secondary btn-fav-detail ${isFav ? 'is-fav' : ''}`;
+    btnDetailToggleFav.innerHTML = `<span class="star-icon">${isFav ? '★' : '☆'}</span><span class="fav-label">${isFav ? T('detail_fav_has') : T('detail_fav_add')}</span>`;
+
+    btnDetailInstall.className = `btn btn-gold btn-install-detail ${isInstalled ? 'installed' : ''}`;
+    btnDetailInstall.textContent = isInstalled ? T('detail_installed') : T('detail_install_latest');
+
+    const availVer = formatVersionString(mod.version);
+    const heroSummary = (isTranslated && currentTranslatedSummary) ? currentTranslatedSummary : (mod.summary || '');
+
+    detailHeroCard.innerHTML = `
+      <img class="detail-hero-logo" src="${mod.iconUrl || 'favicon.png'}" alt="${mod.name}" onerror="this.src='favicon.png'">
+      <div class="detail-hero-info">
+        <div>
+          <h2 class="detail-hero-title">${mod.name}</h2>
+          <div class="detail-hero-author">${T('detail_by')} <strong>${mod.author}</strong></div>
+          <p class="detail-hero-summary" id="detailHeroSummary">${heroSummary}</p>
+        </div>
+        <div class="detail-hero-meta">
+          <span class="meta-item">${T('detail_downloads')} <strong class="gold">${fmtNumber(mod.downloadCount)}</strong></span>
+          ${availVer ? `<span class="meta-item">${T('detail_cat_ver')} <strong>${availVer}</strong></span>` : ''}
+          ${isInstalled ? `<span class="meta-item">${T('detail_my_ver')} <strong style="color:var(--status-green);">✓ ${myVerRaw ? formatVersionDisplay(myVerRaw) : T('status_installed')}</strong></span>` : ''}
+          <span class="meta-item">${T('detail_updated')} <strong>${fmtDate(mod.dateModified, { day: 'numeric', month: 'numeric', year: 'numeric' })}</strong></span>
+          <span class="meta-item">${T('detail_created')} <strong>${fmtDate(mod.dateCreated, { day: 'numeric', month: 'numeric', year: 'numeric' })}</strong></span>
+          ${mod.sourceUrl ? `<span class="meta-item"><a href="${mod.sourceUrl}" class="repo-link" title="${T('detail_repo_hint')}">${T('detail_repo')}</a></span>` : ''}
+          ${mod.wikiUrl ? `<span class="meta-item"><a href="${mod.wikiUrl}" class="repo-link" title="${T('detail_wiki_hint')}">${T('detail_wiki')}</a></span>` : ''}
+          ${mod.issuesUrl ? `<span class="meta-item"><a href="${mod.issuesUrl}" class="repo-link" title="${T('detail_issues_hint')}">${T('detail_issues')}</a></span>` : ''}
+        </div>
+      </div>
+    `;
+  }
+
+  // Pinta la galería de capturas de la ficha.
+  function renderDetailGallery(mod) {
+    if (!mod) return;
+    if (mod.screenshots && mod.screenshots.length > 0) {
+      detailGalleryGrid.innerHTML = '';
+      mod.screenshots.forEach(s => {
+        const item = document.createElement('div');
+        item.className = 'gallery-thumb';
+        item.innerHTML = `
+          <a href="${s.url}" title="${s.title || mod.name}">
+            <img src="${s.thumbnailUrl || s.url}" alt="${s.title || mod.name}">
+          </a>
+          ${s.title ? `<div class="gallery-title">${s.title}</div>` : ''}
+        `;
+        detailGalleryGrid.appendChild(item);
+      });
+    } else {
+      detailGalleryGrid.innerHTML = `
+        <div class="empty-state" style="grid-column: 1 / -1;">
+          <span class="empty-icon">🖼️</span>
+          <p class="empty-desc">${T('detail_no_screenshots')}</p>
         </div>
       `;
     }
@@ -1728,7 +1791,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       window.open(targetUrl, '_blank');
     }
-    showToast('Abriendo enlace en tu navegador web externo');
+    showToast(T('toast_open_external'));
   });
 
   // Delegated link click inside Addon Detail View to open in In-App Browser
@@ -1744,14 +1807,21 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Render Files Table inside Detail View
+  // Última lista de versiones pintada (para repintar al cambiar de idioma)
+  let lastDetailFiles = [];
+  let lastDetailAddonName = '';
+
   function renderDetailFiles(files, addonName) {
-    if (files.length === 0) {
-      detailFilesList.innerHTML = '<p>No se encontraron archivos descargables.</p>';
+    lastDetailFiles = Array.isArray(files) ? files : [];
+    lastDetailAddonName = addonName || '';
+
+    if (lastDetailFiles.length === 0) {
+      detailFilesList.innerHTML = `<p>${T('detail_no_files')}</p>`;
       return;
     }
 
     detailFilesList.innerHTML = '';
-    files.forEach(f => {
+    lastDetailFiles.forEach(f => {
       const item = document.createElement('div');
       item.className = 'file-item';
 
@@ -1768,40 +1838,40 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="file-name">${f.displayName || f.fileName}</span>
           <div class="file-meta-line">
             <span class="file-type-badge ${typeClass}">${f.releaseTypeLabel}</span>
-            <span>${new Date(f.fileDate).toLocaleDateString('es-ES')}</span>
+            <span>${fmtDate(f.fileDate, { day: 'numeric', month: 'numeric', year: 'numeric' })}</span>
             <span>• ${f.fileLength}</span>
-            <span>• 📥 ${Number(f.downloadCount).toLocaleString()}</span>
-            <span>Versiones: ${versionsBadges}</span>
+            <span>• 📥 ${fmtNumber(f.downloadCount)}</span>
+            <span>${T('file_versions', { versions: versionsBadges })}</span>
           </div>
         </div>
-        <button class="btn btn-secondary btn-install-file" data-url="${f.downloadUrl}" data-name="${addonName}">
-          ${isForever ? '⚡ Instalar (Forever)' : 'Instalar versión'}
+        <button class="btn btn-secondary btn-install-file" data-url="${f.downloadUrl}" data-name="${lastDetailAddonName}">
+          ${isForever ? T('file_install_forever') : T('file_install')}
         </button>
       `;
 
       const btnInst = item.querySelector('.btn-install-file');
       btnInst.addEventListener('click', async () => {
         btnInst.disabled = true;
-        btnInst.textContent = 'Instalando...';
+        btnInst.textContent = T('btn_installing_file');
 
         try {
           const res = await fetch('/api/install-file', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ downloadUrl: f.downloadUrl, name: addonName, gameId: currentActiveGame })
+            body: JSON.stringify({ downloadUrl: f.downloadUrl, name: lastDetailAddonName, gameId: currentActiveGame })
           });
           const resData = await res.json();
           if (resData.success) {
-            btnInst.textContent = '✓ Instalado';
-            showToast(`¡"${addonName}" instalado en Interface/AddOns!`);
+            btnInst.textContent = T('btn_installed');
+            showToast(T('toast_install_done', { name: lastDetailAddonName }));
             loadInstalledAddons();
           } else {
-            throw new Error(resData.error || 'Error al instalar');
+            throw new Error(resData.code ? T('err_' + resData.code) : (resData.error || T('toast_install_error', { message: '' })));
           }
         } catch (err) {
           btnInst.disabled = false;
-          btnInst.textContent = 'Reintentar';
-          showToast(`Error: ${err.message}`, 'error');
+          btnInst.textContent = T('btn_retry');
+          showToast(T('toast_install_error', { message: err.message }), 'error');
         }
       });
 
@@ -1831,14 +1901,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentDetailMod) return;
     const isNowFav = await toggleFavorite(currentDetailMod);
     btnDetailToggleFav.className = `btn btn-secondary btn-fav-detail ${isNowFav ? 'is-fav' : ''}`;
-    btnDetailToggleFav.innerHTML = `<span class="star-icon">${isNowFav ? '★' : '☆'}</span><span class="fav-label">${isNowFav ? 'En Favoritos' : 'Añadir a Favoritos'}</span>`;
+    btnDetailToggleFav.innerHTML = `<span class="star-icon">${isNowFav ? '★' : '☆'}</span><span class="fav-label">${isNowFav ? T('detail_fav_has') : T('detail_fav_add')}</span>`;
   });
 
   // Detail View Install Latest
   btnDetailInstall?.addEventListener('click', async () => {
     if (!currentDetailMod) return;
     btnDetailInstall.disabled = true;
-    btnDetailInstall.textContent = '⏳ Descargando...';
+    btnDetailInstall.textContent = T('btn_downloading');
 
     try {
       const res = await fetch('/api/install-curseforge', {
@@ -1848,16 +1918,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.success) {
-        btnDetailInstall.textContent = '✓ Instalado con éxito';
-        showToast(`¡"${currentDetailMod.name}" instalado en Interface/AddOns!`);
+        btnDetailInstall.textContent = T('detail_install_done');
+        showToast(T('toast_install_done', { name: currentDetailMod.name }));
         loadInstalledAddons();
       } else {
-        throw new Error(data.error || 'Error al instalar');
+        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_install_error', { message: '' })));
       }
     } catch (err) {
       btnDetailInstall.disabled = false;
-      btnDetailInstall.textContent = 'Reintentar';
-      showToast(`Error: ${err.message}`, 'error');
+      btnDetailInstall.textContent = T('btn_retry');
+      showToast(T('toast_install_error', { message: err.message }), 'error');
     }
   });
 
@@ -1867,17 +1937,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!url) return;
 
     btnInstallUrl.disabled = true;
-    btnInstallUrl.textContent = 'Descargando...';
+    btnInstallUrl.textContent = T('btn_downloading');
 
     const log = (msg, type = 'info') => {
       const line = document.createElement('div');
       line.className = `log-line ${type}`;
-      line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+      line.textContent = `[${new Date().toLocaleTimeString(LOCALE())}] ${msg}`;
       installConsole.appendChild(line);
       installConsole.scrollTop = installConsole.scrollHeight;
     };
 
-    log(`Iniciando descarga de: ${url}`);
+    log(T('manual_log_start', { url }));
 
     try {
       const res = await fetch('/api/install-url', {
@@ -1888,19 +1958,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (data.success) {
-        log(`✓ Instalación completada con éxito: ${data.installedFolders.join(', ')}`, 'info');
-        showToast(`Instalado: ${data.installedFolders.join(', ')}`);
+        log(`✓ ${T('manual_log_done', { folders: data.installedFolders.join(', ') })}`, 'info');
+        showToast(T('manual_toast_done', { folders: data.installedFolders.join(', ') }));
         installUrlInput.value = '';
         loadInstalledAddons();
       } else {
-        throw new Error(data.error || 'Error desconocido');
+        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('manual_error_unknown')));
       }
     } catch (err) {
-      log(`❌ Error: ${err.message}`, 'error');
+      log(`❌ ${T('manual_log_error', { message: err.message })}`, 'error');
       showToast(err.message, 'error');
     } finally {
       btnInstallUrl.disabled = false;
-      btnInstallUrl.textContent = 'Descargar e Instalar';
+      btnInstallUrl.textContent = T('settings_manual_btn');
     }
   });
 
@@ -1911,12 +1981,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/backups?gameId=${encodeURIComponent(g)}`);
       const data = await res.json();
       const backups = data.backups || [];
+      lastBackups = backups;
       backupsCountBadge.textContent = backups.length;
 
-      const activeGameObj = currentGamesData[g];
       const backupsSub = document.querySelector('#pane-backups .page-subtitle');
       if (backupsSub) {
-        backupsSub.textContent = `Snapshots limpios de configuración para ${activeGameObj?.name || g}.`;
+        backupsSub.textContent = T('vault_subtitle_game', { game: gameLabel(g) });
       }
 
       backupsList.innerHTML = '';
@@ -1924,8 +1994,8 @@ document.addEventListener('DOMContentLoaded', () => {
         backupsList.innerHTML = `
           <div class="empty-state">
             <span class="empty-icon">💾</span>
-            <h3 class="empty-title">Sin backups para ${activeGameObj?.name || g}</h3>
-            <p class="empty-desc">Crea un snapshot de tus macros y configuraciones antes de jugar.</p>
+            <h3 class="empty-title">${T('vault_empty_title', { game: gameLabel(g) })}</h3>
+            <p class="empty-desc">${T('vault_empty_desc')}</p>
           </div>
         `;
         return;
@@ -1940,13 +2010,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="backup-date">${b.date} • ${b.sizeMb} MB</span>
           </div>
           <div class="backup-actions">
-            <button class="card-btn btn-restore-backup" data-file="${b.fileName}">Restaurar</button>
-            <button class="card-btn btn-danger btn-delete-backup" data-file="${b.fileName}">Borrar</button>
+            <button class="card-btn btn-restore-backup" data-file="${b.fileName}">${T('vault_restore')}</button>
+            <button class="card-btn btn-danger btn-delete-backup" data-file="${b.fileName}">${T('vault_delete')}</button>
           </div>
         `;
 
         item.querySelector('.btn-restore-backup').addEventListener('click', async () => {
-          if (!confirm(`¿Restaurar configuración desde "${b.fileName}"? Sobrescribirá tu carpeta WTF actual de ${activeGameObj?.name || g}.`)) return;
+          if (!confirm(T('confirm_restore', { file: b.fileName, game: gameLabel(currentActiveGame) }))) return;
           try {
             const res = await fetch('/api/backups/restore', {
               method: 'POST',
@@ -1955,21 +2025,21 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const resData = await res.json();
             if (resData.success) {
-              showToast('Configuración WTF restaurada con éxito');
+              showToast(T('toast_restore_ok'));
             }
           } catch (err) {
-            showToast('Error restaurando backup', 'error');
+            showToast(T('toast_restore_error'), 'error');
           }
         });
 
         item.querySelector('.btn-delete-backup').addEventListener('click', async () => {
-          if (!confirm(`¿Borrar el backup "${b.fileName}"?`)) return;
+          if (!confirm(T('confirm_delete_backup', { file: b.fileName }))) return;
           try {
             await fetch(`/api/backups/${encodeURIComponent(b.fileName)}?gameId=${encodeURIComponent(currentActiveGame)}`, { method: 'DELETE' });
-            showToast('Backup eliminado');
+            showToast(T('toast_delete_ok'));
             loadBackups();
           } catch (err) {
-            showToast('Error borrando backup', 'error');
+            showToast(T('toast_delete_error'), 'error');
           }
         });
 
@@ -1982,7 +2052,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnCreateBackup?.addEventListener('click', async () => {
     btnCreateBackup.disabled = true;
-    btnCreateBackup.textContent = 'Creando snapshot...';
+    btnCreateBackup.textContent = T('vault_create_loading');
 
     try {
       const res = await fetch('/api/backups/create', {
@@ -1992,16 +2062,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.fileName) {
-        showToast(`Backup creado: ${data.fileName} (${data.sizeMb} MB)`);
+        showToast(T('toast_backup_created', { file: data.fileName, size: data.sizeMb }));
         loadBackups();
       } else {
-        throw new Error(data.error || 'Error al crear backup');
+        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_backup_error')));
       }
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
       btnCreateBackup.disabled = false;
-      btnCreateBackup.textContent = '💾 Crear Nuevo Backup Ahora';
+      btnCreateBackup.textContent = T('vault_create');
     }
   });
 
@@ -2032,14 +2102,8 @@ document.addEventListener('DOMContentLoaded', () => {
     return s.toLowerCase().startsWith('v') ? s : `v${s}`;
   }
 
-  function textoI18n(clave, porDefecto) {
-    try {
-      if (window.I18N && typeof window.I18N.t === 'function') {
-        const trad = window.I18N.t(clave);
-        if (trad) return trad;
-      }
-    } catch (_) {}
-    return porDefecto;
+  function textoI18n(clave) {
+    return T(clave);
   }
 
   /**
@@ -2053,17 +2117,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (modo === 'update' && verRemota) {
       btnAppUpdate.classList.remove('is-latest');
-      if (appUpdateLabel) appUpdateLabel.textContent = textoI18n('nav_update_to', 'Actualizar a');
+      if (appUpdateLabel) appUpdateLabel.textContent = T('nav_update_to');
       if (appUpdateVerBadge) appUpdateVerBadge.textContent = versionLimpia(verRemota);
-      btnAppUpdate.title = `¡Nueva versión KoRForge ${versionLimpia(verRemota)} disponible! Haz clic para actualizar`;
+      btnAppUpdate.title = T('upd_nav_new_hint', { version: versionLimpia(verRemota) });
     } else {
       const ver = versionLimpia(verInstalada || versionInstalada);
       btnAppUpdate.classList.add('is-latest');
-      if (appUpdateLabel) appUpdateLabel.textContent = textoI18n('nav_update_latest', 'Versión');
+      if (appUpdateLabel) appUpdateLabel.textContent = T('nav_update_latest');
       if (appUpdateVerBadge) appUpdateVerBadge.textContent = ver || 'v…';
       btnAppUpdate.title = ver
-        ? `KoRForge ${ver} · última versión. Haz clic para comprobar de nuevo`
-        : 'Haz clic para comprobar si hay una versión nueva';
+        ? T('upd_nav_latest_hint', { version: ver })
+        : T('upd_nav_unknown_hint');
     }
   }
 
@@ -2105,33 +2169,33 @@ document.addEventListener('DOMContentLoaded', () => {
         iconOk.hidden = hayNueva;
       }
     }
-    if (modalTitle) modalTitle.textContent = hayNueva ? 'Nueva Versión de KoRForge' : 'KoRForge al día';
+    if (modalTitle) modalTitle.textContent = hayNueva ? T('upd_title_new') : T('upd_title_latest');
     if (modalSub) {
       modalSub.textContent = hayNueva
-        ? 'GitHub Releases Oficial'
-        : `Estás usando la última versión disponible (${verInstaladaTxt})`;
+        ? T('upd_sub_github')
+        : T('upd_sub_latest', { version: verInstaladaTxt });
     }
     if (modalCurrentVer) modalCurrentVer.textContent = verInstaladaTxt;
     if (modalNewVer) modalNewVer.textContent = verRemotaTxt || verInstaladaTxt;
     if (modalVerArrow) modalVerArrow.style.display = hayNueva ? '' : 'none';
     if (modalNewVerCol) modalNewVerCol.style.display = hayNueva ? '' : 'none';
-    if (modalNotesTitle) modalNotesTitle.textContent = hayNueva ? 'Novedades y Cambios:' : 'Novedades de esta versión:';
+    if (modalNotesTitle) modalNotesTitle.textContent = hayNueva ? T('upd_notes_title_new') : T('upd_notes_title_latest');
     if (modalReleaseNotes) {
       if (hayNueva || (appUpdateData && appUpdateData.releaseNotes)) {
         modalReleaseNotes.innerHTML = formatReleaseNotes(appUpdateData && appUpdateData.releaseNotes);
       } else {
-        modalReleaseNotes.innerHTML = '<p style="color:#94a3b8;">No se pudo consultar GitHub Releases (sin conexión). La versión instalada es la última que conocía la app.</p>';
+        modalReleaseNotes.innerHTML = `<p style="color:#94a3b8;">${T('upd_notes_offline')}</p>`;
       }
     }
     if (updateProgressWrap) updateProgressWrap.style.display = 'none';
     if (btnDownloadUpdate) {
       btnDownloadUpdate.style.display = hayNueva ? 'inline-flex' : 'none';
       btnDownloadUpdate.disabled = false;
-      btnDownloadUpdate.textContent = '⚡ Actualizar dentro de la App';
+      btnDownloadUpdate.textContent = T('upd_btn_update_app');
     }
     if (btnApplyUpdateRestart) btnApplyUpdateRestart.style.display = 'none';
     if (btnRecheckUpdate) btnRecheckUpdate.style.display = hayNueva ? 'none' : 'inline-flex';
-    if (btnDismissUpdate) btnDismissUpdate.textContent = hayNueva ? 'Más tarde' : 'Cerrar';
+    if (btnDismissUpdate) btnDismissUpdate.textContent = hayNueva ? T('upd_btn_later') : T('upd_btn_close');
     updateModal.style.display = 'flex';
   }
 
@@ -2146,7 +2210,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function formatReleaseNotes(rawMarkdown) {
-    if (!rawMarkdown) return '<p>Hay una nueva versión disponible para descargar desde GitHub Releases.</p>';
+    if (!rawMarkdown) return `<p>${T('upd_notes_default')}</p>`;
 
     const lines = rawMarkdown.split('\n');
     let html = '';
@@ -2181,7 +2245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (inList) html += '</ul>';
-    return html || '<p>Hay una nueva versión disponible para descargar desde GitHub Releases.</p>';
+    return html || `<p>${T('upd_notes_default')}</p>`;
   }
 
   function closeUpdateModal() {
@@ -2208,14 +2272,14 @@ document.addEventListener('DOMContentLoaded', () => {
   btnRecheckUpdate?.addEventListener('click', async () => {
     if (!btnRecheckUpdate) return;
     btnRecheckUpdate.disabled = true;
-    btnRecheckUpdate.textContent = '⏳ Comprobando...';
+    btnRecheckUpdate.textContent = T('upd_btn_checking');
     const data = await checkAppUpdates();
     btnRecheckUpdate.disabled = false;
-    btnRecheckUpdate.textContent = '🔄 ' + textoI18n('nav_update_check', 'Comprobar de nuevo');
+    btnRecheckUpdate.textContent = T('upd_btn_recheck');
     if (data && data.updateAvailable) {
-      showToast(`Nueva versión disponible: ${versionLimpia(data.remoteVersion)}`, 'success');
+      showToast(T('toast_update_available', { version: versionLimpia(data.remoteVersion) }), 'success');
     } else {
-      showToast('Estás en la última versión de KoRForge', 'info');
+      showToast(T('toast_on_latest'), 'info');
     }
     abrirModalActualizacion();
   });
@@ -2223,16 +2287,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // In-App Download Trigger
   btnDownloadUpdate?.addEventListener('click', async () => {
     if (!appUpdateData || !appUpdateData.downloadUrl) {
-      showToast('No se encontró URL de actualización', 'error');
+      showToast(T('toast_no_update_url'), 'error');
       return;
     }
 
     try {
       btnDownloadUpdate.disabled = true;
-      btnDownloadUpdate.textContent = 'Descargando...';
+      btnDownloadUpdate.textContent = T('btn_downloading');
       if (updateProgressWrap) updateProgressWrap.style.display = 'block';
       if (updateProgressFill) updateProgressFill.style.width = '0%';
-      if (updateProgressInfo) updateProgressInfo.textContent = 'Iniciando descarga de la actualización...';
+      if (updateProgressInfo) updateProgressInfo.textContent = T('upd_starting');
 
       const res = await fetch('/api/app-updates/download', {
         method: 'POST',
@@ -2243,7 +2307,7 @@ document.addEventListener('DOMContentLoaded', () => {
         })
       });
 
-      if (!res.ok) throw new Error('Error al iniciar la descarga');
+      if (!res.ok) throw new Error(T('upd_download_failed'));
 
       // Poll progress every 400ms
       clearInterval(updatePollInterval);
@@ -2257,31 +2321,36 @@ document.addEventListener('DOMContentLoaded', () => {
             const mbDown = (prog.downloadedBytes / (1024 * 1024)).toFixed(1);
             const mbTotal = (prog.totalBytes / (1024 * 1024)).toFixed(1);
             if (updateProgressInfo) {
-              updateProgressInfo.textContent = `Descargando... ${prog.percent}% (${mbDown} MB de ${mbTotal} MB @ ${prog.speedMb || '0.0'} MB/s)`;
+              updateProgressInfo.textContent = T('upd_downloading', {
+                percent: prog.percent,
+                done: mbDown,
+                total: mbTotal,
+                speed: prog.speedMb || '0.0'
+              });
             }
           } else if (prog.status === 'completed') {
             clearInterval(updatePollInterval);
             if (updateProgressFill) updateProgressFill.style.width = '100%';
-            if (updateProgressInfo) updateProgressInfo.textContent = '✓ ¡Descarga completa! Todo listo para actualizar.';
+            if (updateProgressInfo) updateProgressInfo.textContent = T('upd_complete');
             btnDownloadUpdate.style.display = 'none';
             if (btnApplyUpdateRestart) {
               btnApplyUpdateRestart.style.display = 'inline-flex';
             }
-            showToast('Actualización descargada con éxito', 'success');
+            showToast(T('toast_download_ok'), 'success');
           } else if (prog.status === 'error') {
             clearInterval(updatePollInterval);
-            if (updateProgressInfo) updateProgressInfo.textContent = `❌ Error: ${prog.error || 'Fallo de descarga'}`;
+            if (updateProgressInfo) updateProgressInfo.textContent = T('upd_error', { message: prog.error || T('upd_download_failed') });
             btnDownloadUpdate.disabled = false;
-            btnDownloadUpdate.textContent = 'Reintentar Descarga';
-            showToast(`Fallo al descargar actualización: ${prog.error}`, 'error');
+            btnDownloadUpdate.textContent = T('upd_btn_retry_download');
+            showToast(T('toast_download_fail', { message: prog.error || T('upd_download_failed') }), 'error');
           }
         } catch (_) {}
       }, 400);
 
     } catch (err) {
-      showToast(`Error al iniciar descarga: ${err.message}`, 'error');
+      showToast(T('toast_download_start_error', { message: err.message }), 'error');
       btnDownloadUpdate.disabled = false;
-      btnDownloadUpdate.textContent = '⚡ Actualizar dentro de la App';
+      btnDownloadUpdate.textContent = T('upd_btn_update_app');
     }
   });
 
@@ -2289,18 +2358,18 @@ document.addEventListener('DOMContentLoaded', () => {
   btnApplyUpdateRestart?.addEventListener('click', async () => {
     try {
       btnApplyUpdateRestart.disabled = true;
-      btnApplyUpdateRestart.textContent = 'Reiniciando KoRForge...';
-      showToast('Cerrando KoRForge y aplicando actualización...', 'info');
+      btnApplyUpdateRestart.textContent = T('upd_btn_restarting');
+      showToast(T('toast_applying'), 'info');
 
       const res = await fetch('/api/app-updates/apply', { method: 'POST' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || `HTTP ${res.status}`);
+        throw new Error(data.code ? T('err_' + data.code) : (data.error || `HTTP ${res.status}`));
       }
     } catch (err) {
-      showToast(`Error al reiniciar: ${err.message}`, 'error');
+      showToast(T('toast_restart_error', { message: err.message }), 'error');
       btnApplyUpdateRestart.disabled = false;
-      btnApplyUpdateRestart.textContent = '🔄 Reintentar Reinicio';
+      btnApplyUpdateRestart.textContent = T('upd_btn_retry_restart');
     }
   });
 
@@ -2318,7 +2387,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnCloseBulkModalX = document.getElementById('btnCloseBulkModalX');
 
   async function checkAddonUpdates(silent = false) {
-    if (!silent) showToast('Buscando actualizaciones de addons en CurseForge...', 'info');
+    if (!silent) showToast(T('toast_checking_addons'), 'info');
     try {
       const res = await fetch(`/api/addons/check-updates?gameId=${encodeURIComponent(currentActiveGame)}`);
       const data = await res.json();
@@ -2327,12 +2396,12 @@ document.addEventListener('DOMContentLoaded', () => {
       if (availableAddonUpdates.length > 0) {
         if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'flex';
         if (bulkUpdateSummary) {
-          bulkUpdateSummary.textContent = `Hay ${availableAddonUpdates.length} addon(s) con versión más reciente lista para instalar.`;
+          bulkUpdateSummary.textContent = T('bulk_summary_count', { count: availableAddonUpdates.length });
         }
-        if (!silent) showToast(`¡${availableAddonUpdates.length} actualizaciones disponibles!`, 'warning');
+        if (!silent) showToast(T('toast_updates_found', { count: availableAddonUpdates.length }), 'warning');
       } else {
         if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
-        if (!silent) showToast('Todos tus addons están al día ✓', 'success');
+        if (!silent) showToast(T('toast_all_up_to_date'), 'success');
       }
 
       // Re-render installed addons to show update pills
@@ -2340,7 +2409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const filter = activePill ? activePill.getAttribute('data-filter') : 'all';
       renderInstalledAddons(filter, document.getElementById('searchInput')?.value || '');
     } catch (err) {
-      if (!silent) showToast('Error al comprobar actualizaciones de addons', 'error');
+      if (!silent) showToast(T('toast_check_addons_error'), 'error');
     }
   }
 
@@ -2351,7 +2420,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (bulkUpdateModal) bulkUpdateModal.style.display = 'flex';
     if (bulkProgressFill) bulkProgressFill.style.width = '0%';
-    if (bulkProgressInfo) bulkProgressInfo.textContent = `Actualizando 0 de ${availableAddonUpdates.length} addons...`;
+    if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_progress', { done: 0, total: availableAddonUpdates.length });
     if (bulkUpdateResultsList) bulkUpdateResultsList.innerHTML = '';
     if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'none';
     if (btnCloseBulkModalX) btnCloseBulkModalX.style.display = 'none';
@@ -2369,13 +2438,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await res.json();
       if (bulkProgressFill) bulkProgressFill.style.width = '100%';
       if (bulkProgressInfo) {
-        bulkProgressInfo.textContent = `✓ Actualización completada: ${data.updatedCount} actualizados, ${data.failedCount} errores.`;
+        bulkProgressInfo.textContent = T('bulk_done', { updated: data.updatedCount, failed: data.failedCount });
       }
 
       if (bulkUpdateResultsList && Array.isArray(data.results)) {
         bulkUpdateResultsList.innerHTML = data.results.map(r => `
           <div style="padding: 4px 0; color: ${r.success ? '#4ade80' : '#f87171'};">
-            ${r.success ? '✓' : '✗'} <strong>${r.name}</strong> ${r.success ? 'actualizado con éxito' : `(${r.error})`}
+            ${r.success ? '✓' : '✗'} <strong>${r.name}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? T('err_' + r.code) : r.error})`}
           </div>
         `).join('');
       }
@@ -2387,7 +2456,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       loadInstalledAddons();
     } catch (err) {
-      if (bulkProgressInfo) bulkProgressInfo.textContent = `Error en actualización masiva: ${err.message}`;
+      if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_error', { message: err.message });
       if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'inline-flex';
     }
   });
@@ -2408,7 +2477,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const ver = btn.getAttribute('data-ver');
     const fileId = btn.getAttribute('data-fileid');
 
-    showToast(`Actualizando "${name}" a ${ver}...`, 'info');
+    showToast(T('toast_updating_one', { name, version: ver }), 'info');
     try {
       const res = await fetch('/api/install-file', {
         method: 'POST',
@@ -2417,15 +2486,15 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.success) {
-        showToast(`"${name}" actualizado con éxito`, 'success');
+        showToast(T('toast_updated_one', { name }), 'success');
         availableAddonUpdates = availableAddonUpdates.filter(u => u.modId != modId);
         if (availableAddonUpdates.length === 0 && bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
         loadInstalledAddons();
       } else {
-        throw new Error(data.error || 'Error al actualizar');
+        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_update_one_error', { message: '' })));
       }
     } catch (err) {
-      showToast(`Error al actualizar addon: ${err.message}`, 'error');
+      showToast(T('toast_update_one_error', { message: err.message }), 'error');
     }
   });
 
@@ -2455,22 +2524,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentAnalyzedProfile = null;
 
-  btnExportProfile?.addEventListener('click', async () => {
+  // Exporta el pack: reutilizable al repintar (el título por defecto se traduce)
+  let lastExportProfile = null;
+
+  async function exportProfile() {
     try {
-      const activeGameObj = currentGamesData[currentActiveGame];
-      const title = exportProfileTitle?.value || `Pack de Addons (${activeGameObj?.name || 'WoW'})`;
+      const title = exportProfileTitle?.value || T('pack_default_title', { game: gameLabel(currentActiveGame) });
       const res = await fetch(`/api/profiles/export?gameId=${encodeURIComponent(currentActiveGame)}&title=${encodeURIComponent(title)}`);
       const data = await res.json();
 
       if (data.code && exportProfileCode) {
+        lastExportProfile = data.profile;
         exportProfileCode.value = data.code;
         if (exportProfileTitle) exportProfileTitle.value = data.profile.title;
         if (exportProfileModal) exportProfileModal.style.display = 'flex';
       }
     } catch (err) {
-      showToast(`Error al generar pack: ${err.message}`, 'error');
+      showToast(T('toast_pack_error', { message: err.message }), 'error');
     }
-  });
+  }
+
+  btnExportProfile?.addEventListener('click', exportProfile);
 
   const closeExportModal = () => { if (exportProfileModal) exportProfileModal.style.display = 'none'; };
   btnCloseExportModal?.addEventListener('click', closeExportModal);
@@ -2478,7 +2552,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnCopyProfileCode?.addEventListener('click', () => {
     if (exportProfileCode) {
       navigator.clipboard.writeText(exportProfileCode.value);
-      showToast('¡Código del pack copiado al portapapeles! Compártelo por chat o Discord', 'success');
+      showToast(T('toast_pack_copied'), 'success');
     }
   });
 
@@ -2499,7 +2573,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAnalyzeProfile?.addEventListener('click', async () => {
     const raw = importProfileInput?.value?.trim();
     if (!raw) {
-      showToast('Pega un código de pack válido', 'warning');
+      showToast(T('toast_need_code'), 'warning');
       return;
     }
 
@@ -2510,42 +2584,54 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ code: raw, gameId: currentActiveGame })
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.error);
+      if (!data.success) throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_pack_analyze_error', { message: '' })));
 
       currentAnalyzedProfile = data.analysis;
       if (importInputPhase) importInputPhase.style.display = 'none';
       if (importAnalysisPhase) importAnalysisPhase.style.display = 'block';
 
-      if (profileAnalysisSummary) {
-        profileAnalysisSummary.innerHTML = `
-          <strong>📦 ${data.analysis.title}</strong> (${data.analysis.gameName})<br>
-          <span style="font-size: 0.82rem; opacity: 0.9;">Total de addons: ${data.analysis.totalCount} | Ya instalados: ${data.analysis.alreadyInstalledCount} | <strong>Faltan por instalar: ${data.analysis.missingCount}</strong></span>
-        `;
-      }
-
-      if (profileMissingList) {
-        if (data.analysis.missingCount === 0) {
-          profileMissingList.innerHTML = `<div style="color: #4ade80; padding: 10px;">✓ ¡Ya tienes instalados todos los addons de este pack!</div>`;
-          if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'none';
-        } else {
-          profileMissingList.innerHTML = data.analysis.missing.map(m => `
-            <div style="padding: 6px 4px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);">
-              <div>
-                <strong>${m.title || m.name}</strong>
-                <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 6px;">v${m.version || '1.0.0'}</span>
-              </div>
-              <span style="font-size: 0.72rem; color: ${m.canInstall ? '#fbbf24' : '#f87171'};">
-                ${m.canInstall ? '⚡ Listo para instalar' : '⚠️ Manual'}
-              </span>
-            </div>
-          `).join('');
-          if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'inline-flex';
-        }
-      }
+      renderProfileAnalysis(data.analysis);
     } catch (err) {
-      showToast(`Error al analizar pack: ${err.message}`, 'error');
+      showToast(T('toast_pack_analyze_error', { message: err.message }), 'error');
     }
   });
+
+  // Pinta el resumen del pack analizado (se repinta al cambiar de idioma)
+  function renderProfileAnalysis(analysis) {
+    if (!analysis) return;
+
+    if (profileAnalysisSummary) {
+      profileAnalysisSummary.innerHTML = `
+        <strong>📦 ${analysis.title}</strong> (${analysis.gameName})<br>
+        <span style="font-size: 0.82rem; opacity: 0.9;">
+          ${T('pack_summary_total', { total: analysis.totalCount })} |
+          ${T('pack_summary_have', { count: analysis.alreadyInstalledCount })} |
+          <strong>${T('pack_summary_missing', { count: analysis.missingCount })}</strong>
+        </span>
+      `;
+    }
+
+    if (!profileMissingList) return;
+
+    if (analysis.missingCount === 0) {
+      profileMissingList.innerHTML = `<div style="color: #4ade80; padding: 10px;">${T('pack_all_installed')}</div>`;
+      if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'none';
+      return;
+    }
+
+    profileMissingList.innerHTML = analysis.missing.map(m => `
+      <div style="padding: 6px 4px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.05);">
+        <div>
+          <strong>${m.title || m.name}</strong>
+          <span style="font-size: 0.75rem; color: #94a3b8; margin-left: 6px;">v${m.version || '1.0.0'}</span>
+        </div>
+        <span style="font-size: 0.72rem; color: ${m.canInstall ? '#fbbf24' : '#f87171'};">
+          ${m.canInstall ? T('pack_ready') : T('pack_manual')}
+        </span>
+      </div>
+    `).join('');
+    if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'inline-flex';
+  }
 
   btnInstallMissingAddons?.addEventListener('click', async () => {
     if (!currentAnalyzedProfile || !currentAnalyzedProfile.missing || currentAnalyzedProfile.missing.length === 0) return;
@@ -2553,7 +2639,7 @@ document.addEventListener('DOMContentLoaded', () => {
     btnInstallMissingAddons.disabled = true;
     if (importProgressWrap) importProgressWrap.style.display = 'block';
     if (importProgressFill) importProgressFill.style.width = '20%';
-    if (importProgressInfo) importProgressInfo.textContent = 'Descargando e instalando addons del pack...';
+    if (importProgressInfo) importProgressInfo.textContent = T('pack_installing');
 
     try {
       const res = await fetch('/api/profiles/install-missing', {
@@ -2567,18 +2653,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const data = await res.json();
       if (importProgressFill) importProgressFill.style.width = '100%';
-      if (importProgressInfo) importProgressInfo.textContent = `✓ Instalados ${data.installedCount} addons con éxito.`;
+      if (importProgressInfo) importProgressInfo.textContent = T('toast_pack_installed', { count: data.installedCount });
 
-      showToast(`¡${data.installedCount} addons instalados desde el pack!`, 'success');
+      showToast(T('toast_pack_installed_toast', { count: data.installedCount }), 'success');
       setTimeout(() => {
         closeImportModal();
         loadInstalledAddons();
       }, 1000);
     } catch (err) {
-      showToast(`Error al instalar addons del pack: ${err.message}`, 'error');
+      showToast(T('toast_pack_install_error', { message: err.message }), 'error');
       btnInstallMissingAddons.disabled = false;
     }
   });
+
+  // --- Repintado completo al cambiar de idioma --------------------------
+  // Se ejecuta después de que i18n.js haya traducido el HTML estático: aquí se
+  // vuelve a pintar TODO lo que app.js genera por su cuenta.
+  function refrescarTextosDinamicos() {
+    // 0. Interfaz nativa (bandeja del sistema) al mismo idioma
+    if (window.electronAPI && typeof window.electronAPI.setLanguage === 'function' && window.I18N) {
+      try { window.electronAPI.setLanguage(window.I18N.getLanguage()); } catch (_) {}
+    }
+
+    // 1. Subtítulos con el nombre del cliente activo
+    const addonsSub = document.getElementById('addonsSubtitle');
+    if (addonsSub) addonsSub.textContent = T('addons_subtitle', { game: gameLabel(currentActiveGame) });
+    const backupsSub = document.querySelector('#pane-backups .page-subtitle');
+    if (backupsSub) backupsSub.textContent = T('vault_subtitle_game', { game: gameLabel(currentActiveGame) });
+
+    // 2. Listas
+    const activePill = document.querySelector('.filter-pills .pill.active');
+    const filter = activePill ? activePill.getAttribute('data-filter') : 'all';
+    if (addonsGrid) renderInstalledAddons(filter, document.getElementById('searchInput')?.value || '');
+    if (favoritesTabGrid) renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
+    if (gamesManagementList && Object.keys(currentGamesData).length) {
+      renderGamesManagement(currentGamesData, currentActiveGame);
+    }
+
+    // 3. Tarjetas del catálogo (o de favoritos, según lo último consultado)
+    if (cfResultsGrid) {
+      if (lastCatalogMode === 'favorites' && lastCatalogResults.length === 0) {
+        renderFavoritesCatalog(cfSearchInput ? cfSearchInput.value : '');
+      } else if (lastCatalogResults.length > 0) {
+        cfResultsInfo.textContent = lastCatalogMode === 'favorites'
+          ? T('results_favorites', { count: lastCatalogResults.length })
+          : (cfSearchInput && cfSearchInput.value.trim()
+              ? T('results_for', { query: cfSearchInput.value.trim() })
+              : T('results_featured'));
+        renderCatalogCards(lastCatalogResults);
+      }
+    }
+
+    // 4. Bóveda
+    if (backupsList) loadBackups();
+
+    // 5. Ficha abierta
+    if (cfDetailView && cfDetailView.style.display !== 'none' && currentDetailMod) {
+      renderDetailHero(currentDetailMod, findInstalledAddon(currentDetailMod));
+      renderDetailGallery(currentDetailMod);
+      if (lastDetailFiles.length) renderDetailFiles(lastDetailFiles, lastDetailAddonName);
+      if (detailHtmlBody) {
+        detailHtmlBody.innerHTML = (isTranslated && currentTranslatedDesc) ? currentTranslatedDesc : (currentOriginalDesc || `<p>${T('detail_loading_desc')}</p>`);
+      }
+      updateTranslateButtonUI(false, isTranslated);
+      setAddressBar('📦', T('topbar_addon', { name: currentDetailMod.name }));
+    } else {
+      // Sin ensuciar el historial: solo se repinta la barra de dirección
+      const activeTabEl = document.querySelector('.nav-item.active');
+      const curTab = activeTabEl ? activeTabEl.getAttribute('data-tab') : 'search';
+      const bar = addressBarFor(curTab);
+      setAddressBar(bar.icon, bar.text);
+    }
+
+    // 6. Botón de versión del menú lateral
+    if (appUpdateData && appUpdateData.updateAvailable) {
+      pintarBotonVersion('update', versionInstalada, appUpdateData.remoteVersion);
+    } else if (btnAppUpdate && btnAppUpdate.style.display !== 'none') {
+      pintarBotonVersion('latest', versionInstalada);
+    }
+
+    // 7. Modales abiertos
+    if (updateModal && updateModal.style.display === 'flex') abrirModalActualizacion();
+    if (importAnalysisPhase && importAnalysisPhase.style.display !== 'none' && currentAnalyzedProfile) {
+      renderProfileAnalysis(currentAnalyzedProfile);
+    }
+    if (bulkUpdateSummary && bulkUpdateBanner && bulkUpdateBanner.style.display !== 'none') {
+      bulkUpdateSummary.textContent = T('bulk_summary_count', { count: availableAddonUpdates.length });
+    }
+  }
 
   // App Initialization
   async function initApp() {
@@ -2606,6 +2768,8 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         versionInstalada = String((await window.electronAPI.getAppVersion()) || '');
         pintarBotonVersion('latest', versionInstalada);
+        const aboutVer = document.getElementById('aboutVersionVal');
+        if (aboutVer) aboutVer.textContent = versionLimpia(versionInstalada);
       } catch (_) {}
     }
     checkAppUpdates();

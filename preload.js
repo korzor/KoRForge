@@ -7,5 +7,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   isMaximized: () => ipcRenderer.invoke('window-is-maximized'),
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   onMaximizedChange: (callback) => ipcRenderer.on('window-maximized-change', (_, isMax) => callback(isMax)),
-  openExternal: (url) => ipcRenderer.send('open-external', url)
+  openExternal: (url) => ipcRenderer.send('open-external', url),
+  // Traduce la interfaz nativa (bandeja del sistema) al idioma elegido en la app
+  setLanguage: (lang) => ipcRenderer.send('korforge:set-language', lang)
 });

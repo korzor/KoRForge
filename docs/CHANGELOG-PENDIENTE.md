@@ -48,7 +48,14 @@ como pendiente de la próxima etiqueta, cuando el dueño decida cuál es.
 
 ## Próxima versión
 
-*(vacío por ahora: lo que se haga se apunta aquí hasta que el dueño decida la etiqueta)*
+### 🌍 1. Idiomas completos de verdad (los cinco, en toda la app)
+- **Todo el texto pasa por el diccionario:** antes solo una parte del HTML estaba traducida y el resto (barra de búsqueda, filtros, categorías, tarjetas, fichas, modales, toasts, tooltips, confirmaciones y ajustes) estaba fijo en español. Ahora vive en `public/i18n.js`: **470 claves × 5 idiomas** (inglés, español, gallego, francés e italiano).
+- **Al cambiar de idioma cambia absolutamente todo**, sin reiniciar: `app.js` escucha `korforge:languageChanged` y repinta listas, tarjetas, la ficha abierta, los modales abiertos, la barra de dirección y el botón de versión.
+- **Fechas y números** por idioma (`I18N.fmtDate`, `fmtNumber`, `relativeDate`): ya no hay `es-ES` escrito a mano.
+- **El backend no manda frases:** el escáner devuelve códigos de compatibilidad (`compat_forever_ok`, `compat_era_retail`…) y el servidor devuelve un `code` en sus errores; el cliente los traduce.
+- **La bandeja del sistema** (menú nativo de Electron) también cambia con el idioma.
+- **Guard proactivo:** `npm run i18n:check` comprueba que los cinco idiomas tienen las mismas claves, que ninguna clave usada falta y que no queda texto fijo ni en el HTML ni en `app.js`. Está **enganchado al release**: `scripts/release-github.js` aborta si falla. Además `npm run i18n:check:live` abre la app en Electron y lo comprueba en el DOM real.
+- Norma escrita en `docs/REGLAS-IDIOMAS.md`.
 
 ---
 

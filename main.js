@@ -215,16 +215,33 @@ function ensureServer() {
   return Promise.resolve();
 }
 
-function createTray() {
-  if (tray) return;
-  try {
-    const iconPath = path.join(__dirname, 'korforge.ico');
-    const trayImg = nativeImage.createFromPath(iconPath);
-    tray = new Tray(trayImg);
+// --- Textos de la bandeja del sistema (interfaz nativa) -------------------
+// Las etiquetas del menú de la bandeja también existen en los cinco idiomas
+// (docs/REGLAS-IDIOMAS.md). El idioma lo manda la ventana al arrancar y al cambiarlo.
+const TRAY_TEXTS = {
+  en: { open: '⚡ Open KoRForge', close: 'Close KoRForge', tooltip: 'KoRForge - WoW Forever Addon Forge' },
+  es: { open: '⚡ Abrir KoRForge', close: 'Cerrar KoRForge', tooltip: 'KoRForge - Forja de Addons de WoW Forever' },
+  gl: { open: '⚡ Abrir KoRForge', close: 'Pechar KoRForge', tooltip: 'KoRForge - Forxa de Addons de WoW Forever' },
+  fr: { open: '⚡ Ouvrir KoRForge', close: 'Fermer KoRForge', tooltip: 'KoRForge - Forge d’Addons pour WoW Forever' },
+  it: { open: '⚡ Apri KoRForge', close: 'Chiudi KoRForge', tooltip: 'KoRForge - Fucina di Addon per WoW Forever' }
+};
 
-    const contextMenu = Menu.buildFromTemplate([
+let trayLang = TRAY_TEXTS[loadConfigSync().language] ? loadConfigSync().language : 'en';
+
+function trayTexts() {
+  return TRAY_TEXTS[trayLang] || TRAY_TEXTS.en;
+}
+
+function applyTrayLanguage(lang) {
+  if (!TRAY_TEXTS[lang]) lang = 'en';
+  trayLang = lang;
+  if (!tray) return;
+  const texts = trayTexts();
+  try {
+    tray.setToolTip(texts.tooltip);
+    tray.setContextMenu(Menu.buildFromTemplate([
       {
-        label: '⚡ Abrir KoRForge',
+        label: texts.open,
         click: () => {
           if (win) {
             win.show();
@@ -234,7 +251,39 @@ function createTray() {
       },
       { type: 'separator' },
       {
-        label: 'Cerrar KoRForge',
+        label: texts.close,
+        click: () => {
+          isQuitting = true;
+          app.quit();
+        }
+      }
+    ]));
+  } catch (err) {
+    console.warn('[KoRForge] No se pudo actualizar la bandeja:', err.message);
+  }
+}
+
+function createTray() {
+  if (tray) return;
+  try {
+    const iconPath = path.join(__dirname, 'korforge.ico');
+    const trayImg = nativeImage.createFromPath(iconPath);
+    tray = new Tray(trayImg);
+
+    const texts = trayTexts();
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: texts.open,
+        click: () => {
+          if (win) {
+            win.show();
+            win.focus();
+          }
+        }
+      },
+      { type: 'separator' },
+      {
+        label: texts.close,
         click: () => {
           isQuitting = true;
           app.quit();
@@ -242,7 +291,7 @@ function createTray() {
       }
     ]);
 
-    tray.setToolTip('KoRForge - WoW Forever Addon Forge');
+    tray.setToolTip(texts.tooltip);
     tray.setContextMenu(contextMenu);
 
     tray.on('click', () => {
@@ -452,6 +501,11 @@ ipcMain.on('open-external', (e, url) => {
   if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
     shell.openExternal(url);
   }
+});
+
+// Idioma de la interfaz nativa (menú de la bandeja del sistema)
+ipcMain.on('korforge:set-language', (e, lang) => {
+  applyTrayLanguage(String(lang || 'en'));
 });
 
 app.whenReady().then(async () => {

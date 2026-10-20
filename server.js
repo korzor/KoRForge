@@ -284,7 +284,7 @@ app.post('/api/config/auto-detect', (req, res) => {
   const { rootDir } = req.body;
   const targetRoot = (rootDir || config.rootWoWDir || '').trim();
   if (!targetRoot || !fs.existsSync(targetRoot)) {
-    return res.status(400).json({ error: 'Directorio raíz no existe o no es accesible' });
+    return res.status(400).json({ error: 'Directorio raíz no existe o no es accesible', code: 'err_root_not_found' });
   }
 
   config.rootWoWDir = targetRoot;
@@ -333,7 +333,7 @@ app.get('/api/favorites', (req, res) => {
 
 app.post('/api/favorites/toggle', (req, res) => {
   const { mod, gameId } = req.body;
-  if (!mod || !mod.id) return res.status(400).json({ error: 'mod con id requerido' });
+  if (!mod || !mod.id) return res.status(400).json({ error: 'mod con id requerido', code: 'err_mod_id_required' });
   const targetGame = gameId || config.activeGame || 'forever';
 
   if (!config.favoritesByGame) config.favoritesByGame = {};
@@ -474,7 +474,7 @@ app.post('/api/addons/update-all', async (req, res) => {
     const targetGame = gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(targetGame);
     if (!dir || !fs.existsSync(dir)) {
-      return res.status(400).json({ error: 'Ruta de WoW no disponible' });
+      return res.status(400).json({ error: 'Ruta de WoW no disponible', code: 'err_no_wow_path' });
     }
 
     const listToUpdate = Array.isArray(updates) ? updates : [];
@@ -512,9 +512,9 @@ app.post('/api/addons/update-all', async (req, res) => {
 app.post('/api/addons/toggle', (req, res) => {
   try {
     const { folderName, gameId } = req.body;
-    if (!folderName) return res.status(400).json({ error: 'folderName requerido' });
+    if (!folderName) return res.status(400).json({ error: 'folderName requerido', code: 'err_folder_required' });
     const dir = getAddonsDir(gameId);
-    if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego' });
+    if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
     const result = scanner.toggleAddon(dir, folderName);
     res.json(result);
   } catch (err) {
@@ -527,7 +527,7 @@ app.delete('/api/addons/:folderName', (req, res) => {
     const { folderName } = req.params;
     const gameId = req.query.gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(gameId);
-    if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego' });
+    if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
     const result = scanner.deleteAddon(dir, folderName, gameId);
     res.json(result);
   } catch (err) {
@@ -541,7 +541,7 @@ app.post('/api/addons/open-folder', (req, res) => {
   const targetGame = config.games[gKey] || config.games.forever;
   const targetPath = (targetGame?.path || '').trim();
   if (!targetPath) {
-    return res.status(400).json({ error: 'No hay ruta configurada para este juego.' });
+    return res.status(400).json({ error: 'No hay ruta configurada para este juego.', code: 'err_game_path_missing' });
   }
   const addonsPath = path.join(targetPath, 'Interface', 'AddOns');
   let dirToOpen = addonsPath;
@@ -630,7 +630,7 @@ app.get('/api/mod/:modId/files', async (req, res) => {
 app.post('/api/translate-mod', async (req, res) => {
   try {
     const { modId, summary, html, targetLang } = req.body;
-    if (!modId) return res.status(400).json({ error: 'modId requerido' });
+    if (!modId) return res.status(400).json({ error: 'modId requerido', code: 'err_mod_id_required' });
     const result = await translator.translateMod({
       modId,
       summary,
@@ -658,18 +658,18 @@ app.get('/api/mod/:modId/translation', async (req, res) => {
 app.post('/api/install-curseforge', async (req, res) => {
   try {
     const { modId, name, gameId } = req.body;
-    if (!modId) return res.status(400).json({ error: 'modId requerido' });
+    if (!modId) return res.status(400).json({ error: 'modId requerido', code: 'err_mod_id_required' });
 
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
-      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.' });
+      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.', code: 'err_game_path_missing' });
     }
 
     console.log(`[KoRForge] Obteniendo archivo para mod ${modId} (${name || 'Addon'}) en ${targetGame}...`);
     const fileInfo = await curseforge.getLatestFile(modId, targetGame);
     if (!fileInfo || !fileInfo.downloadUrl) {
-      return res.status(404).json({ error: 'No se encontró archivo compatible con el cliente de WoW activo (Forever / Classic). Para evitar errores LUA, no se instalarán versiones exclusivas de Retail.' });
+      return res.status(404).json({ error: 'No se encontró archivo compatible con el cliente de WoW activo (Forever / Classic). Para evitar errores LUA, no se instalarán versiones exclusivas de Retail.', code: 'err_no_compatible_file' });
     }
 
     console.log(`[KoRForge] Descargando desde CDN: ${fileInfo.downloadUrl}`);
@@ -729,12 +729,12 @@ app.post('/api/install-curseforge', async (req, res) => {
 app.post('/api/install-file', async (req, res) => {
   try {
     const { downloadUrl, name, gameId, modId, version, fileId } = req.body;
-    if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida' });
+    if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida', code: 'err_download_url_required' });
 
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
-      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.' });
+      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.', code: 'err_game_path_missing' });
     }
 
     console.log(`[KoRForge] Instalando archivo específico en ${targetGame}: ${downloadUrl}`);
@@ -765,12 +765,12 @@ app.post('/api/install-file', async (req, res) => {
 app.post('/api/install-url', async (req, res) => {
   try {
     const { url, nameHint, gameId } = req.body;
-    if (!url) return res.status(400).json({ error: 'URL requerida' });
+    if (!url) return res.status(400).json({ error: 'URL requerida', code: 'err_url_required' });
 
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
-      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.' });
+      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.', code: 'err_game_path_missing' });
     }
 
     console.log(`[KoRForge] Instalando desde URL/GitHub en ${targetGame}: ${url}`);
@@ -798,7 +798,7 @@ app.post('/api/backups/create', (req, res) => {
     const gameId = req.body.gameId || config.activeGame || 'forever';
     const wtfDir = getWtfDir(gameId);
     if (!wtfDir) {
-      return res.status(400).json({ error: 'Ruta no configurada para este juego.' });
+      return res.status(400).json({ error: 'Ruta no configurada para este juego.', code: 'err_path_unavailable' });
     }
     const result = backup.createBackup(wtfDir, gameId);
     res.json(result);
@@ -810,11 +810,11 @@ app.post('/api/backups/create', (req, res) => {
 app.post('/api/backups/restore', (req, res) => {
   try {
     const { fileName, gameId } = req.body;
-    if (!fileName) return res.status(400).json({ error: 'fileName requerido' });
+    if (!fileName) return res.status(400).json({ error: 'fileName requerido', code: 'err_filename_required' });
     const targetGame = gameId || config.activeGame || 'forever';
     const wtfDir = getWtfDir(targetGame);
     if (!wtfDir) {
-      return res.status(400).json({ error: 'Ruta no configurada para este juego.' });
+      return res.status(400).json({ error: 'Ruta no configurada para este juego.', code: 'err_path_unavailable' });
     }
     const result = backup.restoreBackup(fileName, wtfDir, targetGame);
     res.json(result);
@@ -911,7 +911,8 @@ app.get('/api/app-updates/check', async (req, res) => {
     checked: false,
     updateAvailable: false,
     currentVersion: APP_VERSION,
-    error: 'No se pudo consultar GitHub Releases. Comprueba tu conexión a internet e inténtalo de nuevo.'
+    error: 'No se pudo consultar GitHub Releases. Comprueba tu conexión a internet e inténtalo de nuevo.',
+    code: 'err_github_unreachable'
   });
 });
 
@@ -919,7 +920,7 @@ app.get('/api/app-updates/check', async (req, res) => {
 app.post('/api/app-updates/download', async (req, res) => {
   try {
     const { downloadUrl, version } = req.body;
-    if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida' });
+    if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida', code: 'err_download_url_required' });
     updater.startUpdateDownload(downloadUrl, version).catch(err => {
       console.error('[KoRForge Update] Error en descarga de fondo:', err.message);
     });
@@ -950,7 +951,7 @@ app.get('/api/profiles/export', (req, res) => {
     const gameId = req.query.gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(gameId);
     if (!dir || !fs.existsSync(dir)) {
-      return res.status(400).json({ error: 'Ruta del juego no configurada' });
+      return res.status(400).json({ error: 'Ruta del juego no configurada', code: 'err_game_path_missing' });
     }
     const scanned = scanner.scanAddons(dir, gameId);
     const gameInfo = config.games[gameId] || { name: 'WoW Forever' };
@@ -985,7 +986,7 @@ app.post('/api/profiles/install-missing', async (req, res) => {
     const targetGame = gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(targetGame);
     if (!dir || !fs.existsSync(dir)) {
-      return res.status(400).json({ error: 'Ruta no configurada para este juego' });
+      return res.status(400).json({ error: 'Ruta no configurada para este juego', code: 'err_path_unavailable' });
     }
 
     const toInstall = Array.isArray(missingAddons) ? missingAddons : [];
@@ -1007,7 +1008,7 @@ app.post('/api/profiles/install-missing', async (req, res) => {
           });
           results.push({ name: item.name, success: true, folders: instRes.installedFolders });
         } else {
-          results.push({ name: item.name, success: false, error: 'No se encontró archivo descargable' });
+          results.push({ name: item.name, success: false, error: 'No se encontró archivo descargable', code: 'err_no_downloadable' });
         }
       } catch (err) {
         results.push({ name: item.name, success: false, error: err.message });

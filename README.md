@@ -73,7 +73,8 @@ Cada cliente mantiene su propio catálogo de addons instalados, rutas y copias d
 
 ### 🌐 10. Internacionalización (i18n)
 - Interfaz disponible en **Español**, **English**, **Galego**, **Français** e **Italiano**.
-- Cambio dinámico de idioma sin reiniciar la app.
+- Cambio dinámico de idioma sin reiniciar la app: **todo** el texto cambia al instante (botones, tooltips, filtros, fichas, avisos, modales, fechas y el menú de la bandeja del sistema).
+- Nada de texto fijo en el código: vive en `public/i18n.js` con las mismas claves en los cinco idiomas, y `npm run i18n:check` lo verifica antes de cada release (ver `docs/REGLAS-IDIOMAS.md`).
 
 ---
 

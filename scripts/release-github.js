@@ -9,6 +9,16 @@ const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'u
 const version = pkg.version || '1.0.0';
 const tagName = `v${version}`;
 
+// 0. Puerta de idiomas (docs/REGLAS-IDIOMAS.md): no se publica con textos sin traducir.
+console.log('\n🌍 [0/3] Comprobando que todos los idiomas están completos...');
+try {
+  execSync('node scripts/verificar-i18n.js', { cwd: projectDir, stdio: 'inherit' });
+} catch (_) {
+  console.error('\n❌ Release cancelada: hay textos de interfaz sin traducir o claves que faltan.');
+  console.error('   Arregla lo que señala el verificador y vuelve a lanzar la release.');
+  process.exit(1);
+}
+
 // 1. Cerrar instancias previas para liberar bloqueos de archivos en release/
 try {
   execSync('taskkill /F /IM KoRForge.exe /T 2>nul || exit 0', { shell: 'cmd.exe', stdio: 'ignore' });

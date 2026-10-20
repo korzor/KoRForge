@@ -80,13 +80,13 @@ function parseTocFile(filePath) {
   }
 }
 
-// Audit interface number against active game client flavor
+// Audit interface number against active game client flavor.
+// Devuelve un CÓDIGO (no texto): el cliente traduce con I18N (compat_<code>_badge/_label).
 function auditCompatibility(rawInterface, gameId = 'forever') {
   if (!rawInterface || !rawInterface.trim()) {
     return {
       status: 'unknown',
-      badge: '❓ Sin versión',
-      label: 'Cabecera ## Interface no especificada',
+      code: 'missing_header',
       interfaces: []
     };
   }
@@ -95,9 +95,8 @@ function auditCompatibility(rawInterface, gameId = 'forever') {
   if (parts.length === 0) {
     return {
       status: 'unknown',
-      badge: '❓ Desconocido',
-      label: `Valor no numérico: ${rawInterface}`,
-      interfaces: []
+      code: 'unknown_value',
+      interfaces: [rawInterface]
     };
   }
 
@@ -106,112 +105,47 @@ function auditCompatibility(rawInterface, gameId = 'forever') {
   if (gameId === 'forever') {
     // Forever is 1.60.1 (interface 16001). Also supports classic 1.12 (11200)
     if (parts.includes(16001) || hasNum(16000, 16099) || parts.includes(11200)) {
-      return {
-        status: 'compatible',
-        badge: '✓ Compatible',
-        label: 'Certificado para cliente WoW Forever 1.60.1',
-        interfaces: parts
-      };
+      return { status: 'compatible', code: 'forever_ok', interfaces: parts };
     }
     // If it only has retail versions (110000+ or 120000+)
     if (hasNum(110000, 129999) && !hasNum(10000, 19999) && !hasNum(100000, 109999)) {
-      return {
-        status: 'incompatible',
-        badge: '❌ Incompatible',
-        label: 'Diseñado para WoW Retail (The War Within 11.x). Podría provocar errores LUA.',
-        interfaces: parts
-      };
+      return { status: 'incompatible', code: 'forever_retail', interfaces: parts };
     }
     // If it's classic era (115xx) or classic prog (404xx / 505xx)
     if (hasNum(11400, 11599) || hasNum(40000, 50999)) {
-      return {
-        status: 'warning',
-        badge: '⚠️ Aviso Classic',
-        label: 'Diseñado para WoW Classic / Era. Puede funcionar pero no incluye 16001 explícito.',
-        interfaces: parts
-      };
+      return { status: 'warning', code: 'forever_classic', interfaces: parts };
     }
-    return {
-      status: 'warning',
-      badge: '⚠️ Versión antigua',
-      label: `Interface ${parts.join(', ')} no coincide con 16001`,
-      interfaces: parts
-    };
+    return { status: 'warning', code: 'forever_mismatch', interfaces: parts };
   }
 
   if (gameId === 'retail') {
     if (hasNum(110000, 129999)) {
-      return {
-        status: 'compatible',
-        badge: '✓ Compatible',
-        label: 'Compatible con Retail (The War Within)',
-        interfaces: parts
-      };
+      return { status: 'compatible', code: 'retail_ok', interfaces: parts };
     }
-    return {
-      status: 'incompatible',
-      badge: '❌ Obsoleto / Classic',
-      label: 'No coincide con la interfaz de Retail 11.x',
-      interfaces: parts
-    };
+    return { status: 'incompatible', code: 'retail_mismatch', interfaces: parts };
   }
 
   if (gameId === 'classic_era') {
     if (hasNum(11400, 11599) || parts.includes(11200)) {
-      return {
-        status: 'compatible',
-        badge: '✓ Compatible',
-        label: 'Compatible con WoW Classic Era (Vanilla 1.15 / 1.12)',
-        interfaces: parts
-      };
+      return { status: 'compatible', code: 'era_ok', interfaces: parts };
     }
     if (hasNum(110000, 129999)) {
-      return {
-        status: 'incompatible',
-        badge: '❌ Incompatible',
-        label: 'Diseñado para WoW Retail (The War Within 11.x). Provocará errores en Classic Era.',
-        interfaces: parts
-      };
+      return { status: 'incompatible', code: 'era_retail', interfaces: parts };
     }
-    return {
-      status: 'warning',
-      badge: '⚠️ Posible incompatible',
-      label: 'No coincide con interfaz de Classic Era (115xx / 11200)',
-      interfaces: parts
-    };
+    return { status: 'warning', code: 'era_mismatch', interfaces: parts };
   }
 
   if (gameId === 'classic') {
     if (hasNum(30400, 50599)) {
-      return {
-        status: 'compatible',
-        badge: '✓ Compatible',
-        label: 'Compatible con WoW Classic Progression (Cata / MoP)',
-        interfaces: parts
-      };
+      return { status: 'compatible', code: 'prog_ok', interfaces: parts };
     }
     if (hasNum(110000, 129999)) {
-      return {
-        status: 'incompatible',
-        badge: '❌ Incompatible',
-        label: 'Diseñado para WoW Retail (The War Within 11.x). Provocará errores en Classic Prog.',
-        interfaces: parts
-      };
+      return { status: 'incompatible', code: 'prog_retail', interfaces: parts };
     }
-    return {
-      status: 'warning',
-      badge: '⚠️ Aviso de versión',
-      label: 'No coincide con interfaz de Classic Prog (30400 - 50599)',
-      interfaces: parts
-    };
+    return { status: 'warning', code: 'prog_mismatch', interfaces: parts };
   }
 
-  return {
-    status: 'compatible',
-    badge: '✓ Instalado',
-    label: `Interface: ${parts.join(', ')}`,
-    interfaces: parts
-  };
+  return { status: 'compatible', code: 'generic_ok', interfaces: parts };
 }
 
 // Parses and audits required dependencies
