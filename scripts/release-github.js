@@ -71,15 +71,13 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🖼️ Cambios y Novedades (v1.1.3 ➔ v1.1.4)
+### ☕ Cambios y Novedades (v1.1.4 ➔ v1.1.5)
 
-**Pantalla de arranque**
-- Al abrir KoRForge aparece una **pantalla con el logo** para que se vea que la app está cargando.
-- Se cierra sola en cuanto la ventana principal está lista (y si algo falla, a los 12 s como mucho).
-- No roba el foco ni aparece en la barra de tareas. Si arrancas en la bandeja, no sale.
-
-**Arranque más ligero**
-- Las **fuentes de Google ya no bloquean el primer pintado**: se cargan en segundo plano y, si la red va lenta o no hay, la app abre igual con las fuentes del sistema.
+**Botón de apoyo: ahora Buy Me a Coffee**
+- El botón pasa de Ko-fi a **Buy Me a Coffee**, con su morado y su taza.
+- Sigue **debajo de minimizar, maximizar y cerrar**, alineado con la barra y **sin pisar los logos de juego** (comprobado a 1120, 1280, 1400 y 1600 px).
+- Abre \`buymeacoffee.com/korzor\` en tu navegador externo.
+- Es nativo: no carga el botón de terceros, funciona sin conexión y está traducido a los cinco idiomas.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})

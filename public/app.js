@@ -193,11 +193,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
   }
 
-  // Botón de apoyo (Ko-fi), debajo de minimizar/maximizar/cerrar: abre la página en el navegador
-  const btnKofi = document.getElementById('btnKofi');
-  btnKofi?.addEventListener('click', (e) => {
+  // Botón de apoyo (Buy Me a Coffee), debajo de minimizar/maximizar/cerrar: abre la página en el navegador
+  const btnBmc = document.getElementById('btnBmc');
+  btnBmc?.addEventListener('click', (e) => {
     e.stopPropagation();
-    const url = 'https://ko-fi.com/korzor';
+    const url = 'https://www.buymeacoffee.com/korzor';
     if (window.electronAPI && typeof window.electronAPI.openExternal === 'function') {
       window.electronAPI.openExternal(url);
     } else {

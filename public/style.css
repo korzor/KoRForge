@@ -126,47 +126,52 @@ body.is-maximized .app-topbar {
   -webkit-app-region: no-drag;
 }
 
-/* Botón de apoyo (Ko-fi): debajo de minimizar / maximizar / cerrar.
+/* Botón de apoyo (Buy Me a Coffee): debajo de minimizar / maximizar / cerrar.
    Su borde derecho (right: 10px) marca la vertical con el botón Buscar y la barra de scroll:
-   .app-content usa el mismo relleno derecho de 10 px. Si se mueve uno, mover el otro. */
-.kofi-btn {
+   .app-content usa el mismo relleno derecho de 10 px. Si se mueve uno, mover el otro.
+   Colores de la marca: morado #BD5FFF con el texto en blanco (el amarillo #FFDD00 queda para la taza). */
+.bmc-btn {
   position: absolute;
   top: 36px;
   right: 10px;
   height: 28px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 0 12px;
+  gap: 5px;
+  padding: 0 9px;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(180deg, #2ac1ff 0%, #00b9fe 100%);
+  background: linear-gradient(180deg, #c77bff 0%, #bd5fff 100%);
   color: #fff;
   font-family: var(--font-sans);
-  font-size: 0.7rem;
+  /* Ajustado para que «Invitame a un café» (la etiqueta más larga de los cinco idiomas) quepa sin
+     pisar los pills de juego de la barra: comprobado a 1120, 1280, 1400 y 1600 px. */
+  font-size: 0.63rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
   cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0, 185, 254, 0.35);
+  box-shadow: 0 2px 10px rgba(189, 95, 255, 0.38);
   z-index: 100;
   -webkit-app-region: no-drag;
   transition: filter 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.kofi-btn:hover {
+.bmc-btn:hover {
   filter: brightness(1.08);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(0, 185, 254, 0.5);
+  box-shadow: 0 4px 14px rgba(189, 95, 255, 0.52);
 }
 
-.kofi-btn:active {
+.bmc-btn:active {
   transform: translateY(0);
   filter: brightness(0.98);
 }
 
-.kofi-btn .kofi-cup {
+.bmc-btn .bmc-cup {
   font-size: 0.9rem;
   line-height: 1;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.35));
 }
 
 .win-btn {
@@ -638,7 +643,7 @@ body.is-maximized .app-sidebar {
 /* Main Content Area */
 .app-content {
   flex: 1;
-  /* El borde derecho (10 px) es el mismo que el del botón de Ko-fi de la barra superior:
+  /* El borde derecho (10 px) es el mismo que el del botón de Buy Me a Coffee de la barra superior:
      así el botón Buscar, las tarjetas y la barra de scroll caen en la misma vertical
      (dueño, 20-10-2026). Si se toca uno de los dos, hay que tocar el otro. */
   padding: 14px 10px 14px 10px;
