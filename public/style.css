@@ -327,6 +327,27 @@ body.is-maximized .win-btn.win-max .icon-restore {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
 }
 
+/* El logo del juego sustituye al emoji + texto del pill (dueño, 20-10-2026). Los cuatro logos
+   tienen proporciones muy distintas, así que manda el alto y el ancho se ajusta solo. */
+.game-version-pill .pill-logo {
+  display: block;
+  height: 20px;
+  width: auto;
+  max-width: 92px;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+}
+
+/* Con el juego activo el logo va a plena luz; apagado, algo atenuado. */
+.game-version-pill:not(.active) .pill-logo {
+  opacity: 0.72;
+}
+
+.game-version-pill:hover .pill-logo,
+.game-version-pill.active .pill-logo {
+  opacity: 1;
+}
+
 .game-version-pill .pill-badge {
   font-family: var(--font-mono);
   font-size: 0.68rem;
