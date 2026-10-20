@@ -126,7 +126,9 @@ body.is-maximized .app-topbar {
   -webkit-app-region: no-drag;
 }
 
-/* Botón de apoyo (Ko-fi): debajo de minimizar / maximizar / cerrar */
+/* Botón de apoyo (Ko-fi): debajo de minimizar / maximizar / cerrar.
+   Su borde derecho (right: 10px) marca la vertical con el botón Buscar y la barra de scroll:
+   .app-content usa el mismo relleno derecho de 10 px. Si se mueve uno, mover el otro. */
 .kofi-btn {
   position: absolute;
   top: 36px;
@@ -636,7 +638,10 @@ body.is-maximized .app-sidebar {
 /* Main Content Area */
 .app-content {
   flex: 1;
-  padding: 14px 20px 14px 10px;
+  /* El borde derecho (10 px) es el mismo que el del botón de Ko-fi de la barra superior:
+     así el botón Buscar, las tarjetas y la barra de scroll caen en la misma vertical
+     (dueño, 20-10-2026). Si se toca uno de los dos, hay que tocar el otro. */
+  padding: 14px 10px 14px 10px;
   overflow: hidden;
   display: flex;
   flex-direction: column;

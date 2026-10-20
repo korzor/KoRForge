@@ -71,17 +71,12 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### ⚡ Cambios y Novedades (v1.1.1 ➔ v1.1.2)
+### 📐 Cambios y Novedades (v1.1.2 ➔ v1.1.3)
 
-**Actualizar y reiniciar, mucho más rápido**
-- Fuera las esperas fijas del actualizador: había 2 s de margen, 3 s tras instalar y 8 s a ciegas esperando a que arrancase la app.
-- Ahora se comprueba la **versión realmente instalada** y se sondea el proceso cada 200 ms: el ciclo baja de **~28 s a ~11 s** (lo que queda es el instalador en silencio, que es su trabajo de verdad).
-- **Corregido un fallo** que apareció al medirlo: si la versión pedida ya estaba instalada, el actualizador la daba por buena en el primer sondeo y reabría la app con la instalación a medias.
-
-**Botón de apoyo (Ko-fi)**
-- Botón **«Apóyame»** justo debajo de minimizar, maximizar y cerrar, en el azul de Ko-fi.
-- Abre \`ko-fi.com/korzor\` en el navegador externo. Es nativo: no carga código de terceros ni depende de la red al abrir la app.
-- Traducido a los cinco idiomas, con su tooltip.
+**Una sola vertical a la derecha**
+- El **botón Buscar** termina en la misma línea vertical que el **botón de apoyo (Ko-fi)** de la barra superior.
+- La **barra de scroll** de la derecha queda en esa misma línea: en el catálogo, en las pestañas y en la ficha del addon.
+- Un único margen derecho (10 px) para toda la ventana, comprobado de **1120 a 1920 px** de ancho.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
