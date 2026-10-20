@@ -38,8 +38,8 @@ Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, mot
 ---
 
 ## Historial de Versiones Publicadas
-- **v1.0.4 (21-10-2026):** La ficha de addon abre siempre desde arriba y cada pestaña (Descripción, Versiones, Galería) empieza por el principio, con la barra de acciones fija arriba.
-- **v1.0.3 (21-10-2026):** Arreglado el scroll de la ficha de addon (no se podía desplazar ni tenía barra lateral; la barra de acciones queda fija arriba).
+- **v1.0.4 (20-10-2026):** La ficha de addon abre siempre desde arriba y cada pestaña (Descripción, Versiones, Galería) empieza por el principio, con la barra de acciones fija arriba.
+- **v1.0.3 (20-10-2026):** Arreglado el scroll de la ficha de addon (no se podía desplazar ni tenía barra lateral; la barra de acciones queda fija arriba).
 - **v1.0.2 (19-10-2026):** Actualizador in-app por GitHub Releases, reinicio desacoplado y reparaciones de interfaz (esquinas transparentes, iconos del menú lateral).
 - **v1.0.0 (18-10-2026):** Lanzamiento oficial inicial. Instalador NSIS, versión portable, selector multiversión, catálogo CurseForge con traductor y galería, Bóveda WTF y ventana sin marcos con arrastre nativo.
   - *Aviso:* las builds **v1.0.0 y v1.0.1 se retiraron el 20-10-2026** (empaquetaban un `config.json` personal). De la 1.0.0 solo queda el `README` y el changelog como historia; la primera build limpia publicada es la **1.0.2**.
