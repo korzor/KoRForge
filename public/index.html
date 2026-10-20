@@ -147,19 +147,6 @@
           </div>
 
           <div class="toolbar">
-            <!-- Navegación (atrás / adelante / recargar), movida aquí desde la barra de título
-                 para que viva junto a los filtros y el campo de búsqueda (dueño, 20-10-2026). -->
-            <div class="browser-nav-bar toolbar-nav">
-              <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
-                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
-                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
-                <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
             <div class="search-box">
               <span class="search-icon">🔍</span>
               <input type="text" id="searchInput" placeholder="Filtrar addons instalados...">
@@ -378,6 +365,19 @@
               
               <!-- Search & Sort Top Toolbar -->
               <div class="cf-top-toolbar">
+                <!-- Navegación (atrás / adelante / recargar) a la IZQUIERDA de la barra de búsqueda,
+                     al mismo alto que ella (dueño, 20-10-2026). -->
+                <div class="browser-nav-bar toolbar-nav">
+                  <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
+                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
+                    <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                </div>
                 <div class="cf-search-input-wrap">
                   <span class="cf-search-icon">🔍</span>
                   <input type="text" id="cfSearchInput" placeholder="Buscar por nombre (ej. Details, Questie, Decursive, OmniBar, Plater)...">

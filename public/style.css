@@ -707,22 +707,22 @@ body.is-maximized .app-sidebar {
   margin-bottom: 20px;
 }
 
-/* Navegación (atrás / adelante / recargar) dentro de la barra de búsqueda (dueño, 20-10-2026).
-   Mismo alto que el campo de texto, para que la fila quede a la misma altura que los filtros. */
-.toolbar .toolbar-nav {
+/* Navegación (atrás / adelante / recargar) a la izquierda de la barra de búsqueda del catálogo
+   (dueño, 20-10-2026). Aquí toda la fila mide 38 px, así que los botones también. */
+.cf-top-toolbar .toolbar-nav {
   gap: 6px;
   flex-shrink: 0;
 }
 
-.toolbar .nav-control-btn {
-  width: 34px;
-  height: 34px;
+.cf-top-toolbar .nav-control-btn {
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
 }
 
-.toolbar .nav-control-btn svg {
-  width: 17px;
-  height: 17px;
+.cf-top-toolbar .nav-control-btn svg {
+  width: 18px;
+  height: 18px;
 }
 
 .search-box {
