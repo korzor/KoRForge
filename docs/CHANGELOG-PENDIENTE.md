@@ -1,11 +1,20 @@
-# KoRForge - Registro de Mejoras y Cambios Acumulados (Próxima Versión)
+# KoRForge - Registro de Mejoras y Cambios Acumulados
 
-Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, motores, optimizaciones y arquitectura) implementadas en KoRForge para la próxima versión oficial (**v1.1.0**).
+Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, motores, optimizaciones y arquitectura) implementadas en KoRForge.
 *Nota: Los retoques estéticos menores o ajustes de padding no se registran aquí.*
 
 ---
 
-## Estado Actual: Preparando v1.1.0
+## Estado Actual: v1.1.0 publicada (20-10-2026)
+
+La **v1.1.0** está publicada en GitHub (`korzor/KoRForge`) y en la web (`wow.centolos.org`,
+`public/wow/releases/`), con la app instalada del dueño ya actualizada a esa versión por su propio
+actualizador. El bloque de abajo es el registro de lo que lleva dentro.
+
+**No hay versión siguiente en preparación:** lo que se implemente a partir de ahora se apunta aquí
+como pendiente de la próxima etiqueta, cuando el dueño decida cuál es.
+
+## Funcionalidades de calado publicadas (presentes en la 1.1.0)
 
 ### 🚀 1. Sistema de Auto-Actualización In-App Silencioso
 - **Motor de descarga integrado:** La app comprueba silenciosamente nuevas versiones en GitHub Releases y descarga el paquete directamente dentro de la aplicación.
@@ -37,7 +46,14 @@ Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, mot
 
 ---
 
+## Próxima versión
+
+*(vacío por ahora: lo que se haga se apunta aquí hasta que el dueño decida la etiqueta)*
+
+---
+
 ## Historial de Versiones Publicadas
+- **v1.1.0 (20-10-2026):** revisión completa de la interfaz. La barra de versiones usa el logo oficial de cada juego (Forever, Retail, Classic Era y Classic Prog), los botones de versión son más grandes, el cohete goblin entra en el botón de actualización y en el modal, y la navegación (atrás, adelante y recargar) se muda de la barra de título a la barra de búsqueda, que ahora se queda también dentro de la ficha de un addon. Fuera el botón Volver al catálogo (lo hace el botón atrás). Notas en docs/CAMBIOS-ULTIMA.md.
 - **v1.0.12 (20-10-2026):** fuera los guiones largos de la interfaz (tooltip del botón de versión) y versión de comprobación del actualizador arreglado. Norma escrita en docs/REGLAS-TEXTOS.md.
 - **v1.0.11 (20-10-2026):** actualizador que sí instala de verdad. El `spawn` directo de PowerShell desde la app empaquetada moría al instante (exit 0, sin ejecutar el script); ahora se lanza con `shell: true` (cmd /c) y queda registro en `%TEMP%\korforge_apply_update.log`. Verificado 1.0.9 → 1.0.11.
 - **v1.0.10 (20-10-2026):** actualización de comprobación: se aplica con el runner blindado de la 1.0.9 (sin ventanas, espera real al instalador, reintento de reapertura y registro en `%TEMP%`).
