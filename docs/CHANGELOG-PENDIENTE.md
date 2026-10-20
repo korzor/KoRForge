@@ -48,7 +48,17 @@ como pendiente de la próxima etiqueta, cuando el dueño decida cuál es.
 
 ## Próxima versión
 
-*(vacío por ahora: lo que se haga se apunta aquí hasta que el dueño decida la etiqueta)*
+### ⚡ 1. Actualizar y reiniciar, mucho más rápido
+- Fuera las **esperas fijas** del runner: había 2 s de margen + 3 s tras instalar + 8 s a ciegas esperando a que arrancase la app. Ahora se comprueba la **versión realmente instalada** en `resources/app/package.json` (señal de que el instalador terminó) y se **sondea** el proceso cada 200 ms.
+- De **~28 s a ~11 s** en la prueba real en este equipo (lo que queda es el instalador en silencio, 10-14 s: es su trabajo de verdad).
+- El cierre de la app al pedir la actualización pasa de 400 ms a 150 ms.
+- Corregido un fallo que destapó la prueba: si la versión pedida ya estaba instalada, el runner la daba por buena **en el primer sondeo**, con el instalador aún escribiendo. Ahora exige que el proceso del instalador haya aparecido y ya no esté.
+- `scripts/verificar-actualizador-silencioso.js` arreglado: lanzaba el runner sin `shell: true` (el fallo que el propio módulo documenta) y por eso daba siempre "script temporal eliminado: false"; además ahora desactiva el paso de reapertura con un interruptor claro.
+
+### ☕ 2. Botón de apoyo (Ko-fi)
+- Botón **«Apóyame»** debajo de minimizar / maximizar / cerrar, en el azul de Ko-fi (`#00b9fe`), que abre `ko-fi.com/korzor` en el navegador externo.
+- Se hace **nativo** (no el widget flotante del CDN): así queda donde se pidió, no depende de la red al abrir la app y no carga código de terceros en la ventana.
+- Traducido a los cinco idiomas, con tooltip incluido.
 
 ---
 

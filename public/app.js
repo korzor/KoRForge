@@ -193,6 +193,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }, true);
   }
 
+  // Botón de apoyo (Ko-fi), debajo de minimizar/maximizar/cerrar: abre la página en el navegador
+  const btnKofi = document.getElementById('btnKofi');
+  btnKofi?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const url = 'https://ko-fi.com/korzor';
+    if (window.electronAPI && typeof window.electronAPI.openExternal === 'function') {
+      window.electronAPI.openExternal(url);
+    } else {
+      window.open(url, '_blank', 'noopener');
+    }
+  });
+
   // Navigation History Management
   const navHistory = [];
   let historyIndex = -1;

@@ -137,8 +137,15 @@ async function startUpdateDownload(downloadUrl, version) {
 // OJO: se ejecuta el proceso tal como está en el .ps1; debe ser silencioso (sin ventanas ni pings).
 // Si se toca, comprobarlo con la sonda de ventanas (el .ps1 se ejecuta con windowsHide).
 // Deja rastro en %TEMP%\korforge_apply_update.log para poder diagnosticar una actualización.
-function buildApplyScript(installerPath, appExePath) {
+//
+// TIEMPOS (20-10-2026): antes había 2 s de margen + 3 s fijos tras instalar + 8 s a ciegas
+// esperando a que la app arrancase: ~13 s tirados de los ~28 s que tardaba el ciclo. Ahora
+// solo se espera lo que de verdad hace falta: se comprueba la versión instalada en
+// resources/app/package.json (señal real de que el instalador ha acabado) y se sondea el
+// proceso de la app cada 200 ms. El instalador en silencio sigue siendo lo más lento (~13 s).
+function buildApplyScript(installerPath, appExePath, targetVersion) {
   const psQuote = (p) => `'${String(p).replace(/'/g, "''")}'`;
+  const versionEsperada = String(targetVersion || '').replace(/^v/i, '');
   return [
     "$ErrorActionPreference = 'SilentlyContinue'",
     '',
@@ -148,55 +155,90 @@ function buildApplyScript(installerPath, appExePath) {
     "  $stamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'",
     "  Add-Content -LiteralPath $logFile -Value \"[$stamp] $texto\" -Encoding UTF8",
     '}',
-    "Log '--- Aplicando actualización ---'",
+    'Log \'--- Aplicando actualización ---\'',
     '',
     `$installer = ${psQuote(installerPath)}`,
     `$appExe = ${psQuote(appExePath)}`,
+    `$targetVersion = ${psQuote(versionEsperada)}`,
+    "$pkgRuta = Join-Path (Split-Path -Parent $appExe) 'resources\\app\\package.json'",
+    "function VersionInstalada {",
+    '  try {',
+    '    $v = (Get-Content -LiteralPath $pkgRuta -Raw | ConvertFrom-Json).version',
+    '    if ($v) { return [string]$v }',
+    '  } catch {}',
+    "  return ''",
+    '}',
     '',
-    '# 1. Margen para que la petición HTTP que disparó esto acabe de salir',
+    '# 1. Margen mínimo: solo para que la respuesta HTTP que disparó esto llegue a salir',
     "Log 'Paso 1: margen inicial'",
-    'Start-Sleep -Seconds 2',
+    'Start-Sleep -Milliseconds 300',
     '',
     '# 2. Cerrar KoRForge y esperar a que sus procesos desaparezcan de verdad',
     "Log 'Paso 2: cerrando KoRForge'",
     "Get-Process -Name 'KoRForge','electron' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue",
-    '$limite = (Get-Date).AddSeconds(20)',
-    'do { Start-Sleep -Milliseconds 400 } while ((@(Get-Process -Name KoRForge,electron -ErrorAction SilentlyContinue)).Count -gt 0 -and (Get-Date) -lt $limite)',
+    '$limite = (Get-Date).AddSeconds(10)',
+    'while ((@(Get-Process -Name KoRForge,electron -ErrorAction SilentlyContinue)).Count -gt 0 -and (Get-Date) -lt $limite) {',
+    '  Start-Sleep -Milliseconds 150',
+    '}',
     "Log 'Paso 2: KoRForge cerrado'",
     '',
-    '# 3. Instalar en silencio (NSIS /S). El proceso del instalador puede seguir vivo mientras',
-    '#    termina de escribir: se espera a que no quede ninguno antes de reabrir la app.',
+    '# 3. Instalar en silencio (NSIS /S). Solo se da por terminado cuando el proceso del instalador',
+    '#    HA APARECIDO y ya NO está (si solo se mira la versión, con la misma versión ya instalada',
+    '#    se daría por buena en el primer sondeo mientras el instalador aún escribe).',
     "Log \"Paso 3: instalando $installer\"",
+    '$versionAntes = VersionInstalada',
     "Start-Process -FilePath $installer -ArgumentList '/S' -WindowStyle Hidden | Out-Null",
-    '$limite = (Get-Date).AddMinutes(3)',
-    'do {',
-    '  Start-Sleep -Milliseconds 500',
+    '$inicio = Get-Date',
+    '$limite = $inicio.AddMinutes(3)',
+    '$vistoSetup = $false',
+    '$instalacionLista = $false',
+    'while ((Get-Date) -lt $limite) {',
+    '  Start-Sleep -Milliseconds 200',
     "  $setup = @(Get-Process -Name 'KoRForge-Setup*' -ErrorAction SilentlyContinue)",
-    '} while ($setup.Count -gt 0 -and (Get-Date) -lt $limite)',
-    'Start-Sleep -Seconds 3',
-    "$verInstalada = ''",
-    'try {',
-    "  $pkgRuta = Join-Path (Split-Path -Parent $appExe) 'resources\\app\\package.json'",
-    "  $verInstalada = (Get-Content -LiteralPath $pkgRuta -Raw | ConvertFrom-Json).version",
-    '} catch {}',
-    'Log "Paso 3: instalación terminada. Versión instalada: $verInstalada"',
+    '  if ($setup.Count -gt 0) { $vistoSetup = $true; continue }',
+    '  if (-not $vistoSetup) {',
+    '    # Si el instalador no llega a aparecer (sonda con un ejecutable inocuo), no esperar 3 minutos',
+    '    if (((Get-Date) - $inicio).TotalSeconds -gt 10) { break }',
+    '    continue',
+    '  }',
+    '  $ahora = VersionInstalada',
+    '  if (($ahora -and $targetVersion -and $ahora -eq $targetVersion) -or ($ahora -and $versionAntes -and $ahora -ne $versionAntes)) {',
+    '    $instalacionLista = $true',
+    '    break',
+    '  }',
+    '  Start-Sleep -Milliseconds 1500',
+    '  break',
+    '}',
+    '$verInstalada = VersionInstalada',
+    "$resultado = 'ok'; if (-not $instalacionLista) { $resultado = 'sin confirmar' }",
+    'Log "Paso 3: instalación terminada ($resultado). Versión instalada: $verInstalada"',
     '',
-    '# 4. Reabrir KoRForge. Si la app se cierra en los primeros segundos (el instalador a veces',
-    '#    cierra instancias al acabar), se vuelve a abrir una vez.',
+    '# 4. Reabrir KoRForge y comprobar que el proceso vive (sondeo, no esperas a ciegas)',
+    '#    $reabrirApp = $false desactiva TODO el paso 4 (lo usa la sonda de ventanas).',
+    '$reabrirApp = $true',
     'function Abrir-App {',
     '  if (Test-Path -LiteralPath $appExe) { Start-Process -FilePath $appExe | Out-Null }',
     '  else { Start-Process -FilePath $installer | Out-Null }',
     '}',
-    "Log 'Paso 4: reabriendo KoRForge'",
-    'Abrir-App',
-    'Start-Sleep -Seconds 8',
-    'if ((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -eq 0) {',
-    "  Log 'Paso 4: la app no siguió viva a los 8 s; reintentando abrirla'",
-    '  Start-Sleep -Seconds 3',
+    'if (-not $reabrirApp) {',
+    "  Log 'Paso 4: reapertura desactivada (sonda)'",
+    '} else {',
+    "  Log 'Paso 4: reabriendo KoRForge'",
     '  Abrir-App',
-    '  Start-Sleep -Seconds 6',
+    '  $limite = (Get-Date).AddSeconds(15)',
+    '  $arrancada = $false',
+    '  while ((Get-Date) -lt $limite) {',
+    '    Start-Sleep -Milliseconds 200',
+    '    if ((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0) { $arrancada = $true; break }',
+    '  }',
+    '  if (-not $arrancada) {',
+    "    Log 'Paso 4: la app no arrancó; reintentando una vez'",
+    '    Start-Sleep -Seconds 2',
+    '    Abrir-App',
+    '    Start-Sleep -Seconds 4',
+    '  }',
+    "  Log \"Paso 4: app en ejecución: $((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0)\"",
     '}',
-    "Log \"Paso 4: app en ejecución: $((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0)\"",
     '',
     '# 5. Limpiar el script temporal',
     'Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue',
@@ -240,7 +282,7 @@ function applyUpdateAndRestart(electronApp = null) {
   // Se lanza con windowsHide + -WindowStyle Hidden: ni consola ni pings (antes era un .bat
   // con ping 127.0.0.1 como temporizador y una ventana de cmd a la vista).
   const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
-  fs.writeFileSync(runnerScript, buildApplyScript(installerPath, appExePath), 'utf-8');
+  fs.writeFileSync(runnerScript, buildApplyScript(installerPath, appExePath, currentDownload.version), 'utf-8');
 
   // Lanzado oculto y desacoplado: no se abre ninguna ventana.
   // OJO (fallo de la 1.0.8/1.0.9/1.0.10): el spawn DIRECTO de powershell.exe desde la app
@@ -261,7 +303,7 @@ function applyUpdateAndRestart(electronApp = null) {
   });
   child.unref();
 
-  // Cerrar la aplicación principal limpiamente
+  // Cerrar la aplicación principal limpiamente (150 ms: justo lo que tarda en salir la respuesta)
   setTimeout(() => {
     try {
       if (global.quitAndApplyUpdate) {
@@ -274,7 +316,7 @@ function applyUpdateAndRestart(electronApp = null) {
     } catch (_) {
       process.exit(0);
     }
-  }, 400);
+  }, 150);
 
   return { success: true, message: 'Actualizador lanzado. Cerrando KoRForge...' };
 }
