@@ -38,6 +38,7 @@ Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, mot
 ---
 
 ## Historial de Versiones Publicadas
+- **v1.0.11 (20-10-2026):** actualizador que sí instala de verdad. El `spawn` directo de PowerShell desde la app empaquetada moría al instante (exit 0, sin ejecutar el script); ahora se lanza con `shell: true` (cmd /c) y queda registro en `%TEMP%\korforge_apply_update.log`. Verificado 1.0.9 → 1.0.11.
 - **v1.0.10 (20-10-2026):** actualización de comprobación: se aplica con el runner blindado de la 1.0.9 (sin ventanas, espera real al instalador, reintento de reapertura y registro en `%TEMP%`).
 - **v1.0.9 (20-10-2026):** botón de versión permanente en el menú lateral (se enciende al haber versión nueva) y actualizador blindado: registro en `%TEMP%`, espera real a que el instalador acabe y reintento de reapertura.
 - **v1.0.8 (20-10-2026):** actualización de comprobación del actualizador silencioso: al pasar desde la 1.0.7 ya no se abre ninguna ventana ni se hacen pings (la ventana que se veía al venir de la 1.0.6 la abría el actualizador antiguo).

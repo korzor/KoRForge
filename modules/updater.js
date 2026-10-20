@@ -242,7 +242,11 @@ function applyUpdateAndRestart(electronApp = null) {
   const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
   fs.writeFileSync(runnerScript, buildApplyScript(installerPath, appExePath), 'utf-8');
 
-  // Lanzado oculto y desacoplado: no se abre ninguna ventana
+  // Lanzado oculto y desacoplado: no se abre ninguna ventana.
+  // OJO (fallo de la 1.0.8/1.0.9/1.0.10): el spawn DIRECTO de powershell.exe desde la app
+  // empaquetada deja un proceso que sale al instante con código 0 y no ejecuta el script
+  // (verificado con sondas: proceso creado, exit=0, sin log ni instalación). A través de
+  // `shell: true` (cmd /c) sí se ejecuta. No quitar el shell.
   const child = spawn('powershell.exe', [
     '-NoProfile',
     '-NonInteractive',
@@ -252,7 +256,8 @@ function applyUpdateAndRestart(electronApp = null) {
   ], {
     detached: true,
     stdio: 'ignore',
-    windowsHide: true
+    windowsHide: true,
+    shell: true
   });
   child.unref();
 

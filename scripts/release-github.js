@@ -61,10 +61,10 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.9 ➔ v1.0.10)
-- **Actualización de comprobación del actualizador blindado:** si vienes de la 1.0.9, esta actualización se aplica con el runner nuevo: sin ventanas, esperando a que el instalador termine de verdad y con reintento de reapertura si KoRForge no sigue vivo a los 8 segundos. El resultado queda registrado en %TEMP%\korforge_apply_update.log.
-- **El botón de versión del menú lateral** (1.0.9) sigue igual: apagado con tu versión actual y verde cuando hay una nueva.
-- **¿Por qué falló la 1.0.8?** Ese día el runner reabría la app mientras el instalador aún cerraba archivos, y la app se cerraba sola a los pocos segundos. Ese es exactamente el fallo que corrige la 1.0.9.
+### 🌟 Cambios y Novedades (v1.0.10 ➔ v1.0.11)
+- **Actualizador que sí instala:** arreglado el fallo de la 1.0.8/1.0.9/1.0.10. La app descargaba la versión nueva, se cerraba… pero desaparecía sin instalar nada (el lanzador de PowerShell del actualizador moría al instante, con código 0, sin ejecutar el script). Ahora el runner se lanza a través de `cmd /c`, que sí lo ejecuta, y deja el registro en %TEMP%\korforge_apply_update.log.
+- **Verificado de punta a punta:** 1.0.9 → 1.0.11 con el runner nuevo: cierra la app, instala en silencio, reabre y el registro confirma la versión instalada.
+- **El botón de versión del menú lateral:** apagado con tu versión actual, verde con «Actualizar a vX» cuando hay una nueva.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
