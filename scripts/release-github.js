@@ -61,13 +61,9 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.1 ➔ v1.0.2)
-- **Esquinas 100% Transparentes:** Eliminados los bordes y esquinas grises exteriores de la ventana en Windows.
-- **Iconos Temáticos en Menú Lateral:** Nuevos iconos ilustrados de Warcraft para Favoritos (Estrella Alianza/Horda), Addons Instalados (Cofre) y Bóveda WTF (Relicario acorazado).
-- **Botón de Actualización Integrado:** Reubicado en el menú lateral sobre Configuración, adaptativo en altura y con indicador de versión.
-- **Modal de Actualización Rediseñado:** Notas de actualización con diseño amplio, ordenado y viñetas estructuradas.
-- **Reinicio Automático al Actualizar:** Cierre forzoso de procesos bloqueados, instalación silenciosa y reapertura automática sin congelarse en "Reiniciando".
-- **Gestión Silenciosa de Instancias:** Cierre automático de procesos previos o zombies al abrir la aplicación sin alertas ni cuadros de diálogo.
+### 🌟 Cambios y Novedades (v1.0.2 ➔ v1.0.3)
+- **Corregido el scroll de la ficha de addon:** la página de detalle no se podía desplazar y no mostraba barra lateral cuando la descripción, la lista de versiones o la galería eran largas. Ahora tiene su propia área de scroll con barra visible y la barra de acciones (Volver, Traducir, Favoritos, Instalar) queda fija arriba mientras se lee.
+- **Navegación de la ficha intacta:** las tres pestañas (Descripción, Versiones y Archivos, Galería) y los botones de volver siguen funcionando igual, también con el teclado (Esc).
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
