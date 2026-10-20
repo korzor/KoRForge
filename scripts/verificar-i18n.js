@@ -29,6 +29,7 @@ const vm = require('vm');
 const ROOT = path.resolve(__dirname, '..');
 const I18N_FILE = path.join(ROOT, 'public', 'i18n.js');
 const HTML_FILE = path.join(ROOT, 'public', 'index.html');
+const SPLASH_FILE = path.join(ROOT, 'public', 'splash.html');
 const APP_FILE = path.join(ROOT, 'public', 'app.js');
 const VERBOSE = process.argv.includes('--verbose');
 
@@ -169,9 +170,9 @@ function parseAttrs(raw) {
 
 const I18N_ATTRS = ['data-i18n', 'data-i18n-html', 'data-i18n-title', 'data-i18n-placeholder', 'data-i18n-alt'];
 
-function checkHtml(translations) {
+function checkHtml(translations, file) {
   const has = (key) => Object.prototype.hasOwnProperty.call(translations.en, key);
-  let html = fs.readFileSync(HTML_FILE, 'utf8');
+  const html = fs.readFileSync(file, 'utf8');
   const clean = html.replace(/<!--[\s\S]*?-->/g, (m) => m.replace(/[^\n]/g, ' '));
 
   const stack = [];
@@ -209,7 +210,7 @@ function checkHtml(translations) {
       for (const attr of I18N_ATTRS) {
         const key = attrs[attr];
         if (key && !has(key)) {
-          fail(HTML_FILE, lineOf(clean, index), `<${tag}> usa ${attr}="${key}" y esa clave no existe en el diccionario`);
+          fail(file, lineOf(clean, index), `<${tag}> usa ${attr}="${key}" y esa clave no existe en el diccionario`);
         }
       }
 
@@ -217,17 +218,17 @@ function checkHtml(translations) {
       const id = attrs.id || '';
       if (attrs.title !== undefined && attrs['data-i18n-title'] === undefined && !TITLE_ALLOWLIST_IDS.has(id)) {
         if (/[A-Za-zÀ-ÿ]/.test(attrs.title)) {
-          fail(HTML_FILE, lineOf(clean, index), `<${tag}${id ? ' id="' + id + '"' : ''}> tiene title fijo sin data-i18n-title: "${attrs.title}"`);
+          fail(file, lineOf(clean, index), `<${tag}${id ? ' id="' + id + '"' : ''}> tiene title fijo sin data-i18n-title: "${attrs.title}"`);
         }
       }
       if (attrs.placeholder !== undefined && attrs['data-i18n-placeholder'] === undefined && !PLACEHOLDER_ALLOWLIST_IDS.has(id)) {
         if (/[A-Za-zÀ-ÿ]/.test(attrs.placeholder)) {
-          fail(HTML_FILE, lineOf(clean, index), `<${tag}${id ? ' id="' + id + '"' : ''}> tiene placeholder fijo sin data-i18n-placeholder: "${attrs.placeholder}"`);
+          fail(file, lineOf(clean, index), `<${tag}${id ? ' id="' + id + '"' : ''}> tiene placeholder fijo sin data-i18n-placeholder: "${attrs.placeholder}"`);
         }
       }
       if (attrs.alt !== undefined && attrs['data-i18n-alt'] === undefined && !ALT_ALLOWLIST.has(attrs.alt)) {
         if (/[A-Za-zÀ-ÿ]/.test(attrs.alt)) {
-          fail(HTML_FILE, lineOf(clean, index), `<${tag}> tiene alt fijo sin data-i18n-alt: "${attrs.alt}"`);
+          fail(file, lineOf(clean, index), `<${tag}> tiene alt fijo sin data-i18n-alt: "${attrs.alt}"`);
         }
       }
 
@@ -251,10 +252,10 @@ function checkHtml(translations) {
     if (parent.attrs['data-i18n-skip'] !== undefined) continue;
     if (parent.attrs['data-i18n-doctitle'] !== undefined) continue;
 
-    fail(HTML_FILE, lineOf(clean, index), `texto visible sin data-i18n dentro de <${parent.tag}>: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
+    fail(file, lineOf(clean, index), `texto visible sin data-i18n dentro de <${parent.tag}>: "${text.slice(0, 60)}${text.length > 60 ? '…' : ''}"`);
   }
 
-  if (!problems.length) ok('public/index.html: todo el texto pasa por data-i18n');
+  if (!problems.length) ok(`${path.relative(ROOT, file)}: todo el texto pasa por data-i18n`);
 }
 
 // ---------------------------------------------------------------- 3 y 5. app.js
@@ -368,7 +369,8 @@ function main() {
 
   const { enKeys } = checkParity(translations);
   checkPlaceholders(translations, enKeys);
-  checkHtml(translations);
+  checkHtml(translations, HTML_FILE);
+  if (fs.existsSync(SPLASH_FILE)) checkHtml(translations, SPLASH_FILE);
   checkApp(translations);
   checkDashes(translations);
 

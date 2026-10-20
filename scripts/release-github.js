@@ -71,12 +71,15 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 📐 Cambios y Novedades (v1.1.2 ➔ v1.1.3)
+### 🖼️ Cambios y Novedades (v1.1.3 ➔ v1.1.4)
 
-**Una sola vertical a la derecha**
-- El **botón Buscar** termina en la misma línea vertical que el **botón de apoyo (Ko-fi)** de la barra superior.
-- La **barra de scroll** de la derecha queda en esa misma línea: en el catálogo, en las pestañas y en la ficha del addon.
-- Un único margen derecho (10 px) para toda la ventana, comprobado de **1120 a 1920 px** de ancho.
+**Pantalla de arranque**
+- Al abrir KoRForge aparece una **pantalla con el logo** para que se vea que la app está cargando.
+- Se cierra sola en cuanto la ventana principal está lista (y si algo falla, a los 12 s como mucho).
+- No roba el foco ni aparece en la barra de tareas. Si arrancas en la bandeja, no sale.
+
+**Arranque más ligero**
+- Las **fuentes de Google ya no bloquean el primer pintado**: se cargan en segundo plano y, si la red va lenta o no hay, la app abre igual con las fuentes del sistema.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})

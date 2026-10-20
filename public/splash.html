@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title data-i18n-doctitle="doc_title">KoRForge</title>
+  <style>
+    /* Ventana de arranque: fondo transparente, solo el logo y el aviso de que está cargando.
+       Sin recursos externos: tiene que pintar al instante, antes que el resto de la app. */
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      overflow: hidden;
+      user-select: none;
+      -webkit-app-region: drag;
+      font-family: 'Inter', -apple-system, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    .splash-wrap {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+    }
+
+    .splash-logo {
+      width: 100%;
+      max-width: 560px;
+      height: auto;
+      display: block;
+      filter: drop-shadow(0 8px 22px rgba(0, 0, 0, 0.6));
+    }
+
+    .splash-texto {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #f1f5f9;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.85);
+    }
+
+    .splash-barra {
+      width: 200px;
+      height: 3px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.16);
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0, 0, 0, 0.5);
+    }
+
+    .splash-barra i {
+      display: block;
+      height: 100%;
+      width: 42%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, #f59e0b, #fbbf24);
+      animation: splash-correr 1.05s ease-in-out infinite;
+    }
+
+    @keyframes splash-correr {
+      0% { transform: translateX(-110%); }
+      100% { transform: translateX(360%); }
+    }
+  </style>
+</head>
+<body>
+  <div class="splash-wrap">
+    <img class="splash-logo" src="splash.png" data-i18n-alt="brand_home" alt="KoRForge">
+    <div class="splash-texto"><span data-i18n="splash_loading">Loading...</span></div>
+    <div class="splash-barra"><i></i></div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script>
+    (function () {
+      var lang = 'en';
+      try { lang = new URLSearchParams(location.search).get('lang') || 'en'; } catch (_) {}
+      try { if (window.I18N) window.I18N.setLanguage(lang); } catch (_) {}
+    })();
+  </script>
+</body>
+</html>

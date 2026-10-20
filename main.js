@@ -215,6 +215,58 @@ function ensureServer() {
   return Promise.resolve();
 }
 
+// --- Ventana de arranque (splash) ---------------------------------------
+// Se abre en cuanto Electron está listo y se cierra cuando la ventana principal
+// está lista, para que el usuario vea que la app está cargando desde el primer
+// instante (dueño, 20-10-2026). No roba el foco y no sale en la barra de tareas.
+let splash = null;
+
+function cerrarSplash() {
+  try {
+    if (splash && !splash.isDestroyed()) splash.destroy();
+  } catch (_) {}
+  splash = null;
+}
+
+function createSplash() {
+  try {
+    const cfg = loadConfigSync();
+    if (cfg.startMinimized) return; // arrancar en la bandeja: sin splash
+    const lang = TRAY_TEXTS[cfg.language] ? cfg.language : 'en';
+
+    splash = new BrowserWindow({
+      width: 560,
+      height: 372,
+      frame: false,
+      transparent: true,
+      backgroundColor: '#00000000',
+      resizable: false,
+      movable: false,
+      minimizable: false,
+      maximizable: false,
+      alwaysOnTop: true,
+      skipTaskbar: true,
+      focusable: false,
+      show: false,
+      hasShadow: false,
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false
+      }
+    });
+
+    splash.loadFile(path.join(__dirname, 'public', 'splash.html'), { query: { lang } });
+    splash.once('ready-to-show', () => {
+      try { splash.showInactive(); } catch (_) {}
+    });
+    // Red de seguridad: pase lo que pase, el splash no se queda colgado
+    setTimeout(cerrarSplash, 12000);
+  } catch (err) {
+    logBoot('[KoRForge] No se pudo abrir el splash: ' + (err?.message || err));
+    splash = null;
+  }
+}
+
 // --- Textos de la bandeja del sistema (interfaz nativa) -------------------
 // Las etiquetas del menú de la bandeja también existen en los cinco idiomas
 // (docs/REGLAS-IDIOMAS.md). El idioma lo manda la ventana al arrancar y al cambiarlo.
@@ -342,6 +394,11 @@ function createWindow() {
     if (!cfg.startMinimized && win) {
       win.show();
       win.focus();
+      // La ventana principal ya está lista: fuera el splash (un pelín después, para que no
+      // haya un parpadeo entre las dos ventanas)
+      setTimeout(cerrarSplash, 180);
+    } else {
+      cerrarSplash();
     }
   });
 
@@ -510,6 +567,9 @@ ipcMain.on('korforge:set-language', (e, lang) => {
 
 app.whenReady().then(async () => {
   logBoot('app.whenReady fired');
+  // Lo primero de todo: que se vea que está arrancando
+  createSplash();
+  logBoot('createSplash called');
   await ensureServer();
   logBoot('ensureServer resolved');
   createWindow();
@@ -532,6 +592,7 @@ app.on('before-quit', () => {
 
 app.on('will-quit', () => {
   logBoot('app will-quit event fired');
+  cerrarSplash();
   try {
     if (tray) {
       tray.destroy();
