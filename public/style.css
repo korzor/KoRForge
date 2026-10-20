@@ -340,9 +340,9 @@ body.is-maximized .win-btn.win-max .icon-restore {
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
 }
 
-/* Con el juego activo el logo va a plena luz; apagado, algo atenuado. */
+/* Con el juego activo el logo va a plena luz; apagado, apenas atenuado. */
 .game-version-pill:not(.active) .pill-logo {
-  opacity: 0.72;
+  opacity: 0.85;
 }
 
 .game-version-pill:hover .pill-logo,
