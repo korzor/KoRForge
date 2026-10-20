@@ -2052,7 +2052,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (appUpdateLabel) appUpdateLabel.textContent = textoI18n('nav_update_latest', 'Versión');
       if (appUpdateVerBadge) appUpdateVerBadge.textContent = ver || 'v…';
       btnAppUpdate.title = ver
-        ? `KoRForge ${ver} — última versión. Haz clic para comprobar de nuevo`
+        ? `KoRForge ${ver} · última versión. Haz clic para comprobar de nuevo`
         : 'Haz clic para comprobar si hay una versión nueva';
     }
   }
