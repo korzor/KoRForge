@@ -62,7 +62,7 @@ const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
 ### 🌟 Cambios y Novedades (v1.0.10 ➔ v1.0.11)
-- **Actualizador que sí instala:** arreglado el fallo de la 1.0.8/1.0.9/1.0.10. La app descargaba la versión nueva, se cerraba… pero desaparecía sin instalar nada (el lanzador de PowerShell del actualizador moría al instante, con código 0, sin ejecutar el script). Ahora el runner se lanza a través de `cmd /c`, que sí lo ejecuta, y deja el registro en %TEMP%\korforge_apply_update.log.
+- **Actualizador que sí instala:** arreglado el fallo de la 1.0.8/1.0.9/1.0.10. La app descargaba la versión nueva, se cerraba… pero desaparecía sin instalar nada (el lanzador de PowerShell del actualizador moría al instante, con código 0, sin ejecutar el script). Ahora el runner se lanza a través de cmd /c, que sí lo ejecuta, y deja el registro en %TEMP%\korforge_apply_update.log.
 - **Verificado de punta a punta:** 1.0.9 → 1.0.11 con el runner nuevo: cierra la app, instala en silencio, reabre y el registro confirma la versión instalada.
 - **El botón de versión del menú lateral:** apagado con tu versión actual, verde con «Actualizar a vX» cuando hay una nueva.
 
