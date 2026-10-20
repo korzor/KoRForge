@@ -133,9 +133,25 @@ async function startUpdateDownload(downloadUrl, version) {
   }
 }
 
+// Textos de la tarjeta de carga que se pinta mientras se aplica la actualización.
+// Es interfaz nativa (el proceso que instala no puede leer i18n.js), así que vive aquí,
+// en los cinco idiomas, igual que TRAY_TEXTS (docs/REGLAS-IDIOMAS.md). El idioma lo manda
+// la ventana al pedir el reinicio.
+const SPLASH_TEXTS = {
+  en: { instalando: 'Updating KoRForge...', abriendo: 'Opening KoRForge...' },
+  es: { instalando: 'Actualizando KoRForge...', abriendo: 'Abriendo KoRForge...' },
+  gl: { instalando: 'Actualizando KoRForge...', abriendo: 'Abrindo KoRForge...' },
+  fr: { instalando: 'Mise à jour de KoRForge...', abriendo: 'Ouverture de KoRForge...' },
+  it: { instalando: 'Aggiornamento di KoRForge...', abriendo: 'Apertura di KoRForge...' }
+};
+
+function textosSplash(lang) {
+  return SPLASH_TEXTS[String(lang || '').toLowerCase()] || SPLASH_TEXTS.en;
+}
+
 // Generador del runner que aplica la actualización.
-// OJO: se ejecuta el proceso tal como está en el .ps1; debe ser silencioso (sin ventanas ni pings).
-// Si se toca, comprobarlo con la sonda de ventanas (el .ps1 se ejecuta con windowsHide).
+// OJO: se ejecuta el proceso tal como está en el .ps1; no debe abrir consolas ni pings.
+// Si se toca, comprobarlo con la sonda de ventanas (scripts/verificar-actualizador-silencioso.js).
 // Deja rastro en %TEMP%\korforge_apply_update.log para poder diagnosticar una actualización.
 //
 // TIEMPOS (20-10-2026): antes había 2 s de margen + 3 s fijos tras instalar + 8 s a ciegas
@@ -143,9 +159,20 @@ async function startUpdateDownload(downloadUrl, version) {
 // solo se espera lo que de verdad hace falta: se comprueba la versión instalada en
 // resources/app/package.json (señal real de que el instalador ha acabado) y se sondea el
 // proceso de la app cada 200 ms. El instalador en silencio sigue siendo lo más lento (~13 s).
-function buildApplyScript(installerPath, appExePath, targetVersion) {
+//
+// SPLASH (20-10-2026, dueño): entre cerrar la app y que la nueva arranque pasan ~10 s con el
+// escritorio vacío. El runner pinta lo primero una tarjeta con el logo (el mismo splash.png)
+// y avisa a la app con un fichero bandera para que solo entonces se cierre: así el logo está
+// en pantalla todo el rato y no hay hueco. La tarjeta se cierra cuando la app nueva ya pinta.
+function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {}) {
   const psQuote = (p) => `'${String(p).replace(/'/g, "''")}'`;
   const versionEsperada = String(targetVersion || '').replace(/^v/i, '');
+  const textos = textosSplash(opciones.lang);
+  const splashPng = opciones.splashPng || '';
+  const flagFile = opciones.flagFile || path.join(os.tmpdir(), 'korforge_splash_listo');
+  // Área física de la pantalla donde está la app: la tarjeta sale ahí, no en el monitor principal
+  const pantalla = opciones.pantalla || null;
+  const num = (v) => (Number.isFinite(v) ? String(Math.round(v)) : '$null');
   return [
     "$ErrorActionPreference = 'SilentlyContinue'",
     '',
@@ -160,8 +187,16 @@ function buildApplyScript(installerPath, appExePath, targetVersion) {
     `$installer = ${psQuote(installerPath)}`,
     `$appExe = ${psQuote(appExePath)}`,
     `$targetVersion = ${psQuote(versionEsperada)}`,
+    `$splashOrigen = ${psQuote(splashPng)}`,
+    `$flagSplash = ${psQuote(flagFile)}`,
+    `$textoInstalando = ${psQuote(textos.instalando)}`,
+    `$textoAbriendo = ${psQuote(textos.abriendo)}`,
+    `$pantallaX = ${num(pantalla && pantalla.x)}`,
+    `$pantallaY = ${num(pantalla && pantalla.y)}`,
+    `$pantallaAncho = ${num(pantalla && pantalla.width)}`,
+    `$pantallaAlto = ${num(pantalla && pantalla.height)}`,
     "$pkgRuta = Join-Path (Split-Path -Parent $appExe) 'resources\\app\\package.json'",
-    "function VersionInstalada {",
+    'function VersionInstalada {',
     '  try {',
     '    $v = (Get-Content -LiteralPath $pkgRuta -Raw | ConvertFrom-Json).version',
     '    if ($v) { return [string]$v }',
@@ -169,75 +204,202 @@ function buildApplyScript(installerPath, appExePath, targetVersion) {
     "  return ''",
     '}',
     '',
+    '# --- Tarjeta de carga: lo primero que se pinta ---------------------------',
+    '# Se usa WinForms porque este proceso no es Electron. Se bombea la cola de mensajes',
+    '# (DoEvents) en todas las esperas para que la ventana no se quede en blanco ni "colgada".',
+    '$script:formSplash = $null',
+    '$script:barraSplash = $null',
+    '$script:timerSplash = $null',
+    '$script:lblSplash = $null',
+    '$script:posBarra = -84',
+    '',
+    'function Pulso { try { [System.Windows.Forms.Application]::DoEvents() } catch {} }',
+    '',
+    'function Esperar([int]$ms) {',
+    '  $fin = (Get-Date).AddMilliseconds($ms)',
+    '  while ((Get-Date) -lt $fin) {',
+    '    Pulso',
+    '    Start-Sleep -Milliseconds 40',
+    '  }',
+    '}',
+    '',
+    'function Abrir-Splash {',
+    '  try {',
+    '    # La copia se hace ANTES de instalar: el instalador sobrescribe la carpeta de la app',
+    '    $copia = Join-Path $env:TEMP \'korforge_splash.png\'',
+    '    if (Test-Path -LiteralPath $splashOrigen) { Copy-Item -LiteralPath $splashOrigen -Destination $copia -Force }',
+    '    Add-Type -AssemblyName System.Windows.Forms',
+    '    Add-Type -AssemblyName System.Drawing',
+    '    $ancho = 560',
+    '    $alto = 372',
+    '    $margen = 18',
+    '    $form = New-Object System.Windows.Forms.Form',
+    "    $form.FormBorderStyle = 'None'",
+    '    # Centrada en la pantalla donde está la app (no en el monitor principal, que puede ser otro)',
+    '    if ($null -ne $pantallaX) {',
+    "      $form.StartPosition = 'Manual'",
+    '      $form.Location = New-Object System.Drawing.Point([int]($pantallaX + (($pantallaAncho - $ancho) / 2)), [int]($pantallaY + (($pantallaAlto - $alto) / 2)))',
+    '    } else {',
+    "      $form.StartPosition = 'CenterScreen'",
+    '    }',
+    '    $form.TopMost = $true',
+    '    $form.ShowInTaskbar = $false',
+    "    $form.Text = 'KoRForge'",
+    '    $form.BackColor = [System.Drawing.Color]::FromArgb(11, 16, 24)',
+    '    $form.ClientSize = New-Object System.Drawing.Size($ancho, $alto)',
+    '    # Esquinas redondeadas: la tarjeta no tiene que verse como un rectangulo pegado',
+    '    $diam = $margen * 2',
+    '    $gp = New-Object System.Drawing.Drawing2D.GraphicsPath',
+    '    $gp.AddArc(0, 0, $diam, $diam, 180, 90)',
+    '    $gp.AddArc($ancho - $diam, 0, $diam, $diam, 270, 90)',
+    '    $gp.AddArc($ancho - $diam, $alto - $diam, $diam, $diam, 0, 90)',
+    '    $gp.AddArc(0, $alto - $diam, $diam, $diam, 90, 90)',
+    '    $gp.CloseFigure()',
+    '    $form.Region = New-Object System.Drawing.Region($gp)',
+    '    if (Test-Path -LiteralPath $copia) {',
+    '      $pic = New-Object System.Windows.Forms.PictureBox',
+    '      $pic.SizeMode = \'StretchImage\'',
+    '      $pic.Location = New-Object System.Drawing.Point(0, 20)',
+    '      $pic.Size = New-Object System.Drawing.Size(560, 280)',
+    '      $pic.Image = [System.Drawing.Image]::FromFile($copia)',
+    '      $form.Controls.Add($pic)',
+    '    }',
+    '    $lbl = New-Object System.Windows.Forms.Label',
+    '    $lbl.AutoSize = $false',
+    '    $lbl.TextAlign = \'MiddleCenter\'',
+    '    $lbl.Location = New-Object System.Drawing.Point(0, 306)',
+    '    $lbl.Size = New-Object System.Drawing.Size($ancho, 24)',
+    "    $lbl.Font = New-Object System.Drawing.Font('Segoe UI', 9, [System.Drawing.FontStyle]::Bold)",
+    '    $lbl.ForeColor = [System.Drawing.Color]::FromArgb(241, 245, 249)',
+    '    $lbl.Text = $textoInstalando',
+    '    $form.Controls.Add($lbl)',
+    '    # Barra de progreso animada (misma idea que la del splash de la app)',
+    '    $fondo = New-Object System.Windows.Forms.Panel',
+    '    $fondo.Location = New-Object System.Drawing.Point(180, 340)',
+    '    $fondo.Size = New-Object System.Drawing.Size(200, 3)',
+    '    $fondo.BackColor = [System.Drawing.Color]::FromArgb(42, 52, 68)',
+    '    $form.Controls.Add($fondo)',
+    '    $barra = New-Object System.Windows.Forms.Panel',
+    '    $barra.Size = New-Object System.Drawing.Size(84, 3)',
+    '    $barra.Location = New-Object System.Drawing.Point(-84, 0)',
+    '    $barra.BackColor = [System.Drawing.Color]::FromArgb(245, 158, 11)',
+    '    $fondo.Controls.Add($barra)',
+    '    $script:barraSplash = $barra',
+    '    $script:lblSplash = $lbl',
+    '    $timer = New-Object System.Windows.Forms.Timer',
+    '    $timer.Interval = 16',
+    '    $timer.Add_Tick({',
+    '      $script:posBarra = $script:posBarra + 6',
+    '      if ($script:posBarra -gt 200) { $script:posBarra = -84 }',
+    '      if ($script:barraSplash) { $script:barraSplash.Left = $script:posBarra }',
+    '    })',
+    '    $timer.Start()',
+    '    $script:timerSplash = $timer',
+    '    $form.Show()',
+    '    Pulso',
+    '    Pulso',
+    '    Pulso',
+    '    $script:formSplash = $form',
+    '    return $true',
+    '  } catch {',
+    "    Log ('Splash: no se pudo abrir: ' + $_.Exception.Message)",
+    '    return $false',
+    '  }',
+    '}',
+    '',
+    'function Cerrar-Splash {',
+    '  try { if ($script:timerSplash) { $script:timerSplash.Stop() } } catch {}',
+    '  try { if ($script:formSplash -and -not $script:formSplash.IsDisposed) { $script:formSplash.Close(); $script:formSplash.Dispose() } } catch {}',
+    '  $script:formSplash = $null',
+    '  $script:timerSplash = $null',
+    '}',
+    '',
+    '# 0. Tarjeta de carga primero, y avisar a la app de que ya está en pantalla',
+    "Log 'Paso 0: abriendo la tarjeta de carga'",
+    '$splashAbierto = Abrir-Splash',
+    'if ($splashAbierto) { Set-Content -LiteralPath $flagSplash -Value \'listo\' -Encoding ASCII }',
+    'Log ("Paso 0: tarjeta " + $(if ($splashAbierto) { \'abierta\' } else { \'no disponible\' }))',
+    '',
+    'try {',
+    '',
     '# 1. Margen mínimo: solo para que la respuesta HTTP que disparó esto llegue a salir',
-    "Log 'Paso 1: margen inicial'",
-    'Start-Sleep -Milliseconds 300',
+    "#    (la app espera su bandera y se cierra sola; aquí queda la red de seguridad)",
+    "  Log 'Paso 1: margen inicial'",
+    '  Esperar 300',
     '',
     '# 2. Cerrar KoRForge y esperar a que sus procesos desaparezcan de verdad',
-    "Log 'Paso 2: cerrando KoRForge'",
-    "Get-Process -Name 'KoRForge','electron' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue",
-    '$limite = (Get-Date).AddSeconds(10)',
-    'while ((@(Get-Process -Name KoRForge,electron -ErrorAction SilentlyContinue)).Count -gt 0 -and (Get-Date) -lt $limite) {',
-    '  Start-Sleep -Milliseconds 150',
-    '}',
-    "Log 'Paso 2: KoRForge cerrado'",
+    "  Log 'Paso 2: cerrando KoRForge'",
+    "  Get-Process -Name 'KoRForge','electron' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue",
+    '  $limite = (Get-Date).AddSeconds(10)',
+    '  while ((@(Get-Process -Name KoRForge,electron -ErrorAction SilentlyContinue)).Count -gt 0 -and (Get-Date) -lt $limite) {',
+    '    Esperar 150',
+    '  }',
+    "  Log 'Paso 2: KoRForge cerrado'",
     '',
     '# 3. Instalar en silencio (NSIS /S). Solo se da por terminado cuando el proceso del instalador',
     '#    HA APARECIDO y ya NO está (si solo se mira la versión, con la misma versión ya instalada',
     '#    se daría por buena en el primer sondeo mientras el instalador aún escribe).',
-    "Log \"Paso 3: instalando $installer\"",
-    '$versionAntes = VersionInstalada',
-    "Start-Process -FilePath $installer -ArgumentList '/S' -WindowStyle Hidden | Out-Null",
-    '$inicio = Get-Date',
-    '$limite = $inicio.AddMinutes(3)',
-    '$vistoSetup = $false',
-    '$instalacionLista = $false',
-    'while ((Get-Date) -lt $limite) {',
-    '  Start-Sleep -Milliseconds 200',
-    "  $setup = @(Get-Process -Name 'KoRForge-Setup*' -ErrorAction SilentlyContinue)",
-    '  if ($setup.Count -gt 0) { $vistoSetup = $true; continue }',
-    '  if (-not $vistoSetup) {',
-    '    # Si el instalador no llega a aparecer (sonda con un ejecutable inocuo), no esperar 3 minutos',
-    '    if (((Get-Date) - $inicio).TotalSeconds -gt 10) { break }',
-    '    continue',
-    '  }',
-    '  $ahora = VersionInstalada',
-    '  if (($ahora -and $targetVersion -and $ahora -eq $targetVersion) -or ($ahora -and $versionAntes -and $ahora -ne $versionAntes)) {',
-    '    $instalacionLista = $true',
+    '  Log "Paso 3: instalando $installer"',
+    '  $versionAntes = VersionInstalada',
+    "  Start-Process -FilePath $installer -ArgumentList '/S' -WindowStyle Hidden | Out-Null",
+    '  $inicio = Get-Date',
+    '  $limite = $inicio.AddMinutes(3)',
+    '  $vistoSetup = $false',
+    '  $instalacionLista = $false',
+    '  while ((Get-Date) -lt $limite) {',
+    '    Esperar 200',
+    "    $setup = @(Get-Process -Name 'KoRForge-Setup*' -ErrorAction SilentlyContinue)",
+    '    if ($setup.Count -gt 0) { $vistoSetup = $true; continue }',
+    '    if (-not $vistoSetup) {',
+    '      # Si el instalador no llega a aparecer (sonda con un ejecutable inocuo), no esperar 3 minutos',
+    '      if (((Get-Date) - $inicio).TotalSeconds -gt 10) { break }',
+    '      continue',
+    '    }',
+    '    $ahora = VersionInstalada',
+    '    if (($ahora -and $targetVersion -and $ahora -eq $targetVersion) -or ($ahora -and $versionAntes -and $ahora -ne $versionAntes)) {',
+    '      $instalacionLista = $true',
+    '      break',
+    '    }',
+    '    Esperar 1500',
     '    break',
     '  }',
-    '  Start-Sleep -Milliseconds 1500',
-    '  break',
-    '}',
-    '$verInstalada = VersionInstalada',
-    "$resultado = 'ok'; if (-not $instalacionLista) { $resultado = 'sin confirmar' }",
-    'Log "Paso 3: instalación terminada ($resultado). Versión instalada: $verInstalada"',
+    '  $verInstalada = VersionInstalada',
+    "  $resultado = 'ok'; if (-not $instalacionLista) { $resultado = 'sin confirmar' }",
+    '  Log "Paso 3: instalación terminada ($resultado). Versión instalada: $verInstalada"',
     '',
     '# 4. Reabrir KoRForge y comprobar que el proceso vive (sondeo, no esperas a ciegas)',
     '#    $reabrirApp = $false desactiva TODO el paso 4 (lo usa la sonda de ventanas).',
-    '$reabrirApp = $true',
-    'function Abrir-App {',
-    '  if (Test-Path -LiteralPath $appExe) { Start-Process -FilePath $appExe | Out-Null }',
-    '  else { Start-Process -FilePath $installer | Out-Null }',
-    '}',
-    'if (-not $reabrirApp) {',
-    "  Log 'Paso 4: reapertura desactivada (sonda)'",
-    '} else {',
-    "  Log 'Paso 4: reabriendo KoRForge'",
-    '  Abrir-App',
-    '  $limite = (Get-Date).AddSeconds(15)',
-    '  $arrancada = $false',
-    '  while ((Get-Date) -lt $limite) {',
-    '    Start-Sleep -Milliseconds 200',
-    '    if ((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0) { $arrancada = $true; break }',
+    '  $reabrirApp = $true',
+    '  if ($script:lblSplash) { $script:lblSplash.Text = $textoAbriendo }',
+    '  if (-not $reabrirApp) {',
+    "    Log 'Paso 4: reapertura desactivada (sonda)'",
+    '  } else {',
+    "    Log 'Paso 4: reabriendo KoRForge'",
+    '    if (Test-Path -LiteralPath $appExe) { Start-Process -FilePath $appExe | Out-Null }',
+    '    else { Start-Process -FilePath $installer | Out-Null }',
+    '    $limite = (Get-Date).AddSeconds(15)',
+    '    $arrancada = $false',
+    '    while ((Get-Date) -lt $limite) {',
+    '      Esperar 200',
+    '      if ((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0) { $arrancada = $true; break }',
+    '    }',
+    '    if (-not $arrancada) {',
+    "      Log 'Paso 4: la app no arrancó; reintentando una vez'",
+    '      Esperar 2000',
+    '      if (Test-Path -LiteralPath $appExe) { Start-Process -FilePath $appExe | Out-Null }',
+    '      Esperar 4000',
+    '    }',
+    "    Log \"Paso 4: app en ejecución: $((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0)\"",
+    '    # La app nueva pinta su propio splash al arrancar: se le deja sitio antes de quitar la tarjeta',
+    '    if ($arrancada) { Esperar 1500 }',
     '  }',
-    '  if (-not $arrancada) {',
-    "    Log 'Paso 4: la app no arrancó; reintentando una vez'",
-    '    Start-Sleep -Seconds 2',
-    '    Abrir-App',
-    '    Start-Sleep -Seconds 4',
-    '  }',
-    "  Log \"Paso 4: app en ejecución: $((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)).Count -gt 0)\"",
+    '',
+    '} finally {',
+    '  # La tarjeta no puede quedarse nunca en pantalla si algo falla',
+    '  Cerrar-Splash',
+    "  Log 'Tarjeta de carga cerrada'",
+    '  Remove-Item -LiteralPath $flagSplash -Force -ErrorAction SilentlyContinue',
+    '  Remove-Item -LiteralPath (Join-Path $env:TEMP \'korforge_splash.png\') -Force -ErrorAction SilentlyContinue',
     '}',
     '',
     '# 5. Limpiar el script temporal',
@@ -246,7 +408,7 @@ function buildApplyScript(installerPath, appExePath, targetVersion) {
   ].join('\n');
 }
 
-function applyUpdateAndRestart(electronApp = null) {
+function applyUpdateAndRestart(electronApp = null, lang = 'en') {
   if (currentDownload.status !== 'completed' || !currentDownload.filePath || !fs.existsSync(currentDownload.filePath)) {
     throw new Error('No hay ninguna actualización descargada lista para aplicar.');
   }
@@ -278,13 +440,35 @@ function applyUpdateAndRestart(electronApp = null) {
     appExePath = standardInstalledExe;
   }
 
-  // Runner OCULTO (PowerShell): espera, cierra KoRForge, instala en silencio y reabre.
+  // Runner OCULTO (PowerShell): pinta la tarjeta de carga, cierra KoRForge, instala en silencio y reabre.
   // Se lanza con windowsHide + -WindowStyle Hidden: ni consola ni pings (antes era un .bat
   // con ping 127.0.0.1 como temporizador y una ventana de cmd a la vista).
   const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
-  fs.writeFileSync(runnerScript, buildApplyScript(installerPath, appExePath, currentDownload.version), 'utf-8');
 
-  // Lanzado oculto y desacoplado: no se abre ninguna ventana.
+  // Splash de la tarjeta: el mismo PNG de la app (en la instalación vive en resources/app/public).
+  const rutaPublica = path.join(path.dirname(appExePath), 'resources', 'app', 'public', 'splash.png');
+  const splashPng = fs.existsSync(rutaPublica)
+    ? rutaPublica
+    : path.join(__dirname, '..', 'public', 'splash.png');
+
+  // Bandera: el runner la escribe cuando la tarjeta ya está en pantalla. La app NO se cierra
+  // hasta verla (o hasta el límite), para que no haya ni un instante de escritorio vacío.
+  const flagFile = path.join(os.tmpdir(), 'korforge_splash_listo');
+  try { fs.unlinkSync(flagFile); } catch (_) {}
+
+  const pantalla = typeof global.rectPantallaFisica === 'function' ? global.rectPantallaFisica() : null;
+
+  const script = buildApplyScript(installerPath, appExePath, currentDownload.version, {
+    lang,
+    splashPng,
+    flagFile,
+    pantalla
+  });
+
+  // Con BOM: el .ps1 lleva acentos (fr/it) y PowerShell 5.1 sin BOM los leería como ANSI.
+  fs.writeFileSync(runnerScript, '\ufeff' + script, 'utf-8');
+
+  // Lanzado oculto y desacoplado: no se abre ninguna consola.
   // OJO (fallo de la 1.0.8/1.0.9/1.0.10): el spawn DIRECTO de powershell.exe desde la app
   // empaquetada deja un proceso que sale al instante con código 0 y no ejecuta el script
   // (verificado con sondas: proceso creado, exit=0, sin log ni instalación). A través de
@@ -303,8 +487,7 @@ function applyUpdateAndRestart(electronApp = null) {
   });
   child.unref();
 
-  // Cerrar la aplicación principal limpiamente (150 ms: justo lo que tarda en salir la respuesta)
-  setTimeout(() => {
+  const cerrarApp = () => {
     try {
       if (global.quitAndApplyUpdate) {
         global.quitAndApplyUpdate();
@@ -316,7 +499,20 @@ function applyUpdateAndRestart(electronApp = null) {
     } catch (_) {
       process.exit(0);
     }
-  }, 150);
+  };
+
+  // La respuesta HTTP sale ya; el cierre espera a que la tarjeta esté pintada (bandera).
+  // Límite de 4 s por si el runner no llega a pintarla (entonces se cierra como antes).
+  const inicio = Date.now();
+  const vigilante = setInterval(() => {
+    let lista = false;
+    try { lista = fs.existsSync(flagFile); } catch (_) {}
+    const agotado = Date.now() - inicio > 4000;
+    if (lista || agotado) {
+      clearInterval(vigilante);
+      setTimeout(cerrarApp, lista ? 120 : 0);
+    }
+  }, 80);
 
   return { success: true, message: 'Actualizador lanzado. Cerrando KoRForge...' };
 }

@@ -17,6 +17,21 @@ function logBoot(msg) {
 
 logBoot('--- Process launch (PID: ' + process.pid + ') ---');
 
+// Área física (píxeles reales) de la pantalla donde está la app. La usa el actualizador para
+// pintar su tarjeta de carga en el MISMO monitor que el usuario está mirando, no en el principal
+// por defecto (dueño, 21-10-2026: "sale en el monitor que tengas focus").
+global.rectPantallaFisica = function() {
+  try {
+    if (!win || win.isDestroyed()) return null;
+    const limites = win.getBounds();
+    const pantalla = screen.getDisplayMatching(limites);
+    const area = screen.dipToScreenRect(win, pantalla.workArea);
+    return { x: Math.round(area.x), y: Math.round(area.y), width: Math.round(area.width), height: Math.round(area.height) };
+  } catch (_) {
+    return null;
+  }
+};
+
 // Global hook for in-app updater to cleanly terminate before installer runs
 global.quitAndApplyUpdate = function() {
   logBoot('[quitAndApplyUpdate] Cerrando KoRForge para aplicar actualizacion...');

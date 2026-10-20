@@ -355,6 +355,80 @@ function checkDashes(translations) {
   if (!problems.length) ok('sin guiones largos en los textos');
 }
 
+// ---------------------------------------------------------------- Interfaz nativa
+// Hay textos que no pasan por i18n.js porque los pinta otro proceso: el menú de la bandeja
+// (main.js) y la tarjeta de carga del actualizador (modules/updater.js). Tiene que haberlos
+// en los mismos idiomas y con las mismas claves que el resto de la app, o se queda coja al
+// añadir algo nuevo (docs/REGLAS-IDIOMAS.md).
+function extraerObjetoLiteral(codigo, nombre) {
+  const inicio = codigo.indexOf('const ' + nombre + ' = {');
+  if (inicio < 0) return null;
+  const desde = codigo.indexOf('{', inicio);
+  let nivel = 0;
+  for (let i = desde; i < codigo.length; i++) {
+    if (codigo[i] === '{') nivel++;
+    else if (codigo[i] === '}') {
+      nivel--;
+      if (nivel === 0) return codigo.slice(desde, i + 1);
+    }
+  }
+  return null;
+}
+
+function checkNativos(translations) {
+  const idiomas = Object.keys(translations);
+  const fuentes = [
+    { archivo: path.join(ROOT, 'main.js'), nombre: 'TRAY_TEXTS', etiqueta: 'bandeja del sistema' },
+    { archivo: path.join(ROOT, 'modules', 'updater.js'), nombre: 'SPLASH_TEXTS', etiqueta: 'tarjeta del actualizador' }
+  ];
+
+  for (const { archivo, nombre, etiqueta } of fuentes) {
+    if (!fs.existsSync(archivo)) continue;
+    const codigo = fs.readFileSync(archivo, 'utf-8');
+    const literal = extraerObjetoLiteral(codigo, nombre);
+    if (!literal) {
+      fail(archivo, 0, `no se encontró el objeto ${nombre} (${etiqueta})`);
+      continue;
+    }
+    let objeto;
+    try {
+      objeto = vm.runInNewContext('(' + literal + ')');
+    } catch (err) {
+      fail(archivo, 0, `${nombre} no se pudo evaluar: ${err.message}`);
+      continue;
+    }
+
+    const faltan = idiomas.filter((idioma) => !objeto[idioma]);
+    if (faltan.length) {
+      fail(archivo, 0, `${nombre} (${etiqueta}) no está en: ${faltan.join(', ')}`);
+    }
+    const sobran = Object.keys(objeto).filter((idioma) => !idiomas.includes(idioma));
+    if (sobran.length) {
+      fail(archivo, 0, `${nombre} (${etiqueta}) tiene idiomas que la app no usa: ${sobran.join(', ')}`);
+    }
+
+    const clavesEn = Object.keys(objeto.en || {});
+    for (const idioma of Object.keys(objeto)) {
+      const claves = Object.keys(objeto[idioma] || {});
+      const faltanClaves = clavesEn.filter((k) => !claves.includes(k));
+      if (faltanClaves.length) {
+        fail(archivo, 0, `${nombre}.${idioma} (${etiqueta}) no tiene: ${faltanClaves.join(', ')}`);
+      }
+      for (const clave of claves) {
+        const texto = objeto[idioma][clave];
+        if (typeof texto === 'string' && /[\u2013\u2014]/.test(texto)) {
+          fail(archivo, 0, `${nombre}.${idioma}.${clave} (${etiqueta}) lleva guion largo: "${texto}"`);
+        }
+        if (typeof texto === 'string' && !texto.trim()) {
+          fail(archivo, 0, `${nombre}.${idioma}.${clave} (${etiqueta}) está vacío`);
+        }
+      }
+    }
+  }
+
+  if (!problems.length) ok('interfaz nativa (bandeja y actualizador) en los cinco idiomas');
+}
+
 // ---------------------------------------------------------------- Main
 function main() {
   console.log('🔎 Verificando idiomas de KoRForge…\n');
@@ -373,6 +447,7 @@ function main() {
   if (fs.existsSync(SPLASH_FILE)) checkHtml(translations, SPLASH_FILE);
   checkApp(translations);
   checkDashes(translations);
+  checkNativos(translations);
 
   if (notes.length && VERBOSE) {
     console.log('\nℹ️  Notas:');

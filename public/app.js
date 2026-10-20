@@ -2373,7 +2373,13 @@ document.addEventListener('DOMContentLoaded', () => {
       btnApplyUpdateRestart.textContent = T('upd_btn_restarting');
       showToast(T('toast_applying'), 'info');
 
-      const res = await fetch('/api/app-updates/apply', { method: 'POST' });
+      const res = await fetch('/api/app-updates/apply', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // El idioma se manda para que la tarjeta de carga del actualizador (interfaz nativa)
+        // salga en el idioma en el que está la app (docs/REGLAS-IDIOMAS.md)
+        body: JSON.stringify({ lang: (document.documentElement.lang || 'en') })
+      });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.code ? T('err_' + data.code) : (data.error || `HTTP ${res.status}`));

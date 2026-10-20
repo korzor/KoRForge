@@ -938,7 +938,9 @@ app.get('/api/app-updates/download-progress', (req, res) => {
 // API: Apply Downloaded In-App Update and Restart
 app.post('/api/app-updates/apply', (req, res) => {
   try {
-    const result = updater.applyUpdateAndRestart();
+    // El idioma lo manda la ventana: la tarjeta de carga del actualizador es interfaz nativa
+    const lang = (req.body && req.body.lang) || 'en';
+    const result = updater.applyUpdateAndRestart(null, lang);
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: err.message });

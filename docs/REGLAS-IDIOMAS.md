@@ -60,7 +60,20 @@ en `refrescarTextosDinamicos()`**.
 Nada de `toLocaleDateString('es-ES')` a mano: se usa `I18N.fmtDate`, `I18N.fmtDateTime`,
 `I18N.fmtNumber` o `I18N.relativeDate` (`hace 3h`, `3h ago`, `il y a 3 h`…).
 
-## 6. Lo que no se traduce (a propósito)
+## 6. Interfaz nativa (fuera de `i18n.js`)
+
+Dos sitios los pinta otro proceso y no pueden leer `public/i18n.js`, así que sus textos viven en
+objetos del propio código, **en los cinco idiomas**:
+
+| Qué | Dónde |
+|---|---|
+| Menú de la bandeja del sistema | `TRAY_TEXTS` en `main.js` |
+| Tarjeta de carga del actualizador | `SPLASH_TEXTS` en `modules/updater.js` |
+
+El verificador (`checkNativos`) comprueba que ninguno se queda sin idioma, sin clave o con guion
+largo. Si añades un texto nativo nuevo, añádelo también ahí.
+
+## 7. Lo que no se traduce (a propósito)
 
 - **Nombres de idioma** del selector: se muestran en su propio idioma (`Español`, `Français`…).
 - **Marcas y nombres propios**: KoRForge, WoW Forever, The War Within, nombres de addons.
