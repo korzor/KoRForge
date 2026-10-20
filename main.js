@@ -18,15 +18,24 @@ function logBoot(msg) {
 logBoot('--- Process launch (PID: ' + process.pid + ') ---');
 
 // Área física (píxeles reales) de la pantalla donde está la app. La usa el actualizador para
-// pintar su tarjeta de carga en el MISMO monitor que el usuario está mirando, no en el principal
-// por defecto (dueño, 21-10-2026: "sale en el monitor que tengas focus").
+// pintar su tarjeta de carga en el MISMO monitor que el usuario está mirando, centrada en el
+// medio de la pantalla (dueño, 21-10-2026: "que salga centrado, en el medio de la pantalla").
+// Se manda además el factor de escala del monitor: un proceso WinForms sin DPI por monitor
+// descuadra la tarjeta en pantallas al 125/150%.
 global.rectPantallaFisica = function() {
   try {
     if (!win || win.isDestroyed()) return null;
     const limites = win.getBounds();
     const pantalla = screen.getDisplayMatching(limites);
-    const area = screen.dipToScreenRect(win, pantalla.workArea);
-    return { x: Math.round(area.x), y: Math.round(area.y), width: Math.round(area.width), height: Math.round(area.height) };
+    // bounds (no workArea): el centro exacto de la pantalla, sin descuadre por la barra de tareas
+    const area = screen.dipToScreenRect(win, pantalla.bounds);
+    return {
+      x: Math.round(area.x),
+      y: Math.round(area.y),
+      width: Math.round(area.width),
+      height: Math.round(area.height),
+      escala: pantalla.scaleFactor || 1
+    };
   } catch (_) {
     return null;
   }

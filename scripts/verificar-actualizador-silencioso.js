@@ -20,13 +20,15 @@ const psFile = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
 const salidaVentanas = path.join(os.tmpdir(), 'korforge_sonda_ventanas.txt');
 const pidVigilante = path.join(os.tmpdir(), 'korforge_sonda_ventanas.pid');
 
-// Pantalla de mentira: la tarjeta tiene que quedar centrada dentro de este rectángulo,
-// que es lo que en producción se calcula con la pantalla donde está la app.
-const pantalla = { x: 40, y: 30, width: 1000, height: 760 };
-const ANCHO_CARTA = 560;
-const ALTO_CARTA = 372;
-const esperadoX = pantalla.x + Math.round((pantalla.width - ANCHO_CARTA) / 2);
-const esperadoY = pantalla.y + Math.round((pantalla.height - ALTO_CARTA) / 2);
+// Pantalla de mentira: la tarjeta tiene que quedar centrada dentro de este rectángulo y con
+// el tamaño que toque según la pantalla (560x372 de referencia en 1920x1080, con topes).
+// Se prueba con un 4K que es el caso extremo contrario al monitor del dueño.
+const pantalla = { x: 0, y: 0, width: 3840, height: 2160, escala: 1 };
+const factorEsperado = Math.min(Math.max(pantalla.width / 1920, 0.75), 2.2, Math.min(Math.max(pantalla.height / 1080, 0.75), 2.2));
+const ANCHO_CARTA = Math.round(560 * factorEsperado);
+const ALTO_CARTA = Math.round(372 * factorEsperado);
+const esperadoX = Math.round(pantalla.x + (pantalla.width - ANCHO_CARTA) / 2);
+const esperadoY = Math.round(pantalla.y + (pantalla.height - ALTO_CARTA) / 2);
 
 try { fs.unlinkSync(flagFile); } catch (_) {}
 // El vigilante de una corrida anterior puede tener el fichero abierto: se trunca con reintentos
@@ -125,18 +127,33 @@ Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
 const lineas = fs.existsSync(salidaVentanas)
   ? [...new Set(fs.readFileSync(salidaVentanas, 'utf-8').split(/\r?\n/).map((l) => l.trim()).filter(Boolean))]
   : [];
-const titulos = lineas.map((l) => l.split(' :: ')[0]);
 
-const tarjeta = lineas.find((l) => /^KoRForge ::/.test(l));
-const tarjetaVista = Boolean(tarjeta);
+const tarjetaVista = lineas.some((l) => /^KoRForge ::/.test(l));
+
+// La geometria se comprueba con la linea que escribe el propio runner en el log: es la que
+// manda de verdad (el vigilante de ventanas vive en otro espacio de coordenadas por el DPI).
+const logFile = path.join(os.tmpdir(), 'korforge_apply_update.log');
 let geometriaOk = false;
 let detalle = 'sin datos';
-if (tarjeta) {
-  const [, , rect] = tarjeta.split(' :: ');
-  const [x, y, w, h] = rect.split(',').map(Number);
-  detalle = `x=${x} y=${y} w=${w} h=${h} (esperado x=${esperadoX} y=${esperadoY} w=${ANCHO_CARTA} h=${ALTO_CARTA})`;
-  geometriaOk = Math.abs(x - esperadoX) <= 2 && Math.abs(y - esperadoY) <= 2 && Math.abs(w - ANCHO_CARTA) <= 2 && Math.abs(h - ALTO_CARTA) <= 2;
-}
+try {
+  const log = fs.readFileSync(logFile, 'utf-8');
+  const lineasLog = log.split(/\r?\n/).filter((l) => l.includes('Tarjeta: pantalla fisica='));
+  const ultima = lineasLog[lineasLog.length - 1] || '';
+  const m = ultima.match(/fisica=(-?\d+),(-?\d+) (\d+)x(\d+) escala sistema=([\d.]+) factor=([\d.]+) -> (-?\d+),(-?\d+) (\d+)x(\d+)/);
+  if (m) {
+    const [, fx, fy, fw, fh, escala, factor, lx, ly, lw, lh] = m.map(Number);
+    const centroX = lx + lw / 2;
+    const centroY = ly + lh / 2;
+    const objetivoX = fx / escala + fw / escala / 2;
+    const objetivoY = fy / escala + fh / escala / 2;
+    geometriaOk =
+      Math.abs(lw - ANCHO_CARTA) <= 1 && Math.abs(lh - ALTO_CARTA) <= 1 &&
+      Math.abs(factor - factorEsperado) <= 0.01 &&
+      Math.abs(centroX - objetivoX) <= 1 && Math.abs(centroY - objetivoY) <= 1;
+    detalle = `fisica=${fx},${fy} ${fw}x${fh} escala=${escala} factor=${factor} -> logica=${lx},${ly} ${lw}x${lh} ` +
+      `(esperado ${ANCHO_CARTA}x${ALTO_CARTA} en ${esperadoX},${esperadoY}; centro ${centroX.toFixed(1)},${centroY.toFixed(1)} vs ${objetivoX.toFixed(1)},${objetivoY.toFixed(1)})`;
+  }
+} catch (_) {}
 
 const consolas = lineas.filter((t) => /^(Windows PowerShell|PowerShell|Administrador:|C:\\\\WINDOWS\\\\system32)/i.test(t));
 const limpiado = !fs.existsSync(psFile);
