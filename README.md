@@ -14,7 +14,7 @@
 
 ---
 
-## 📖 ¿Qué es KoRForge?
+## <img src="korforge-lupa.png" alt="📖" width="28" height="28" /> ¿Qué es KoRForge?
 
 **KoRForge** es un gestor de addons standalone para **World of Warcraft**, diseñado como una alternativa moderna, elegante y extremadamente rápida frente a aplicaciones pesadas y comerciales como CurseForge/Overwolf.
 
