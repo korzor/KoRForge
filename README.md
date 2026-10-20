@@ -22,7 +22,7 @@ KoRForge se conecta directamente con el catálogo público de CurseForge sin nec
 
 ---
 
-## ✨ Características Principales
+## <img src="korforge-estrella.png" alt="✨" width="28" height="28" /> Características Principales
 
 ### 🛡️ 1. Cero Bloatware y Privacidad Total
 - **Sin publicidad ni banners de vídeo.**
