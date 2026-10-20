@@ -88,23 +88,38 @@ async function asegurarFichaAbierta(cdp) {
   );
   if (yaAbierta) return;
 
-  for (let i = 0; i < 30; i++) {
-    const cards = await cdp.evaluate(`document.querySelectorAll('#cfResultsGrid .cf-card').length`);
-    if (cards > 0) break;
-    await sleep(500);
+  // Volver a la pestaña del catálogo (la app puede estar en Favoritos, etc.)
+  await cdp.evaluate(`(() => { document.querySelector('.nav-item[data-tab="search"]')?.click(); return true; })()`);
+  await sleep(400);
+
+  for (let intento = 0; intento < 2; intento++) {
+    for (let i = 0; i < 20; i++) {
+      const cards = await cdp.evaluate(`document.querySelectorAll('#cfResultsGrid .cf-card').length`);
+      if (cards > 0) break;
+      await sleep(500);
+    }
+
+    const click = await cdp.evaluate(`(() => {
+      const card = document.querySelector('#cfResultsGrid .cf-card');
+      if (!card) return false;
+      card.click();
+      return true;
+    })()`);
+    if (!click) throw new Error('El catálogo no tiene tarjetas (¿no cargó la API de CurseForge?)');
+
+    // Esperar a que la ficha se muestre (la carga de datos es asíncrona)
+    for (let i = 0; i < 30; i++) {
+      await sleep(500);
+      const visible = await cdp.evaluate(
+        `getComputedStyle(document.getElementById('cfDetailView')).display !== 'none'`
+      );
+      if (visible) {
+        await sleep(3000); // dejar cargar la descripción
+        return;
+      }
+    }
   }
-  const abierto = await cdp.evaluate(`(() => {
-    const card = document.querySelector('#cfResultsGrid .cf-card');
-    if (!card) return false;
-    card.click();
-    return true;
-  })()`);
-  if (!abierto) throw new Error('El catálogo no tiene tarjetas (¿no cargó la API de CurseForge?)');
-  await sleep(6000);
-  const visible = await cdp.evaluate(
-    `getComputedStyle(document.getElementById('cfDetailView')).display !== 'none'`
-  );
-  if (!visible) throw new Error('La tarjeta no abrió la ficha de addon');
+  throw new Error('La tarjeta no abrió la ficha de addon');
 }
 
 async function medirScroll(cdp) {
@@ -216,6 +231,34 @@ async function main() {
       if (m.versionesDesbordan) fallo(problemas, `a ${ancho}px la lista de versiones desborda`);
       if (m.galeriaDesborda) fallo(problemas, `a ${ancho}px la galería desborda`);
       if (!m.quedaFijaLaBarra) fallo(problemas, `a ${ancho}px la barra de acciones ya no es sticky`);
+    }
+
+    // Favoritos: las tarjetas no deben estirarse a lo alto cuando hay pocas
+    console.log('[verificar-ficha] tarjetas de Favoritos');
+    await cdp.evaluate(`(() => { document.querySelector('.nav-item[data-tab="favorites"]')?.click(); return true; })()`);
+    await sleep(2000);
+    const fav = await cdp.evaluate(`(() => {
+      const grid = document.getElementById('favoritesTabGrid');
+      if (!grid) return { sinGrid: true };
+      const cards = Array.from(grid.querySelectorAll('.cf-card'));
+      const cs = getComputedStyle(grid);
+      const filas = cs.gridTemplateRows.split(' ').map(v => parseFloat(v)).filter(n => !Number.isNaN(n));
+      return {
+        tarjetas: cards.length,
+        alignContent: cs.alignContent,
+        alturas: cards.map(c => Math.round(c.getBoundingClientRect().height)),
+        filaMasAlta: filas.length ? Math.max(...filas) : 0
+      };
+    })()`);
+    if (fav.sinGrid) {
+      console.log('  (no hay rejilla de favoritos en esta ventana)');
+    } else if (fav.tarjetas === 0) {
+      console.log('  sin favoritos guardados: nada que medir');
+    } else {
+      const maxTarjeta = Math.max(...fav.alturas);
+      console.log(`  ${fav.tarjetas} tarjeta(s) · alta máx ${maxTarjeta} px · fila máx ${Math.round(fav.filaMasAlta)} px · align-content: ${fav.alignContent}`);
+      if (fav.alignContent !== 'start') fallo(problemas, `las filas de Favoritos se pueden estirar (align-content: ${fav.alignContent})`);
+      if (maxTarjeta > 320) fallo(problemas, `una tarjeta de Favoritos mide ${maxTarjeta} px (se está estirando)`);
     }
   } finally {
     try {
