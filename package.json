@@ -11,7 +11,8 @@
     "package:installer": "electron-builder --win nsis",
     "package:zip": "electron-builder --win zip",
     "package:release": "electron-builder --win nsis zip",
-    "release": "node scripts/release-github.js"
+    "release": "node scripts/release-github.js",
+    "release:web": "node scripts/publish-korforge-release.js"
   },
   "keywords": [
     "wow",
