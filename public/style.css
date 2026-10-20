@@ -305,9 +305,9 @@ body.is-maximized .win-btn.win-max .icon-restore {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  /* Relleno justo: el logo tiene que verse, y el pill mide lo mismo que antes (dueño, 20-10-2026). */
-  padding: 0 8px;
-  height: 36px;
+  /* La barra superior mide 72 px, así que el pill puede crecer sin apretar nada (dueño, 20-10-2026). */
+  padding: 0 10px;
+  height: 46px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 9px;
@@ -333,9 +333,9 @@ body.is-maximized .win-btn.win-max .icon-restore {
    lo mismo que antes: lo que se recorta es el relleno, no el botón. */
 .game-version-pill .pill-logo {
   display: block;
-  height: 26px;
+  height: 32px;
   width: auto;
-  max-width: 64px;
+  max-width: 78px;
   object-fit: contain;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
 }
