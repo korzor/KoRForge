@@ -14,6 +14,13 @@
   al NAS (`\\NAS\docker\centolos\data\korforge-releases.json`).
 - `centolos/scripts/publish-korforge-release.js` aplica todo esto solo: copia los binarios, deja el
   JSON con la última versión y borra los binarios viejos de la web.
+- Los cambios del registro se escriben en `docs/CAMBIOS-ULTIMA.md`: una línea por cambio empezando
+  por `- ` (la primera es la descripción corta) y, si se quiere título propio, una línea
+  `# Titulo: ...`. Las demás líneas que empiezan por `#` se ignoran (corregido el 20-10-2026: antes
+  las cabeceras se colaban como si fueran cambios).
+- **La tarjeta estática no la toca el script:** hay que actualizar a mano
+  `centolos/public/wow/index.html` (versión, fecha, descripción, lista y enlaces) porque es lo que
+  se ve antes de que el JS cargue el registro.
 
 ## 2. GitHub conserva las 5 últimas releases
 
