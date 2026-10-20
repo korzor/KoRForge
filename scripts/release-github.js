@@ -61,10 +61,9 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.6 ➔ v1.0.7)
-- **Actualizador sin ventanas:** al aplicar una actualización ya no se abre una ventana negra de consola, ni se usan pings como temporizador. El cierre de la app, la instalación silenciosa y la reapertura ocurren en segundo plano.
-- **Mismo resultado, sin rastro visual:** se instala la versión nueva en silencio (NSIS /S) y KoRForge reaparece actualizado.
-- **Nota:** la ventana que se veía la abría el actualizador de las versiones anteriores. A partir de la 1.0.7, las siguientes actualizaciones se aplican sin ninguna ventana intermedia.
+### 🌟 Cambios y Novedades (v1.0.7 ➔ v1.0.8)
+- **Actualización de comprobación del actualizador silencioso:** si vienes de la 1.0.7, al aplicar esta versión ya no se abre ninguna ventana de consola ni se ejecutan pings. El cierre de la app, la instalación y la reapertura ocurren en segundo plano.
+- **¿Por qué viste la ventana al pasar de la 1.0.6 a la 1.0.7?** Porque la actualización la aplica el actualizador de la versión que tenías instalada: al venir de la 1.0.6, la ventana la abría el actualizador viejo (un .bat con ping como espera). Desde la 1.0.7, ese código ya es el nuevo.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})

@@ -38,6 +38,7 @@ Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, mot
 ---
 
 ## Historial de Versiones Publicadas
+- **v1.0.8 (20-10-2026):** actualización de comprobación del actualizador silencioso: al pasar desde la 1.0.7 ya no se abre ninguna ventana ni se hacen pings (la ventana que se veía al venir de la 1.0.6 la abría el actualizador antiguo).
 - **v1.0.7 (20-10-2026):** el actualizador ya no abre una ventana de consola ni usa `ping` como espera: cierre, instalación silenciosa y reapertura sin ventanas.
 - **v1.0.6 (20-10-2026):** las tarjetas de Favoritos (y las del Explorador cuando hay pocos resultados) ya no se estiran a lo alto: la rejilla conserva la altura natural de cada tarjeta.
 - **v1.0.5 (20-10-2026):** La ficha de addon ocupa todo el ancho de la ventana y es flexible (antes, 1.080 px centrados). El HTML de la descripción (imágenes, tablas, vídeos, código, citas) se respeta y nunca desborda.
