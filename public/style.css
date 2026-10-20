@@ -132,13 +132,15 @@ body.is-maximized .app-topbar {
    Colores de la marca: morado #BD5FFF con el texto en blanco (el amarillo #FFDD00 queda para la taza). */
 .bmc-btn {
   position: absolute;
-  top: 36px;
+  /* Reparte el alto de la barra (72 px): los controles acaban en 34 y el borde inferior está en 72,
+     así que 37 + 32 deja 3 px de aire arriba y 3 px abajo. */
+  top: 37px;
   right: 10px;
-  height: 28px;
+  height: 32px;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 0 9px;
+  padding: 0 10px;
   border: none;
   border-radius: 8px;
   background: linear-gradient(180deg, #c77bff 0%, #bd5fff 100%);
@@ -146,7 +148,7 @@ body.is-maximized .app-topbar {
   font-family: var(--font-sans);
   /* Ajustado para que «Invitame a un café» (la etiqueta más larga de los cinco idiomas) quepa sin
      pisar los pills de juego de la barra: comprobado a 1120, 1280, 1400 y 1600 px. */
-  font-size: 0.63rem;
+  font-size: 0.64rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   white-space: nowrap;

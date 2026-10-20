@@ -495,7 +495,7 @@
       nav_update_latest: 'Versión',
       nav_update_check: 'Comprobar de nuevo',
       splash_loading: 'Cargando...',
-      bmc_support: 'Invitame a un café',
+      bmc_support: 'Invítame a un café',
       bmc_hint: 'Invita a un café al autor de KoRForge',
       topbar_search: 'KoRForge / Buscar Addons',
       topbar_favorites: 'KoRForge / Addons Favoritos',
