@@ -305,8 +305,9 @@ body.is-maximized .win-btn.win-max .icon-restore {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  /* La barra superior mide 72 px, así que el pill puede crecer sin apretar nada (dueño, 20-10-2026). */
-  padding: 0 12px;
+  /* La barra superior mide 72 px, así que el pill puede crecer sin apretar nada (dueño, 20-10-2026).
+     Sin etiqueta de versión dentro, el relleno lateral se ajusta: el pill es solo el logo. */
+  padding: 0 10px;
   height: 58px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.08);
