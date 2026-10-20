@@ -62,8 +62,8 @@ const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
 ### 🌟 Cambios y Novedades (v1.0.6 ➔ v1.0.7)
-- **Actualizador sin ventanas:** al aplicar una actualización ya no se abre una ventana negra de consola, ni se ejecutan `ping` como temporizador. El cierre de la app, la instalación silenciosa y la reapertura ocurren en segundo plano.
-- **Mismo resultado, sin rastro visual:** se instala la versión nueva en silencio (NSIS `/S`) y KoRForge reaparece actualizado.
+- **Actualizador sin ventanas:** al aplicar una actualización ya no se abre una ventana negra de consola, ni se usan pings como temporizador. El cierre de la app, la instalación silenciosa y la reapertura ocurren en segundo plano.
+- **Mismo resultado, sin rastro visual:** se instala la versión nueva en silencio (NSIS /S) y KoRForge reaparece actualizado.
 - **Nota:** la ventana que se veía la abría el actualizador de las versiones anteriores. A partir de la 1.0.7, las siguientes actualizaciones se aplican sin ninguna ventana intermedia.
 
 ### 📥 Archivos Disponibles
