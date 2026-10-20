@@ -1680,6 +1680,8 @@ input:checked + .slider:before {
   gap: 16px;
   padding-right: 6px;
   padding-bottom: 28px;
+  /* Las filas no se estiran a lo alto cuando hay pocas tarjetas (favoritos con 1-2 addons) */
+  align-content: start;
 }
 
 .cf-card {

@@ -38,6 +38,7 @@ Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, mot
 ---
 
 ## Historial de Versiones Publicadas
+- **v1.0.6 (20-10-2026):** las tarjetas de Favoritos (y las del Explorador cuando hay pocos resultados) ya no se estiran a lo alto: la rejilla conserva la altura natural de cada tarjeta.
 - **v1.0.5 (20-10-2026):** La ficha de addon ocupa todo el ancho de la ventana y es flexible (antes, 1.080 px centrados). El HTML de la descripción (imágenes, tablas, vídeos, código, citas) se respeta y nunca desborda.
 - **v1.0.4 (20-10-2026):** La ficha de addon abre siempre desde arriba y cada pestaña (Descripción, Versiones, Galería) empieza por el principio, con la barra de acciones fija arriba.
 - **v1.0.3 (20-10-2026):** Arreglado el scroll de la ficha de addon (no se podía desplazar ni tenía barra lateral; la barra de acciones queda fija arriba).

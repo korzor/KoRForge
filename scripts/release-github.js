@@ -61,11 +61,9 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.4 ➔ v1.0.5)
-- **La ficha de addon ocupa todo el ancho de la ventana:** antes se quedaba clavada en 1.080 px y centrada con huecos a los lados; ahora es flexible y aprovecha el tamaño de la ventana (también al redimensionarla).
-- **El HTML de la descripción se respeta igual:** imágenes, vídeos, tablas, bloques de código y citas del addon se pintan tal cual llegan, pero con ancho máximo y scroll propio si no caben (nada desborda ni rompe la ficha).
-- **La barra de acciones (Volver, Traducir, Favoritos, Instalar) sigue fija arriba** mientras se lee.
-- **Corregido el scroll de la ficha de addon** (venía de la 1.0.3): la página de detalle ya se puede desplazar y muestra su barra lateral.
+### 🌟 Cambios y Novedades (v1.0.5 ➔ v1.0.6)
+- **Arregladas las tarjetas de Favoritos:** con pocos favoritos, la tarjeta se estiraba a lo alto hasta ocupar toda la rejilla (una sola tarjeta podía medir más de 600 px). Ahora las filas de la rejilla conservan su altura natural y las tarjetas se ven compactas.
+- **Mismo arreglo en el Explorador:** cuando una búsqueda devuelve uno o dos addons, también se quedan arriba con su tamaño normal en vez de estirarse.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
