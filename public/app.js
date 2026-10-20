@@ -1499,6 +1499,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (inAppBrowserView) inAppBrowserView.style.display = 'none';
     cfCatalogLayout.style.display = 'none';
     cfDetailView.style.display = 'flex';
+    cfDetailView.scrollTop = 0; // cada addon abre la ficha desde arriba
 
     // Ensure search tab is active in sidebar
     navItems.forEach(i => i.classList.remove('active'));
@@ -1809,6 +1810,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (targetTab === 'desc') document.getElementById('detailTabDesc')?.classList.add('active');
       if (targetTab === 'files') document.getElementById('detailTabFiles')?.classList.add('active');
       if (targetTab === 'gallery') document.getElementById('detailTabGallery')?.classList.add('active');
+
+      // Cada pestaña empieza a leerse desde arriba (la barra de acciones queda fija)
+      if (cfDetailView) cfDetailView.scrollTop = 0;
     });
   });
 

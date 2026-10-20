@@ -61,9 +61,10 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.2 ➔ v1.0.3)
+### 🌟 Cambios y Novedades (v1.0.2 ➔ v1.0.4)
 - **Corregido el scroll de la ficha de addon:** la página de detalle no se podía desplazar y no mostraba barra lateral cuando la descripción, la lista de versiones o la galería eran largas. Ahora tiene su propia área de scroll con barra visible y la barra de acciones (Volver, Traducir, Favoritos, Instalar) queda fija arriba mientras se lee.
-- **Navegación de la ficha intacta:** las tres pestañas (Descripción, Versiones y Archivos, Galería) y los botones de volver siguen funcionando igual, también con el teclado (Esc).
+- **La ficha siempre abre desde arriba:** al entrar en un addon o al cambiar entre Descripción, Versiones y Galería, el contenido empieza por el principio en vez de heredar el desplazamiento anterior.
+- **Navegación de la ficha intacta:** las tres pestañas, los botones de volver, el traductor, favoritos e instalar siguen funcionando igual, también con el teclado (Esc).
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
