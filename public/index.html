@@ -193,6 +193,47 @@
         <!-- View: Explorador de Addons -->
         <section class="tab-pane active" id="pane-search">
           
+          <!-- Barra de búsqueda FIJA del panel (dueño, 20-10-2026): vive FUERA de #cfCatalogLayout
+               para que siga viéndose también dentro de la ficha de un addon. -->
+          <div class="cf-top-toolbar">
+            <!-- Navegación (atrás / adelante / recargar) a la IZQUIERDA de la barra de búsqueda,
+                 al mismo alto que ella. Sustituye al botón «Volver al catálogo». -->
+            <div class="browser-nav-bar toolbar-nav">
+              <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
+                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
+                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
+                <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <div class="cf-search-input-wrap">
+              <span class="cf-search-icon">🔍</span>
+              <input type="text" id="cfSearchInput" placeholder="Buscar por nombre (ej. Details, Questie, Decursive, OmniBar, Plater)...">
+              <button class="cf-clear-search-btn" id="btnClearSearchText" style="display:none;">✕</button>
+            </div>
+
+            <div class="cf-sort-wrap">
+              <span class="sort-label">Ordenar:</span>
+              <select id="cfSortSelect" class="cf-select">
+                <option value="2|desc">Popularidad (Tendencia)</option>
+                <option value="6|desc">Total de descargas</option>
+                <option value="1|desc" id="optRelevance">Destacados (Featured)</option>
+                <option value="3|desc">Recientemente actualizado</option>
+                <option value="4|asc">Nombre (A - Z)</option>
+                <option value="4|desc">Nombre (Z - A)</option>
+              </select>
+            </div>
+
+            <div class="cf-toolbar-btns">
+              <button class="btn btn-primary" id="btnCfSearch">
+                Buscar
+              </button>
+            </div>
+          </div>
+
           <!-- Subview 1: Catalog & Search Grid -->
           <div class="cf-layout" id="cfCatalogLayout">
             
@@ -363,46 +404,6 @@
             <!-- Main Results Area -->
             <div class="cf-main-area">
               
-              <!-- Search & Sort Top Toolbar -->
-              <div class="cf-top-toolbar">
-                <!-- Navegación (atrás / adelante / recargar) a la IZQUIERDA de la barra de búsqueda,
-                     al mismo alto que ella (dueño, 20-10-2026). -->
-                <div class="browser-nav-bar toolbar-nav">
-                  <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
-                    <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </button>
-                  <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
-                    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </button>
-                  <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
-                    <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  </button>
-                </div>
-                <div class="cf-search-input-wrap">
-                  <span class="cf-search-icon">🔍</span>
-                  <input type="text" id="cfSearchInput" placeholder="Buscar por nombre (ej. Details, Questie, Decursive, OmniBar, Plater)...">
-                  <button class="cf-clear-search-btn" id="btnClearSearchText" style="display:none;">✕</button>
-                </div>
-                
-                <div class="cf-sort-wrap">
-                  <span class="sort-label">Ordenar:</span>
-                  <select id="cfSortSelect" class="cf-select">
-                    <option value="2|desc">Popularidad (Tendencia)</option>
-                    <option value="6|desc">Total de descargas</option>
-                    <option value="1|desc" id="optRelevance">Destacados (Featured)</option>
-                    <option value="3|desc">Recientemente actualizado</option>
-                    <option value="4|asc">Nombre (A - Z)</option>
-                    <option value="4|desc">Nombre (Z - A)</option>
-                  </select>
-                </div>
-
-                <div class="cf-toolbar-btns">
-                  <button class="btn btn-primary" id="btnCfSearch">
-                    Buscar
-                  </button>
-                </div>
-              </div>
-
               <!-- Active Filter Chips Bar -->
               <div class="cf-active-filters-bar" id="cfActiveFiltersBar"></div>
 
@@ -423,9 +424,6 @@
           <!-- Subview 2: Addon Detail Page (Opens when clicking an addon card) -->
           <div class="cf-detail-view" id="cfDetailView" style="display:none;">
             <div class="detail-nav-bar">
-              <button class="btn btn-secondary btn-back-to-catalog" id="btnBackToCatalog">
-                ← Volver al catálogo
-              </button>
               <div class="detail-quick-actions">
                 <button class="btn btn-secondary btn-translate" id="btnTranslateToggle" title="Traducir descripción al español">
                   <span class="translate-icon">🇪🇸</span>
@@ -470,13 +468,6 @@
               <div class="detail-gallery-grid" id="detailGalleryGrid">
                 <!-- Rendered screenshots -->
               </div>
-            </div>
-
-            <!-- Bottom Back Navigation Bar -->
-            <div class="detail-bottom-nav">
-              <button class="btn btn-secondary btn-back-to-catalog" id="btnBackToCatalogBottom">
-                ← Volver al catálogo
-              </button>
             </div>
 
           </div>

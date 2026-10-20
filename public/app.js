@@ -1065,6 +1065,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Execute CurseForge API Query
   async function triggerCurseForgeSearch() {
+    /* La barra de búsqueda ahora vive fuera del catálogo y también se ve dentro de la ficha de un
+       addon: si buscas desde ahí, hay que volver a la parrilla para ver los resultados
+       (dueño, 20-10-2026). */
+    const vistaDetalle = document.getElementById('cfDetailView');
+    const vistaCatalogo = document.getElementById('cfCatalogLayout');
+    if (vistaDetalle && vistaCatalogo && vistaDetalle.style.display !== 'none') {
+      vistaDetalle.style.display = 'none';
+      vistaCatalogo.style.display = 'flex';
+    }
+
     const { activeFlavor, categories } = getActiveFilters();
     const query = cfSearchInput.value.trim();
 
