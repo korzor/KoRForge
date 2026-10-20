@@ -2,13 +2,10 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: Idiomas completos en toda la app
+# Titulo: Actualización mucho más rápida y botón de apoyo
 
-- Traducción completa de toda la interfaz en los cinco idiomas: botones, filtros, tooltips, fichas, avisos y modales cambian al instante.
-- El diccionario sube a 470 textos por idioma (inglés, español, gallego, francés e italiano) y ya no queda ni un texto fijo en el código.
-- La barra de búsqueda, los filtros, las categorías, las tarjetas y la ficha del addon se traducen al completo.
-- Al cambiar de idioma se repinta toda la app sin reiniciar y sin perder la pantalla en la que estabas.
-- Las fechas y los números salen con el formato de cada idioma.
-- Los avisos de compatibilidad de los addons y los errores del servidor también se traducen.
-- El menú de la bandeja del sistema usa el mismo idioma que la app.
-- Verificador nuevo que impide publicar una versión con textos sin traducir.
+- Actualizar y reiniciar ya no pierde segundos en esperas fijas: el ciclo baja de unos 28 a unos 11 segundos.
+- La instalación se da por terminada cuando el instalador ha aparecido y desaparecido, no tras esperar a ciegas.
+- Corregido: si la versión pedida ya estaba instalada, la app podía reabrirse con el instalador a medias.
+- Botón de apoyo (Ko-fi) debajo de minimizar, maximizar y cerrar, en el azul de Ko-fi.
+- El botón lleva a ko-fi.com/korzor en el navegador y está traducido a los cinco idiomas.

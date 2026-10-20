@@ -71,18 +71,17 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌍 Cambios y Novedades (v1.1.0 ➔ v1.1.1)
+### ⚡ Cambios y Novedades (v1.1.1 ➔ v1.1.2)
 
-**Idiomas completos de verdad**
-- **Toda la interfaz se traduce** en los cinco idiomas (inglés, español, gallego, francés e italiano): botones, tooltips, filtros, categorías, tarjetas, ficha del addon, modales, avisos y ajustes.
-- El diccionario sube a **470 textos por idioma** y no queda ni un texto fijo en el código.
-- **Al cambiar de idioma se repinta toda la app** al instante, sin reiniciar y sin perder la pantalla en la que estabas.
-- **Fechas y números** con el formato de cada idioma.
-- Los **avisos de compatibilidad** de los addons y los **errores del servidor** también se traducen.
-- El **menú de la bandeja del sistema** usa el mismo idioma que la app.
+**Actualizar y reiniciar, mucho más rápido**
+- Fuera las esperas fijas del actualizador: había 2 s de margen, 3 s tras instalar y 8 s a ciegas esperando a que arrancase la app.
+- Ahora se comprueba la **versión realmente instalada** y se sondea el proceso cada 200 ms: el ciclo baja de **~28 s a ~11 s** (lo que queda es el instalador en silencio, que es su trabajo de verdad).
+- **Corregido un fallo** que apareció al medirlo: si la versión pedida ya estaba instalada, el actualizador la daba por buena en el primer sondeo y reabría la app con la instalación a medias.
 
-**Para que no vuelva a pasar**
-- **Verificador de idiomas** que comprueba las claves en los cinco idiomas y que no haya textos fijos; el pipeline de publicación se para si algo falta.
+**Botón de apoyo (Ko-fi)**
+- Botón **«Apóyame»** justo debajo de minimizar, maximizar y cerrar, en el azul de Ko-fi.
+- Abre \`ko-fi.com/korzor\` en el navegador externo. Es nativo: no carga código de terceros ni depende de la red al abrir la app.
+- Traducido a los cinco idiomas, con su tooltip.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
