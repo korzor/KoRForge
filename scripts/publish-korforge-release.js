@@ -107,14 +107,29 @@ const ahora = new Date();
 const pad = (n) => String(n).padStart(2, '0');
 const fecha = `${pad(ahora.getDate())}-${pad(ahora.getMonth() + 1)}-${String(ahora.getFullYear()).slice(-2)}`;
 
-/* Los cambios se leen de un fichero aparte para no tocar codigo en cada release. */
+/* Los cambios se leen de un fichero aparte para no tocar codigo en cada release.
+   Formato de docs/CAMBIOS-ULTIMA.md:
+     - una linea opcional "# Titulo: ..." para el titulo de la tarjeta
+     - el resto, una linea por cambio empezando por "- "
+   Las demas lineas de cabecera (#) se ignoran. */
 const cambiosPath = path.join(projectDir, 'docs', 'CAMBIOS-ULTIMA.md');
 let cambios = ['Nueva version de KoRForge'];
+let tituloRelease = `KoRForge v${version}`;
 if (fs.existsSync(cambiosPath)) {
-  cambios = fs.readFileSync(cambiosPath, 'utf8')
-    .split(/\r?\n/)
+  const lineas = fs.readFileSync(cambiosPath, 'utf8').split(/\r?\n/);
+  const tituloLinea = lineas.find((l) => /^#+\s*t[ií]tulo\s*:/i.test(l.trim()));
+  if (tituloLinea) {
+    const texto = tituloLinea.replace(/^#+\s*t[ií]tulo\s*:/i, '').trim();
+    if (texto) tituloRelease = texto.includes('KoRForge') ? texto : `${tituloRelease} - ${texto}`;
+  }
+  cambios = lineas
+    .filter((l) => l.trim() && !l.trim().startsWith('#'))
     .map((l) => l.replace(/^\s*[-*]\s*/, '').trim())
     .filter(Boolean);
+  if (cambios.length === 0) {
+    console.warn('  AVISO: docs/CAMBIOS-ULTIMA.md no tiene ninguna linea de cambio utilizable.');
+    cambios = ['Nueva version de KoRForge'];
+  }
 } else {
   console.warn('  AVISO: no existe docs/CAMBIOS-ULTIMA.md; el registro usara una lista generica.');
 }
@@ -123,7 +138,7 @@ const registro = [{
   version,
   fecha,
   esUltima: true,
-  titulo: `KoRForge v${version}`,
+  titulo: tituloRelease,
   descripcion: cambios[0] || '',
   cambios,
   descargas: [

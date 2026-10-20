@@ -71,18 +71,18 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.12 ➔ v1.1.0)
+### 🌍 Cambios y Novedades (v1.1.0 ➔ v1.1.1)
 
-**Iconos y barra de versiones**
-- **Los logos oficiales de cada juego** sustituyen al emoji y al texto en la barra de versiones: WoW Forever, Retail, Classic Era y Classic Progresivo.
-- **Fuera las etiquetas de versión** dentro de los botones: solo el logo, que ocupa menos. La versión sigue en el tooltip al pasar el ratón.
-- Botones más grandes (58 px) y logos a 42 px, para que se lean bien.
-- El icono del botón de actualización y el del modal usan ahora la imagen del cohete goblin en lugar del emoji.
+**Idiomas completos de verdad**
+- **Toda la interfaz se traduce** en los cinco idiomas (inglés, español, gallego, francés e italiano): botones, tooltips, filtros, categorías, tarjetas, ficha del addon, modales, avisos y ajustes.
+- El diccionario sube a **470 textos por idioma** y no queda ni un texto fijo en el código.
+- **Al cambiar de idioma se repinta toda la app** al instante, sin reiniciar y sin perder la pantalla en la que estabas.
+- **Fechas y números** con el formato de cada idioma.
+- Los **avisos de compatibilidad** de los addons y los **errores del servidor** también se traducen.
+- El **menú de la bandeja del sistema** usa el mismo idioma que la app.
 
-**Navegación**
-- Los botones **atrás, adelante y recargar** pasan de la barra de título a la **barra de búsqueda**, a su izquierda y con su mismo tamaño.
-- La barra de búsqueda **se queda también dentro de la ficha de un addon**, así que ya no hace falta salir para buscar otra cosa.
-- **Eliminado el botón "Volver al catálogo"** (arriba y abajo): el botón atrás hace esa función.
+**Para que no vuelva a pasar**
+- **Verificador de idiomas** que comprueba las claves en los cinco idiomas y que no haya textos fijos; el pipeline de publicación se para si algo falta.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
