@@ -61,9 +61,10 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.5 ➔ v1.0.6)
-- **Arregladas las tarjetas de Favoritos:** con pocos favoritos, la tarjeta se estiraba a lo alto hasta ocupar toda la rejilla (una sola tarjeta podía medir más de 600 px). Ahora las filas de la rejilla conservan su altura natural y las tarjetas se ven compactas.
-- **Mismo arreglo en el Explorador:** cuando una búsqueda devuelve uno o dos addons, también se quedan arriba con su tamaño normal en vez de estirarse.
+### 🌟 Cambios y Novedades (v1.0.6 ➔ v1.0.7)
+- **Actualizador sin ventanas:** al aplicar una actualización ya no se abre una ventana negra de consola, ni se ejecutan `ping` como temporizador. El cierre de la app, la instalación silenciosa y la reapertura ocurren en segundo plano.
+- **Mismo resultado, sin rastro visual:** se instala la versión nueva en silencio (NSIS `/S`) y KoRForge reaparece actualizado.
+- **Nota:** la ventana que se veía la abría el actualizador de las versiones anteriores. A partir de la 1.0.7, las siguientes actualizaciones se aplican sin ninguna ventana intermedia.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
