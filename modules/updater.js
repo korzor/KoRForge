@@ -133,6 +133,35 @@ async function startUpdateDownload(downloadUrl, version) {
   }
 }
 
+// Generador del runner que aplica la actualización.
+// OJO: se ejecuta el proceso tal como está en el .ps1; debe ser silencioso (sin ventanas ni pings).
+// Si se toca, comprobarlo con la sonda de ventanas (el .ps1 se ejecuta con windowsHide).
+function buildApplyScript(installerPath, appExePath) {
+  const psQuote = (p) => `'${String(p).replace(/'/g, "''")}'`;
+  return [
+    "$ErrorActionPreference = 'SilentlyContinue'",
+    '',
+    '# 1. Margen para que la petición HTTP que disparó esto acabe de salir',
+    'Start-Sleep -Seconds 2',
+    '',
+    '# 2. Cerrar KoRForge para poder reemplazar sus archivos',
+    "Get-Process -Name 'KoRForge','electron' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue",
+    'Start-Sleep -Seconds 2',
+    '',
+    '# 3. Instalar la versión nueva en silencio (NSIS /S) y esperar a que termine',
+    `$installer = ${psQuote(installerPath)}`,
+    `$appExe = ${psQuote(appExePath)}`,
+    "Start-Process -FilePath $installer -ArgumentList '/S' -Wait -WindowStyle Hidden",
+    'Start-Sleep -Seconds 2',
+    '',
+    '# 4. Reabrir KoRForge actualizado',
+    'if (Test-Path -LiteralPath $appExe) { Start-Process -FilePath $appExe } else { Start-Process -FilePath $installer }',
+    '',
+    '# 5. Limpiar el script temporal',
+    'Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue'
+  ].join('\n');
+}
+
 function applyUpdateAndRestart(electronApp = null) {
   if (currentDownload.status !== 'completed' || !currentDownload.filePath || !fs.existsSync(currentDownload.filePath)) {
     throw new Error('No hay ninguna actualización descargada lista para aplicar.');
@@ -167,33 +196,9 @@ function applyUpdateAndRestart(electronApp = null) {
 
   // Runner OCULTO (PowerShell): espera, cierra KoRForge, instala en silencio y reabre.
   // Se lanza con windowsHide + -WindowStyle Hidden: ni consola ni pings (antes era un .bat
-  // con `ping 127.0.0.1 -n N` como temporizador y una ventana de cmd a la vista).
+  // con ping 127.0.0.1 como temporizador y una ventana de cmd a la vista).
   const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
-  const psQuote = (p) => `'${String(p).replace(/'/g, "''")}'`;
-  const psContent = [
-    "$ErrorActionPreference = 'SilentlyContinue'",
-    '',
-    '# 1. Margen para que la petición HTTP que disparó esto acabe de salir',
-    'Start-Sleep -Seconds 2',
-    '',
-    '# 2. Cerrar KoRForge para poder reemplazar sus archivos',
-    "Get-Process -Name 'KoRForge','electron' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue",
-    'Start-Sleep -Seconds 2',
-    '',
-    '# 3. Instalar la versión nueva en silencio (NSIS /S) y esperar a que termine',
-    `$installer = ${psQuote(installerPath)}`,
-    `$appExe = ${psQuote(appExePath)}`,
-    "Start-Process -FilePath $installer -ArgumentList '/S' -Wait -WindowStyle Hidden",
-    'Start-Sleep -Seconds 2',
-    '',
-    '# 4. Reabrir KoRForge actualizado',
-    'if (Test-Path -LiteralPath $appExe) { Start-Process -FilePath $appExe } else { Start-Process -FilePath $installer }',
-    '',
-    '# 5. Limpiar el script temporal',
-    'Remove-Item -LiteralPath $PSCommandPath -Force -ErrorAction SilentlyContinue'
-  ].join('\n');
-
-  fs.writeFileSync(runnerScript, psContent, 'utf-8');
+  fs.writeFileSync(runnerScript, buildApplyScript(installerPath, appExePath), 'utf-8');
 
   // Lanzado oculto y desacoplado: no se abre ninguna ventana
   const child = spawn('powershell.exe', [
@@ -231,5 +236,6 @@ module.exports = {
   getDownloadProgress,
   startUpdateDownload,
   applyUpdateAndRestart,
+  buildApplyScript,
   getGitHubToken
 };
