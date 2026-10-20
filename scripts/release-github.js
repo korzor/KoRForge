@@ -61,9 +61,18 @@ console.log(`\n☁️ [3/3] Publicando Release ${tagName} en GitHub (korzor/KoRF
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const notesContent = `## KoRForge ${tagName}
 
-### 🌟 Cambios y Novedades (v1.0.11 ➔ v1.0.12)
-- **Fuera los guiones largos de la interfaz:** el tooltip del botón de versión ya no usa el guion largo. Norma del dueño: prohibidos los guiones largos en cualquier texto que se muestre (botones, títulos, avisos y notas). Queda escrito en docs/REGLAS-TEXTOS.md.
-- **Versión de comprobación del actualizador:** al pasar de la 1.0.11 a esta 1.0.12 se puede ver el actualizador arreglado en funcionamiento (se cierra, instala en silencio y se reabre).
+### 🌟 Cambios y Novedades (v1.0.12 ➔ v1.1.0)
+
+**Iconos y barra de versiones**
+- **Los logos oficiales de cada juego** sustituyen al emoji y al texto en la barra de versiones: WoW Forever, Retail, Classic Era y Classic Progresivo.
+- **Fuera las etiquetas de versión** dentro de los botones: solo el logo, que ocupa menos. La versión sigue en el tooltip al pasar el ratón.
+- Botones más grandes (58 px) y logos a 42 px, para que se lean bien.
+- El icono del botón de actualización y el del modal usan ahora la imagen del cohete goblin en lugar del emoji.
+
+**Navegación**
+- Los botones **atrás, adelante y recargar** pasan de la barra de título a la **barra de búsqueda**, a su izquierda y con su mismo tamaño.
+- La barra de búsqueda **se queda también dentro de la ficha de un addon**, así que ya no hace falta salir para buscar otra cosa.
+- **Eliminado el botón "Volver al catálogo"** (arriba y abajo): el botón atrás hace esa función.
 
 ### 📥 Archivos Disponibles
 - \`${installerName}\` - Instalador oficial para Windows (${installerSize})
