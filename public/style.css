@@ -2042,8 +2042,17 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 18px;
+  width: 100%;
   max-width: 1080px;
   margin: 0 auto;
+  /* Área de scroll propia: el pane del catálogo tiene altura fija y overflow:hidden */
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
+  padding-bottom: 24px;
+  box-sizing: border-box;
 }
 
 .detail-nav-bar {
