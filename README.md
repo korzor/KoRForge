@@ -1,4 +1,4 @@
-# ⚔️ KoRForge - World of Warcraft Addon Manager
+# <img src="korforge-k.png" alt="⚔️" width="30" height="30" /> KoRForge - World of Warcraft Addon Manager
 
 <div align="center">
   <img src="korforge-banner.png" alt="KoRForge Logo" width="320" />
