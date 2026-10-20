@@ -408,11 +408,18 @@ function checkNativos(translations) {
     }
 
     const clavesEn = Object.keys(objeto.en || {});
+    const marcadores = (s) => (typeof s === 'string' ? (s.match(/\{[a-zA-Z0-9_]+\}/g) || []).sort().join(',') : '');
     for (const idioma of Object.keys(objeto)) {
       const claves = Object.keys(objeto[idioma] || {});
       const faltanClaves = clavesEn.filter((k) => !claves.includes(k));
       if (faltanClaves.length) {
         fail(archivo, 0, `${nombre}.${idioma} (${etiqueta}) no tiene: ${faltanClaves.join(', ')}`);
+      }
+      for (const clave of clavesEn) {
+        if (!objeto[idioma] || !(clave in objeto[idioma])) continue;
+        if (marcadores(objeto[idioma][clave]) !== marcadores(objeto.en[clave])) {
+          fail(archivo, 0, `${nombre}.${idioma}.${clave} (${etiqueta}) no lleva las mismas variables que en inglés`);
+        }
       }
       for (const clave of claves) {
         const texto = objeto[idioma][clave];

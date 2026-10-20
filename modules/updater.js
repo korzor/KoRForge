@@ -136,13 +136,13 @@ async function startUpdateDownload(downloadUrl, version) {
 // Textos de la tarjeta de carga que se pinta mientras se aplica la actualización.
 // Es interfaz nativa (el proceso que instala no puede leer i18n.js), así que vive aquí,
 // en los cinco idiomas, igual que TRAY_TEXTS (docs/REGLAS-IDIOMAS.md). El idioma lo manda
-// la ventana al pedir el reinicio.
+// la ventana al pedir el reinicio. {version} lo rellena buildApplyScript.
 const SPLASH_TEXTS = {
-  en: { instalando: 'Updating KoRForge...', abriendo: 'Opening KoRForge...' },
-  es: { instalando: 'Actualizando KoRForge...', abriendo: 'Abriendo KoRForge...' },
-  gl: { instalando: 'Actualizando KoRForge...', abriendo: 'Abrindo KoRForge...' },
-  fr: { instalando: 'Mise à jour de KoRForge...', abriendo: 'Ouverture de KoRForge...' },
-  it: { instalando: 'Aggiornamento di KoRForge...', abriendo: 'Apertura di KoRForge...' }
+  en: { instalando: 'Updating KoRForge to {version}...', abriendo: 'Opening KoRForge...' },
+  es: { instalando: 'Actualizando KoRForge a la {version}...', abriendo: 'Abriendo KoRForge...' },
+  gl: { instalando: 'Actualizando KoRForge á {version}...', abriendo: 'Abrindo KoRForge...' },
+  fr: { instalando: 'Mise à jour de KoRForge vers {version}...', abriendo: 'Ouverture de KoRForge...' },
+  it: { instalando: 'Aggiornamento di KoRForge alla {version}...', abriendo: 'Apertura di KoRForge...' }
 };
 
 function textosSplash(lang) {
@@ -168,6 +168,8 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
   const psQuote = (p) => `'${String(p).replace(/'/g, "''")}'`;
   const versionEsperada = String(targetVersion || '').replace(/^v/i, '');
   const textos = textosSplash(opciones.lang);
+  // La versión a la que se actualiza se ve en la tarjeta: {version} en los cinco idiomas
+  const textoInstalando = textos.instalando.split('{version}').join(versionEsperada || '');
   const splashPng = opciones.splashPng || '';
   const flagFile = opciones.flagFile || path.join(os.tmpdir(), 'korforge_splash_listo');
   // Área física de la pantalla donde está la app: la tarjeta sale ahí, no en el monitor principal
@@ -189,7 +191,7 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
     `$targetVersion = ${psQuote(versionEsperada)}`,
     `$splashOrigen = ${psQuote(splashPng)}`,
     `$flagSplash = ${psQuote(flagFile)}`,
-    `$textoInstalando = ${psQuote(textos.instalando)}`,
+    `$textoInstalando = ${psQuote(textoInstalando)}`,
     `$textoAbriendo = ${psQuote(textos.abriendo)}`,
     `$pantallaX = ${num(pantalla && pantalla.x)}`,
     `$pantallaY = ${num(pantalla && pantalla.y)}`,
