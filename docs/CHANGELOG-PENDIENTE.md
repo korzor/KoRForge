@@ -48,21 +48,12 @@ como pendiente de la próxima etiqueta, cuando el dueño decida cuál es.
 
 ## Próxima versión
 
-### ⚡ 1. Actualizar y reiniciar, mucho más rápido
-- Fuera las **esperas fijas** del runner: había 2 s de margen + 3 s tras instalar + 8 s a ciegas esperando a que arrancase la app. Ahora se comprueba la **versión realmente instalada** en `resources/app/package.json` (señal de que el instalador terminó) y se **sondea** el proceso cada 200 ms.
-- De **~28 s a ~11 s** en la prueba real en este equipo (lo que queda es el instalador en silencio, 10-14 s: es su trabajo de verdad).
-- El cierre de la app al pedir la actualización pasa de 400 ms a 150 ms.
-- Corregido un fallo que destapó la prueba: si la versión pedida ya estaba instalada, el runner la daba por buena **en el primer sondeo**, con el instalador aún escribiendo. Ahora exige que el proceso del instalador haya aparecido y ya no esté.
-- `scripts/verificar-actualizador-silencioso.js` arreglado: lanzaba el runner sin `shell: true` (el fallo que el propio módulo documenta) y por eso daba siempre "script temporal eliminado: false"; además ahora desactiva el paso de reapertura con un interruptor claro.
-
-### ☕ 2. Botón de apoyo (Ko-fi)
-- Botón **«Apóyame»** debajo de minimizar / maximizar / cerrar, en el azul de Ko-fi (`#00b9fe`), que abre `ko-fi.com/korzor` en el navegador externo.
-- Se hace **nativo** (no el widget flotante del CDN): así queda donde se pidió, no depende de la red al abrir la app y no carga código de terceros en la ventana.
-- Traducido a los cinco idiomas, con tooltip incluido.
+*(vacío por ahora: lo que se haga se apunta aquí hasta que el dueño decida la etiqueta)*
 
 ---
 
 ## Historial de Versiones Publicadas
+- **v1.1.2 (20-10-2026):** actualizar y reiniciar baja de ~28 s a ~11 s: fuera las esperas fijas del runner (2 s + 3 s + 8 s), la instalación se da por terminada cuando el proceso del instalador apareció y ya no está y la versión de `resources/app/package.json` es la esperada, y la reapertura sondea el proceso cada 200 ms. Corregido que con la misma versión ya instalada se reabría la app con el instalador a medias. Sonda `verificar-actualizador-silencioso.js` arreglada (lanzaba el runner sin `shell: true`). Botón de apoyo (Ko-fi) debajo de minimizar/maximizar/cerrar, nativo y traducido a los cinco idiomas.
 - **v1.1.1 (20-10-2026):** los cinco idiomas traducen toda la app. `public/i18n.js` pasa a 470 claves por idioma (inglés, español, gallego, francés e italiano) y desaparece el texto fijo: HTML con `data-i18n*`, `T()` en todo `app.js`, backend por códigos (`compat_*`, `code` en los errores) y bandeja del sistema traducida. Al cambiar de idioma se repinta todo sin reiniciar. Verificador `npm run i18n:check` (y `npm run i18n:check:live` con Electron) enganchado al release. Norma en docs/REGLAS-IDIOMAS.md.
 - **v1.1.0 (20-10-2026):** revisión completa de la interfaz. La barra de versiones usa el logo oficial de cada juego (Forever, Retail, Classic Era y Classic Prog), los botones de versión son más grandes, el cohete goblin entra en el botón de actualización y en el modal, y la navegación (atrás, adelante y recargar) se muda de la barra de título a la barra de búsqueda, que ahora se queda también dentro de la ficha de un addon. Fuera el botón Volver al catálogo (lo hace el botón atrás). Notas en docs/CAMBIOS-ULTIMA.md.
 - **v1.0.12 (20-10-2026):** fuera los guiones largos de la interfaz (tooltip del botón de versión) y versión de comprobación del actualizador arreglado. Norma escrita en docs/REGLAS-TEXTOS.md.
