@@ -20,19 +20,6 @@
           <img src="korforge.png" alt="KoRForge" class="app-brand-icon">
           <span class="app-brand-title">ORFORGE</span>
         </div>
-
-        <!-- Browser-Style Navigation Bar (Bigger buttons right next to the brand) -->
-        <div class="browser-nav-bar">
-          <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
-            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
-            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-          <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
-            <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </button>
-        </div>
       </div>
 
       <!-- Game Version Filters in Title Bar (Filling the bar towards the right) -->
@@ -160,6 +147,19 @@
           </div>
 
           <div class="toolbar">
+            <!-- Navegación (atrás / adelante / recargar), movida aquí desde la barra de título
+                 para que viva junto a los filtros y el campo de búsqueda (dueño, 20-10-2026). -->
+            <div class="browser-nav-bar toolbar-nav">
+              <button class="nav-control-btn" id="btnNavBack" title="Volver atrás (Alt+←)" disabled>
+                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="nav-control-btn" id="btnNavForward" title="Ir adelante (Alt+→)" disabled>
+                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <button class="nav-control-btn" id="btnNavReload" title="Recargar vista actual (F5)">
+                <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
             <div class="search-box">
               <span class="search-icon">🔍</span>
               <input type="text" id="searchInput" placeholder="Filtrar addons instalados...">
