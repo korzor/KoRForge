@@ -1,7 +1,7 @@
 # ⚔️ KoRForge - World of Warcraft Addon Manager
 
 <div align="center">
-  <img src="korforge.png" alt="KoRForge Logo" width="160" />
+  <img src="korforge-banner.png" alt="KoRForge Logo" width="320" />
   <p><strong>Gestor de Addons para World of Warcraft rápido, ultraligero y libre de publicidad.</strong></p>
   <p>
     <a href="https://github.com/korzor/KoRForge/releases/latest"><img src="https://img.shields.io/github/v/release/korzor/KoRForge?color=f59e0b&label=Versi%C3%B3n" alt="Versión"></a>
