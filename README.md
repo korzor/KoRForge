@@ -41,7 +41,7 @@ KoRForge is a **standalone** addon manager for World of Warcraft: a modern, fast
 - **Recognizes what you already have:** it reads your `Interface\AddOns` folder, so addons installed by hand or by another tool show up as installed.
 
 ### Download & Install
-Latest official build: [GitHub Releases](https://github.com/korzor/KoRForge/releases/latest) · [web mirror](https://centolos.org/wow/)
+Latest official build: [GitHub Releases](https://github.com/korzor/KoRForge/releases/latest)
 
 1. **Official installer** (`KoRForge-Setup-x.x.x.exe`), recommended: assisted install on Windows 64-bit, desktop and Start Menu shortcuts, clean uninstall from Windows Settings.
 2. **Portable** (`KoRForge-vx.x.x-win-x64.zip`): unzip anywhere and run `KoRForge.exe`. No installation needed.
@@ -102,7 +102,7 @@ KoRForge es un gestor de addons **standalone** para World of Warcraft: una alter
 - **Reconoce lo que ya tienes:** lee tu carpeta `Interface\AddOns`, así que los addons instalados a mano o con otra herramienta aparecen como instalados.
 
 ### Descarga e instalación
-Última versión oficial: [Releases de GitHub](https://github.com/korzor/KoRForge/releases/latest) · [espejo web](https://centolos.org/wow/)
+Última versión oficial: [Releases de GitHub](https://github.com/korzor/KoRForge/releases/latest)
 
 1. **Instalador oficial** (`KoRForge-Setup-x.x.x.exe`), recomendado: instalación asistida en Windows 64 bits, accesos en Escritorio y Menú Inicio, desinstalación limpia desde Configuración de Windows.
 2. **Portable** (`KoRForge-vx.x.x-win-x64.zip`): descomprime donde quieras y ejecuta `KoRForge.exe`. Sin instalar nada.
