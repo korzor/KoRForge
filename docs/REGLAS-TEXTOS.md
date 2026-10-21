@@ -38,3 +38,15 @@ for (const f of ficheros) {
 
 > Ojo: `wow.js` y `routes/wow.js` de Centolos sí tienen `/[\u2014\u2013]/g` en un `replace`: es código que
 > **limpia** guiones largos que llegan de los foros, no un texto a mostrar. Eso se queda.
+
+## Avisos: toast, no cartel (dueño, 21-10-2026)
+
+- **Nada de avisos en grande en la pantalla principal.** Un cartel sobre la lista de addons tapa lo
+  que el usuario ha venido a ver. Los avisos de estado van en un **toast** discreto.
+- **Un aviso, una vez.** Si la condición sigue igual, no se repite en cada cambio de pestaña: se
+  recuerda lo ya avisado (en `app.js`, `avisarFaltaDeCarpeta()` con su guarda `avisoRutaDada`).
+- **No se propone cambiar a otro cliente.** El aviso dice qué cliente no tiene carpeta y dónde se
+  cambia (Ajustes o los logos de la barra de arriba); elegir otro cliente es cosa del usuario.
+  Fallo real: el cartel de la 1.2.4 ofrecía «Cambiar a WoW Forever» porque cogía el primer cliente de
+  la lista con carpeta, que no tenía nada que ver.
+- El cambio de cliente se hace con los **cuatro logos de la barra superior** (son botones, no adornos).
