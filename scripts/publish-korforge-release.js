@@ -22,6 +22,9 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+const { leerCambios } = require('./notas-release');
+const { hashesDe, escribirSha256Sums } = require('./sha256-release');
+
 const projectDir = path.resolve(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'utf-8'));
 const version = pkg.version;
@@ -101,38 +104,25 @@ for (const f of fs.readdirSync(releasesDir)) {
   console.log(`  fuera de la web (version anterior): ${f}`);
 }
 
+/* 3 bis. Hashes: integridad y prueba de autoria (docs/PROTECCION-DERECHOS.md).
+   Se publica SHA256SUMS.txt junto a los binarios y cada descarga lleva su hash en el registro. */
+const rutasWeb = [path.join(releasesDir, installerName), path.join(releasesDir, zipDestName)];
+const entradas = hashesDe(rutasWeb);
+escribirSha256Sums(path.join(releasesDir, 'SHA256SUMS.txt'), entradas);
+const hashPorArchivo = {};
+for (const e of entradas) hashPorArchivo[e.archivo] = e.sha256;
+console.log('  SHA-256 publicado en la web:');
+for (const e of entradas) console.log(`    ${e.sha256}  ${e.archivo}`);
+
 /* 4. Registro con UNA sola entrada (la ultima) ------------------------------ */
 const mb = (f) => `${(fs.statSync(path.join(releasesDir, f)).size / 1048576).toFixed(1)} MB`;
 const ahora = new Date();
 const pad = (n) => String(n).padStart(2, '0');
 const fecha = `${pad(ahora.getDate())}-${pad(ahora.getMonth() + 1)}-${String(ahora.getFullYear()).slice(-2)}`;
 
-/* Los cambios se leen de un fichero aparte para no tocar codigo en cada release.
-   Formato de docs/CAMBIOS-ULTIMA.md:
-     - una linea opcional "# Titulo: ..." para el titulo de la tarjeta
-     - el resto, una linea por cambio empezando por "- "
-   Las demas lineas de cabecera (#) se ignoran. */
-const cambiosPath = path.join(projectDir, 'docs', 'CAMBIOS-ULTIMA.md');
-let cambios = ['Nueva version de KoRForge'];
-let tituloRelease = `KoRForge v${version}`;
-if (fs.existsSync(cambiosPath)) {
-  const lineas = fs.readFileSync(cambiosPath, 'utf8').split(/\r?\n/);
-  const tituloLinea = lineas.find((l) => /^#+\s*t[ií]tulo\s*:/i.test(l.trim()));
-  if (tituloLinea) {
-    const texto = tituloLinea.replace(/^#+\s*t[ií]tulo\s*:/i, '').trim();
-    if (texto) tituloRelease = texto.includes('KoRForge') ? texto : `${tituloRelease} - ${texto}`;
-  }
-  cambios = lineas
-    .filter((l) => l.trim() && !l.trim().startsWith('#'))
-    .map((l) => l.replace(/^\s*[-*]\s*/, '').trim())
-    .filter(Boolean);
-  if (cambios.length === 0) {
-    console.warn('  AVISO: docs/CAMBIOS-ULTIMA.md no tiene ninguna linea de cambio utilizable.');
-    cambios = ['Nueva version de KoRForge'];
-  }
-} else {
-  console.warn('  AVISO: no existe docs/CAMBIOS-ULTIMA.md; el registro usara una lista generica.');
-}
+/* Los cambios y el titulo se leen de docs/CAMBIOS-ULTIMA.md, igual que en la release de GitHub
+   (scripts/notas-release.js), para que las dos vias cuenten siempre lo mismo. */
+const { titulo: tituloRelease, cambios } = leerCambios(projectDir);
 
 const registro = [{
   version,
@@ -147,6 +137,7 @@ const registro = [{
       nombre: `KoRForge v${version} (Instalador Oficial .exe)`,
       archivo: installerName,
       tamano: mb(installerName),
+      sha256: hashPorArchivo[installerName] || '',
       arquitectura: 'Windows x64',
       url: `/api/wow/korforge/download/${installerName}`,
       recomendado: true,
@@ -156,6 +147,7 @@ const registro = [{
       nombre: `KoRForge v${version} (Portable Standalone .zip)`,
       archivo: zipDestName,
       tamano: mb(zipDestName),
+      sha256: hashPorArchivo[zipDestName] || '',
       arquitectura: 'Windows x64',
       url: `/api/wow/korforge/download/${zipDestName}`,
       recomendado: false,

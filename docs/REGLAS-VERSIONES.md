@@ -14,10 +14,16 @@
   al NAS (`\\NAS\docker\centolos\data\korforge-releases.json`).
 - `centolos/scripts/publish-korforge-release.js` aplica todo esto solo: copia los binarios, deja el
   JSON con la última versión y borra los binarios viejos de la web.
+- **Hashes (21-10-2026):** cada release publica `SHA256SUMS.txt` junto a los binarios y cada
+  descarga del registro lleva su campo `sha256`. En GitHub, el mismo hash va en el cuerpo de la
+  release y como asset. Es integridad y prueba de autoría (`docs/PROTECCION-DERECHOS.md`).
 - Los cambios del registro se escriben en `docs/CAMBIOS-ULTIMA.md`: una línea por cambio empezando
   por `- ` (la primera es la descripción corta) y, si se quiere título propio, una línea
   `# Titulo: ...`. Las demás líneas que empiezan por `#` se ignoran (corregido el 20-10-2026: antes
   las cabeceras se colaban como si fueran cambios).
+- **Las notas de GitHub salen del mismo fichero** (`scripts/notas-release.js`). Hasta el 21-10-2026
+  estaban escritas a mano en `release-github.js` y se quedaron congeladas: la 1.1.6 y la 1.1.7 se
+  publicaron en GitHub con el texto de la 1.1.5. No volver a escribirlas a mano.
 - **La tarjeta estática no la toca el script:** hay que actualizar a mano
   `centolos/public/wow/index.html` (versión, fecha, descripción, lista y enlaces) porque es lo que
   se ve antes de que el JS cargue el registro.

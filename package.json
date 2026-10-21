@@ -28,6 +28,7 @@
   "build": {
     "appId": "com.korzor.korforge",
     "productName": "KoRForge",
+    "copyright": "Copyright (c) 2026 KoRZoR. Todos los derechos reservados.",
     "directories": {
       "output": "release"
     },

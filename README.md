@@ -48,6 +48,24 @@ Latest official build: [GitHub Releases](https://github.com/korzor/KoRForge/rele
 
 **Requirements:** Windows 10 or 11 (64-bit) and World of Warcraft installed locally.
 
+### Support the project
+
+Hi! I'm KoRZoR. I'm an independent developer and a technology and video games enthusiast. I spend most of my free time building tools and software free of advertising, telemetry and unnecessary background processes, designed to run fast and to always respect the user's resources.
+
+If KoRForge saves you time, you can invite me to a coffee. It pays for the release hosting, the testing hardware and the hours that go into it.
+
+<p>
+  <a href="https://www.buymeacoffee.com/korzor" target="_blank">
+    <img src="https://img.shields.io/badge/%E2%98%95%20Buy%20me%20a%20coffee-BD5FFF?style=for-the-badge&labelColor=BD5FFF&color=FFDD00" alt="Buy me a coffee">
+  </a>
+</p>
+
+Widget for your own website (English):
+
+```html
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="korzor" data-color="#BD5FFF" data-emoji="" data-font="Cookie" data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+```
+
 ### Privacy
 - No accounts, no passwords and no personal profiles are sent anywhere.
 - All paths and settings stay on your PC (`%APPDATA%\KoRForge\config.json`).
@@ -108,6 +126,24 @@ KoRForge es un gestor de addons **standalone** para World of Warcraft: una alter
 2. **Portable** (`KoRForge-vx.x.x-win-x64.zip`): descomprime donde quieras y ejecuta `KoRForge.exe`. Sin instalar nada.
 
 **Requisitos:** Windows 10 u 11 (64 bits) y World of Warcraft instalado en el equipo.
+
+### Apoyar el proyecto
+
+¡Hola! Soy KoRZoR. Soy desarrollador independiente y apasionado de la tecnología y los videojuegos. Dedico la mayor parte de mi tiempo libre a crear herramientas y soluciones de software libres de publicidad, telemetría y procesos innecesarios, pensadas para que funcionen de forma rápida y respeten siempre los recursos del usuario.
+
+Si KoRForge te ahorra tiempo, puedes invitarme a un café. Con eso se paga el alojamiento de las descargas, el equipo de pruebas y las horas que hay detrás.
+
+<p>
+  <a href="https://www.buymeacoffee.com/korzor" target="_blank">
+    <img src="https://img.shields.io/badge/%E2%98%95%20Invita%20a%20un%20caf%C3%A9-BD5FFF?style=for-the-badge&labelColor=BD5FFF&color=FFDD00" alt="Invita a un café">
+  </a>
+</p>
+
+Widget para tu propia web (español):
+
+```html
+<script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js" data-name="bmc-button" data-slug="korzor" data-color="#BD5FFF" data-emoji="" data-font="Cookie" data-text="Invita a un café" data-outline-color="#000000" data-font-color="#ffffff" data-coffee-color="#FFDD00"></script>
+```
 
 ### Privacidad
 - No se envían cuentas, contraseñas ni perfiles personales a ningún sitio.
