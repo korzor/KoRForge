@@ -1,15 +1,25 @@
-ISC License
+ACUERDO DE LICENCIA Y TÉRMINOS DE USO DE SOFTWARE
+Copyright (c) 2026 KorzoR. Todos los derechos reservados.
 
-Copyright (c) 2026 KoRZoR
+Se concede por la presente autorización gratuita a cualquier persona para descargar, 
+instalar y ejecutar este software ("el Software") exclusivamente para su uso personal 
+o profesional como usuario final, sujeto a las siguientes restricciones:
 
-Permission to use, copy, modify, and/or distribute this software for any
-purpose with or without fee is hereby granted, provided that the above
-copyright notice and this permission notice appear in all copies.
+1. PROHIBICIÓN DE OBRAS DERIVADAS Y BIFURCACIONES (FORKS):
+Queda terminantemente prohibido modificar, adaptar, traducir, descompilar, realizar 
+ingeniería inversa, extraer fragmentos de código o crear proyectos derivados basados 
+en este software, ya sea de forma total o parcial.
 
-THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
-WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
-MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
-ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
-ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
-OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+2. PROHIBICIÓN DE EXPLOTACIÓN COMERCIAL:
+Queda expresamente prohibida la venta, reventa, sublicenciamiento, alquiler, arrendamiento 
+o monetización directa o indirecta del Software, de sus binarios o de su código fuente.
+
+3. REDISTRIBUCIÓN:
+No está permitida la redistribución, republicación ni el alojamiento de copias no oficiales 
+de este código o de la aplicación en otras plataformas o sitios web sin el consentimiento 
+previo, explícito y por escrito del autor original.
+
+4. EXENCIÓN DE RESPONSABILIDAD:
+EL SOFTWARE SE PROPORCIONA "TAL CUAL" ("AS IS"), SIN GARANTÍA DE NINGÚN TIPO, EXPRESA 
+O IMPLÍCITA. EN NINGÚN CASO EL AUTOR SERÁ RESPONSABLE DE NINGUNA RECLAMACIÓN, DAÑO U OTRA 
+RESPONSABILIDAD DERIVADA DEL USO O LA IMPOSIBILIDAD DE USO DE ESTE SOFTWARE.
