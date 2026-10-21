@@ -170,9 +170,9 @@ async function getModDescription(modId) {
   }
 }
 
-async function getModFiles(modId, pageSize = 20) {
+async function getModFiles(modId, pageSize = 20, index = 0) {
   try {
-    const url = `${BASE_URL}/mods/${modId}/files?pageSize=${pageSize}`;
+    const url = `${BASE_URL}/mods/${modId}/files?pageSize=${pageSize}&index=${index}`;
     const res = await fetch(url, {
       headers: {
         'x-api-key': CF_API_KEY,
@@ -272,13 +272,27 @@ function tieneEtiquetaRetail(file) {
 
 async function getLatestFile(modId, gameId = 'forever') {
   try {
-    const files = await getModFiles(modId, 30);
-    if (files.length === 0) {
-      return null;
+    /* Se miran VARIAS tandas de ficheros, no solo los más nuevos.
+       Motivo (dueño, 21-10-2026): RareScanner en MoP Classic daba «no compatible file» y el addon
+       sí tiene 45 ficheros de la rama 5.5.x; el problema era que los 25 más recientes son de Retail
+       y de Forever. Un cliente puede tener su último fichero varias tandas más atrás, así que se baja
+       por páginas de 50 (las más nuevas primero) hasta encontrar alguno compatible. Tope de 5 tandas
+       para no encadenar peticiones: 250 ficheros de histórico. */
+    const TAMANO_TANDA = 50;
+    const MAX_TANDAS = 5;
+    let compatibleFiles = [];
+
+    for (let tanda = 0; tanda < MAX_TANDAS; tanda += 1) {
+      const pagina = await getModFiles(modId, TAMANO_TANDA, tanda * TAMANO_TANDA);
+      if (!Array.isArray(pagina) || pagina.length === 0) break;
+      const compatibles = pagina.filter(f => isFileCompatibleWithGame(f, gameId));
+      if (compatibles.length > 0) {
+        compatibleFiles = compatibles;
+        break;
+      }
+      if (pagina.length < TAMANO_TANDA) break; // se acabaron los ficheros
     }
 
-    // Filtrar estrictamente por versión de juego seleccionada (ningún juego acepta versiones incompatibles)
-    const compatibleFiles = files.filter(f => isFileCompatibleWithGame(f, gameId));
     if (compatibleFiles.length === 0) {
       return null;
     }

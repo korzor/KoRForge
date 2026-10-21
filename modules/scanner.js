@@ -200,21 +200,29 @@ function scanAddons(addonsDir, gameId = 'forever') {
     const actualAddonName = isExplicitlyDisabled ? folderName.replace(/\.disabled$/, '') : folderName;
     const folderPath = path.join(addonsDir, folderName);
 
-    // Look for .toc file matching folder name or any .toc
+    /* Buscar el .toc que corresponde AL CLIENTE ACTIVO.
+       Muchos addons multi-cliente (TipTac Reborn, por ejemplo) traen varios .toc dentro de la misma
+       carpeta: TipTac.toc es el de Retail y TipTac_Mists.toc el de MoP. Antes se cogía el que se
+       llamaba igual que la carpeta o el primero por orden alfabético, así que un addon que funciona
+       en el juego salía como «Otra versión» porque se leía el .toc de Retail (dueño, 21-10-2026). */
     let tocMeta = null;
-    let expectedToc = path.join(folderPath, `${actualAddonName}.toc`);
-
-    if (fs.existsSync(expectedToc)) {
-      tocMeta = parseTocFile(expectedToc);
-    } else {
-      try {
-        const files = fs.readdirSync(folderPath);
-        const anyToc = files.find(f => f.toLowerCase().endsWith('.toc'));
-        if (anyToc) {
-          tocMeta = parseTocFile(path.join(folderPath, anyToc));
-        }
-      } catch (_) {}
-    }
+    try {
+      const archivosToc = fs.readdirSync(folderPath).filter(f => f.toLowerCase().endsWith('.toc'));
+      const candidatos = [];
+      for (const archivo of archivosToc) {
+        const meta = parseTocFile(path.join(folderPath, archivo));
+        if (meta) candidatos.push({ archivo, meta });
+      }
+      if (candidatos.length > 0) {
+        const esDelCliente = (c) => auditCompatibility(c.meta.interface || '', gameId).status === 'compatible';
+        const nombreCarpeta = `${actualAddonName.toLowerCase()}.toc`;
+        const elegido = candidatos.find(c => esDelCliente(c) && c.archivo.toLowerCase() === nombreCarpeta)
+          || candidatos.find(esDelCliente)
+          || candidatos.find(c => c.archivo.toLowerCase() === nombreCarpeta)
+          || candidatos[0];
+        tocMeta = elegido.meta;
+      }
+    } catch (_) {}
 
     const rawInterface = tocMeta?.interface || '';
     const compatibility = auditCompatibility(rawInterface, gameId);
