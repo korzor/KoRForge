@@ -2162,14 +2162,36 @@ document.addEventListener('DOMContentLoaded', () => {
       backups.forEach(b => {
         const item = document.createElement('div');
         item.className = 'backup-item';
+
+        /* Qué trae el .zip, en claro (dueño, 21-10-2026): archivos, lo que hay en el primer nivel
+           y las cuentas de Battle.net incluidas. Viene ya resumido del servidor. */
+        const dentro = b.contenido;
+        const fichas = [];
+        if (dentro) {
+          if (Number.isFinite(dentro.archivos)) {
+            fichas.push(`<span class="backup-chip">📄 ${T('vault_files_count', { count: dentro.archivos })}</span>`);
+          }
+          if (Array.isArray(dentro.primerNivel) && dentro.primerNivel.length > 0) {
+            fichas.push(`<span class="backup-chip" title="${dentro.primerNivel.join(', ')}">📁 ${T('vault_inside', { items: dentro.primerNivel.join(' · ') })}</span>`);
+          }
+          if (Array.isArray(dentro.cuentas) && dentro.cuentas.length > 0) {
+            fichas.push(`<span class="backup-chip">👤 ${T('vault_accounts', { items: dentro.cuentas.join(' · ') })}</span>`);
+          }
+        }
+
         item.innerHTML = `
           <div class="backup-info">
             <span class="backup-title">${b.fileName}</span>
             <span class="backup-date">${b.date} • ${b.sizeMb} MB</span>
+            ${fichas.length ? `<div class="backup-contents">${fichas.join('')}</div>` : ''}
           </div>
           <div class="backup-actions">
-            <button class="card-btn btn-restore-backup" data-file="${b.fileName}">${T('vault_restore')}</button>
-            <button class="card-btn btn-danger btn-delete-backup" data-file="${b.fileName}">${T('vault_delete')}</button>
+            <button class="btn-vault btn-vault-restore btn-restore-backup" data-file="${b.fileName}">
+              <span class="vault-btn-icon" aria-hidden="true">↩</span>${T('vault_restore')}
+            </button>
+            <button class="btn-vault btn-vault-delete btn-delete-backup" data-file="${b.fileName}">
+              <span class="vault-btn-icon" aria-hidden="true">🗑</span>${T('vault_delete')}
+            </button>
           </div>
         `;
 

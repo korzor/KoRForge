@@ -2,7 +2,7 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: La barra de navegación se queda al abrir una captura
+# Titulo: El WTF Vault enseña lo que trae cada backup
 
-- Al abrir un screenshot (o cualquier enlace de la ficha) sigue arriba la barra de navegación: atrás, adelante, recargar y buscador.
-- La vista web ocupa el resto de la ventana, sin tapar la barra.
+- Los botones de restaurar y borrar tienen estilo propio: icono, color y realce al pasar el ratón.
+- Cada backup dice qué lleva dentro: cuántos archivos, qué hay en la raíz (Account, SavedVariables, Config.wtf) y las cuentas incluidas.

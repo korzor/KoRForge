@@ -3242,3 +3242,111 @@ input:checked + .slider:before {
   min-height: 0;
   height: auto;
 }
+
+/* --- WTF Vault: restaurar y borrar con presencia, y lo que trae cada .zip (dueño, 21-10-2026) --- */
+.backup-item {
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.backup-item:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+}
+
+.backup-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.backup-contents {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.backup-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 420px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  font-size: 0.71rem;
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-vault {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+.btn-vault .vault-btn-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.btn-vault:active {
+  transform: translateY(0) scale(0.99);
+}
+
+.btn-vault-restore {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.26), rgba(245, 158, 11, 0.18));
+  border-color: rgba(34, 197, 94, 0.55);
+  color: #86efac;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 2px 12px rgba(34, 197, 94, 0.18);
+}
+
+.btn-vault-restore:hover {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.4), rgba(245, 158, 11, 0.24));
+  border-color: #22c55e;
+  color: #dcfce7;
+  box-shadow: 0 6px 22px rgba(34, 197, 94, 0.38);
+  transform: translateY(-1px);
+}
+
+.btn-vault-restore:hover .vault-btn-icon {
+  transform: translateX(-2px);
+}
+
+.btn-vault .vault-btn-icon {
+  transition: transform 0.15s ease;
+}
+
+.btn-vault-delete {
+  background: rgba(239, 68, 68, 0.14);
+  border-color: rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+}
+
+.btn-vault-delete:hover {
+  background: rgba(239, 68, 68, 0.26);
+  border-color: #ef4444;
+  color: #fee2e2;
+  box-shadow: 0 6px 22px rgba(239, 68, 68, 0.38);
+  transform: translateY(-1px);
+}
+
+.btn-vault-delete:hover .vault-btn-icon {
+  transform: scale(1.12);
+}

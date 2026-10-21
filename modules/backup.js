@@ -28,6 +28,39 @@ function ensureBackupsDir(gameId = 'forever') {
   return dir;
 }
 
+/**
+ * Qué hay dentro del .zip, para poder enseñarlo sin abrirlo.
+ *
+ * El backup se crea metiendo la carpeta WTF dentro del zip bajo `WTF/`, así que los nombres de las
+ * entradas son `WTF/Account/<cuenta>/SavedVariables/...`. De ahí se saca: cuántos archivos hay, qué
+ * hay en el primer nivel (Account, Config.wtf…) y qué cuentas de Battle.net están incluidas.
+ * Solo se lee el índice del zip (no se descomprime), así que listar 20 backups sigue siendo barato.
+ */
+function resumenContenido(filePath) {
+  try {
+    const zip = new AdmZip(filePath);
+    const archivos = zip.getEntries().filter((e) => !e.isDirectory);
+    const primerNivel = new Set();
+    const cuentas = new Set();
+
+    for (const entrada of archivos) {
+      const partes = String(entrada.entryName || '').split('/').filter(Boolean);
+      if (partes.length < 2) continue;
+      if (partes[0].toUpperCase() !== 'WTF') continue;
+      primerNivel.add(partes[1]);
+      if (partes.length >= 3 && partes[1].toLowerCase() === 'account') cuentas.add(partes[2]);
+    }
+
+    return {
+      archivos: archivos.length,
+      primerNivel: [...primerNivel].slice(0, 8),
+      cuentas: [...cuentas].slice(0, 8)
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
 function listBackups(gameId = 'forever') {
   const dir = ensureBackupsDir(gameId);
   const files = fs.readdirSync(dir);
@@ -42,7 +75,8 @@ function listBackups(gameId = 'forever') {
         gameId,
         sizeMb: (stat.size / (1024 * 1024)).toFixed(2),
         date: stat.mtime.toLocaleString('es-ES'),
-        timestamp: stat.mtimeMs
+        timestamp: stat.mtimeMs,
+        contenido: resumenContenido(filePath)
       };
     })
     .sort((a, b) => b.timestamp - a.timestamp);
