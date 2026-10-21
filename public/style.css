@@ -3184,3 +3184,36 @@ input:checked + .slider:before {
   background: #15803d;
   box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
 }
+
+/* --- Barra de clientes: cuál está activo y cuál no se puede usar (dueño, 21-10-2026) ----------
+   Dos de los cuatro logos son de Classic (Era y Progression) y solo se distinguen por el dibujo.
+   Se escribe el nombre del cliente activo y se apaga el que no tiene carpeta. */
+.topbar-active-game {
+  margin-left: 14px;
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 230px;
+}
+
+.game-version-pill.is-sin-carpeta {
+  opacity: 0.32;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+
+.game-version-pill.is-sin-carpeta .pill-logo {
+  opacity: 0.55;
+}
+.game-version-pill.is-sin-carpeta.active {
+  opacity: 0.8;
+  filter: none;
+  border-color: #f59e0b;
+  cursor: default;
+}

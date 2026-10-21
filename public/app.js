@@ -103,9 +103,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateTopbarGamePills(gameId) {
     document.querySelectorAll('.game-version-pill').forEach(pill => {
-      const match = pill.getAttribute('data-game-id') === gameId;
+      const id = pill.getAttribute('data-game-id');
+      const match = id === gameId;
       pill.classList.toggle('active', match);
+
+      /* Un cliente SIN carpeta no se puede elegir desde la barra: queda a la vista pero apagado y con
+         el motivo en el tooltip. Dos de los cuatro logos son de Classic y solo se distinguen por el
+         dibujo: sin esto se acaba en el «Classic» que no tiene carpeta (pasó el 21-10-2026, dos veces). */
+      const juego = currentGamesData[id];
+      const sinCarpeta = !!juego && !juego.folderExists;
+      const bloqueado = sinCarpeta && !match;
+      pill.classList.toggle('is-sin-carpeta', sinCarpeta);
+      pill.disabled = bloqueado;
+      const claveTitulo = pill.getAttribute('data-i18n-title');
+      if (bloqueado) {
+        pill.setAttribute('title', T('pill_no_path', { juego: juego.name || id }));
+      } else if (claveTitulo) {
+        pill.setAttribute('title', T(claveTitulo));
+      }
     });
+
+    /* Nombre del cliente activo, escrito: con dos logos «Classic» el dibujo no basta. */
+    const etiqueta = document.getElementById('topbarActiveGame');
+    if (etiqueta) {
+      const activo = currentGamesData[gameId];
+      etiqueta.textContent = activo ? (activo.name || '') : '';
+    }
   }
 
   // Application Data State
