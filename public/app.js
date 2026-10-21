@@ -753,18 +753,44 @@ document.addEventListener('DOMContentLoaded', () => {
     return -(h + 1);
   }
 
-  /** Los datos que guarda la lista de favoritos, sacados del addon instalado. */
-  function modFavoritoDeAddon(addon) {
-    const icono = getInstalledAddonIcon(addon);
-    return {
+  /**
+   * Los datos que guarda la lista de favoritos, sacados del addon instalado.
+   *
+   * El icono del addon instalado casi nunca sirve: el .toc trae el nombre de una textura del juego.
+   * Si lo instaló la app sabemos su modId, así que al guardarlo se pide el icono bueno al catálogo
+   * (una petición, solo al marcar). Sin esto, en Favoritos salía el icono de la app en vez del addon
+   * (dueño, 21-10-2026: «hay algunos addons que se les cambia el icono… TipTac»).
+   */
+  async function modFavoritoDeAddon(addon) {
+    let icono = getInstalledAddonIcon(addon);
+    const datos = {
       id: idFavoritoDeAddon(addon),
       name: addon.title || addon.actualName || addon.folderName,
       slug: addon.actualName || addon.folderName || '',
       summary: addon.notes || '',
       author: addon.author || '',
-      iconUrl: /^https?:/i.test(String(icono || '')) ? icono : '',
+      iconUrl: '',
       categories: []
     };
+
+    if (addon && addon.modId) {
+      try {
+        const res = await fetch(`/api/mod/${encodeURIComponent(addon.modId)}`);
+        const respuesta = await res.json();
+        /* La API contesta { mod: {...} }; se aceptan las dos formas por si cambia. */
+        const detalles = respuesta && (respuesta.mod || respuesta);
+        if (detalles) {
+          if (/^https?:/i.test(String(detalles.iconUrl || ''))) icono = detalles.iconUrl;
+          if (detalles.name) datos.name = detalles.name;
+          if (detalles.slug) datos.slug = detalles.slug;
+          if (detalles.summary) datos.summary = detalles.summary;
+          if (detalles.author && detalles.author !== 'Desconocido') datos.author = detalles.author;
+        }
+      } catch (_) { /* sin datos del catálogo: se queda lo del .toc */ }
+    }
+
+    datos.iconUrl = /^https?:/i.test(String(icono || '')) ? icono : '';
+    return datos;
   }
 
   function renderFavoritesTab(searchTerm = '') {
@@ -1064,7 +1090,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnFav = card.querySelector('.btn-addon-fav');
       btnFav?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        await toggleFavorite(modFavoritoDeAddon(addon));
+        await toggleFavorite(await modFavoritoDeAddon(addon));
         renderInstalledAddons(filter, searchTerm);
       });
 
@@ -1446,7 +1472,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'cf-card';
       card.innerHTML = `
-        <img class="cf-logo" src="${mod.iconUrl || 'favicon.png'}" alt="${mod.name}" onerror="this.src='favicon.png'">
+        <img class="cf-logo" src="${mod.iconUrl || 'addon-default.svg'}" alt="${mod.name}" onerror="this.src='addon-default.svg'">
         <div class="cf-card-content">
           <div class="cf-card-main">
             <div class="cf-card-top">
