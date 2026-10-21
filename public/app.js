@@ -287,14 +287,25 @@ document.addEventListener('DOMContentLoaded', () => {
     updateNavButtons();
   }
 
+  /**
+   * Cierra el navegador interno (capturas, webs) y devuelve la barra de navegación a su sitio.
+   * La barra (atrás / adelante / recargar + buscador) vive dentro de `#pane-search`, así que al abrir
+   * una captura ese panel se queda activo y sólo ocupa lo que mide la barra (clase `is-browsing`).
+   */
+  function cerrarNavegadorInterno() {
+    if (inAppBrowserView) inAppBrowserView.style.display = 'none';
+    const contenido = document.querySelector('.app-content');
+    if (contenido) contenido.classList.remove('is-browsing');
+  }
+
   function applyNavState(state) {
     if (!state) return;
     if (state.type === 'tab') {
-      if (inAppBrowserView) inAppBrowserView.style.display = 'none';
+      cerrarNavegadorInterno();
       if (cfDetailView) cfDetailView.style.display = 'none';
       switchTabInternal(state.tabId);
     } else if (state.type === 'detail') {
-      if (inAppBrowserView) inAppBrowserView.style.display = 'none';
+      cerrarNavegadorInterno();
       openAddonDetailInternal(state.modId, state.modName);
     } else if (state.type === 'web') {
       openInAppBrowserInternal(state.url, state.title);
@@ -356,7 +367,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tab Navigation
   function switchTab(tabId) {
-    if (inAppBrowserView) inAppBrowserView.style.display = 'none';
+    cerrarNavegadorInterno();
     if (cfDetailView) cfDetailView.style.display = 'none';
     pushNavState({ type: 'tab', tabId });
     switchTabInternal(tabId);
@@ -1605,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // 4. Addon Detail View Logic
   function showCatalogView() {
-    if (inAppBrowserView) inAppBrowserView.style.display = 'none';
+    cerrarNavegadorInterno();
     cfDetailView.style.display = 'none';
     cfCatalogLayout.style.display = 'flex';
     setAddressBar('⚡', T('topbar_explorer'));
@@ -1700,7 +1711,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   async function openAddonDetailInternal(modId, modName = '') {
-    if (inAppBrowserView) inAppBrowserView.style.display = 'none';
+    cerrarNavegadorInterno();
     cfCatalogLayout.style.display = 'none';
     cfDetailView.style.display = 'flex';
     cfDetailView.scrollTop = 0; // cada addon abre la ficha desde arriba
@@ -1865,7 +1876,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function openInAppBrowserInternal(url, title = '') {
-    tabPanes.forEach(p => p.classList.remove('active'));
+    /* La barra de navegación (atrás / adelante / recargar + buscador) vive dentro de #pane-search:
+       se deja ese panel activo para no perderla al abrir una captura, y sólo ocupa lo que mide la
+       barra (clase `is-browsing`). Antes se ocultaban todas las pestañas (dueño, 21-10-2026). */
+    tabPanes.forEach(p => { if (p.id !== 'pane-search') p.classList.remove('active'); });
+    document.getElementById('pane-search')?.classList.add('active');
+    document.querySelector('.app-content')?.classList.add('is-browsing');
     if (cfDetailView) cfDetailView.style.display = 'none';
     if (cfCatalogLayout) cfCatalogLayout.style.display = 'none';
     if (inAppBrowserView) inAppBrowserView.style.display = 'flex';

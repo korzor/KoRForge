@@ -3227,3 +3227,18 @@ input:checked + .slider:before {
   border-color: #f59e0b;
   cursor: default;
 }
+
+/* --- Captura abierta: la barra de navegación se queda arriba (dueño, 21-10-2026) ----------------
+   #pane-search es quien lleva la barra (atrás / adelante / recargar + buscador). Al abrir una
+   captura el panel se queda activo con sólo la barra y el navegador interno ocupa el resto. */
+.app-content.is-browsing #pane-search.active {
+  flex: 0 0 auto;
+  height: auto;
+  min-height: 0;
+}
+
+.app-content.is-browsing #inAppBrowserView {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: auto;
+}
