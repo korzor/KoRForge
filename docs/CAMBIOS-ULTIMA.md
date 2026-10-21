@@ -2,9 +2,8 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: La tarjeta de actualización, centrada en cualquier pantalla
+# Titulo: El aviso de «ruta del juego» dice qué juego falta
 
-- La tarjeta de actualización sale centrada en cualquier monitor, resolución y porcentaje de escala.
-- Se acabaron las cuentas de píxeles: ahora se pregunta a Windows qué monitor tiene delante la app y se centra en ese.
-- El tamaño sigue adaptándose a la pantalla, de portátiles pequeños a 4K.
-
+- Si un cliente no tiene ruta configurada, el aviso dice cuál es y cuáles sí tienen ruta, en vez de un mensaje genérico.
+- Si el cliente está dentro de la carpeta raíz configurada, se usa su carpeta sin tener que rellenar la ruta del juego a mano.
+- Los Ajustes enseñan la ruta que se está usando de verdad, también cuando sale de la carpeta raíz.
