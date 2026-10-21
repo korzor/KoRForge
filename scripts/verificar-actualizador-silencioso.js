@@ -20,15 +20,9 @@ const psFile = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
 const salidaVentanas = path.join(os.tmpdir(), 'korforge_sonda_ventanas.txt');
 const pidVigilante = path.join(os.tmpdir(), 'korforge_sonda_ventanas.pid');
 
-// Pantalla de mentira: la tarjeta tiene que quedar centrada dentro de este rectángulo y con
-// el tamaño que toque según la pantalla (560x372 de referencia en 1920x1080, con topes).
-// Se prueba con un 4K que es el caso extremo contrario al monitor del dueño.
-const pantalla = { x: 0, y: 0, width: 3840, height: 2160, escala: 1 };
-const factorEsperado = Math.min(Math.max(pantalla.width / 1920, 0.75), 2.2, Math.min(Math.max(pantalla.height / 1080, 0.75), 2.2));
-const ANCHO_CARTA = Math.round(560 * factorEsperado);
-const ALTO_CARTA = Math.round(372 * factorEsperado);
-const esperadoX = Math.round(pantalla.x + (pantalla.width - ANCHO_CARTA) / 2);
-const esperadoY = Math.round(pantalla.y + (pantalla.height - ALTO_CARTA) / 2);
+// Pantalla de mentira: solo se usa para el log. El runner elige el monitor real de la app y la
+// sonda comprueba que la tarjeta queda centrada en el que use, sea cual sea (ver más abajo).
+const pantalla = { x: 0, y: 0, width: 2560, height: 1440, escala: 1.25 };
 
 try { fs.unlinkSync(flagFile); } catch (_) {}
 // El vigilante de una corrida anterior puede tener el fichero abierto: se trunca con reintentos
@@ -86,9 +80,14 @@ watcher.unref();
 
 let script = buildApplyScript(inocuo, inocuo, '9.9.9', { lang: 'es', splashPng, flagFile, pantalla });
 
-// Paso 4 desactivado: en la prueba el "app" sería otro whoami y abriría su propia consola.
-// (El runner ya trae el interruptor $reabrirApp para esto.)
+// Paso 4 desactivado (en la prueba el "app" sería otro whoami) y sin cerrar la app de verdad:
+// así la sonda se puede lanzar sin cerrarle KoRForge al dueño.
 script = script.replace('$reabrirApp = $true', '$reabrirApp = $false');
+script = script.replace(/^.*Stop-Process.*$/m, "  Log 'Paso 2: (sonda) no se cierra la app'");
+script = script.replace(
+  'while ((@(Get-Process -Name KoRForge,electron -ErrorAction SilentlyContinue)).Count -gt 0 -and (Get-Date) -lt $limite) {',
+  'while ($false) {'
+);
 
 // Con BOM, igual que modules/updater.js: el .ps1 lleva acentos y PowerShell 5.1 sin BOM los rompe.
 fs.writeFileSync(psFile, '\ufeff' + script, 'utf-8');
@@ -139,28 +138,32 @@ for (let intento = 0; intento < 20; intento++) {
 
 const tarjetaVista = lineas.some((l) => /^KoRForge ::/.test(l));
 
-// La geometria se comprueba con la linea que escribe el propio runner en el log: es la que
-// manda de verdad (el vigilante de ventanas vive en otro espacio de coordenadas por el DPI).
+// La geometría se comprueba contra la pantalla que el runner diga que ha usado: así la sonda
+// vale en cualquier monitor, resolución y escalado (no se fija ningún número de píxeles).
 const logFile = path.join(os.tmpdir(), 'korforge_apply_update.log');
 let geometriaOk = false;
 let detalle = 'sin datos';
 try {
   const log = fs.readFileSync(logFile, 'utf-8');
-  const lineasLog = log.split(/\r?\n/).filter((l) => l.includes('Tarjeta: pantalla fisica='));
+  const lineasLog = log.split(/\r?\n/).filter((l) => l.includes('Tarjeta: pantalla='));
   const ultima = lineasLog[lineasLog.length - 1] || '';
-  const m = ultima.match(/fisica=(-?\d+),(-?\d+) (\d+)x(\d+) escala sistema=([\d.]+) factor=([\d.]+) -> (-?\d+),(-?\d+) (\d+)x(\d+)/);
+  const m = ultima.match(/pantalla=(-?\d+),(-?\d+) (\d+)x(\d+).*factor=([\d.]+) -> (-?\d+),(-?\d+) (\d+)x(\d+)/);
   if (m) {
-    const [, fx, fy, fw, fh, escala, factor, lx, ly, lw, lh] = m.map(Number);
+    const [, px, py, pw, ph, factor, lx, ly, lw, lh] = m.map(Number);
+    const acotar = (v) => Math.min(Math.max(v, 0.75), 2.2);
+    const factorEsperado = Math.min(acotar(pw / 1920), acotar(ph / 1080));
+    const anchoEsperado = Math.round(560 * factorEsperado);
+    const altoEsperado = Math.round(372 * factorEsperado);
     const centroX = lx + lw / 2;
     const centroY = ly + lh / 2;
-    const objetivoX = fx / escala + fw / escala / 2;
-    const objetivoY = fy / escala + fh / escala / 2;
+    const objetivoX = px + pw / 2;
+    const objetivoY = py + ph / 2;
     geometriaOk =
-      Math.abs(lw - ANCHO_CARTA) <= 1 && Math.abs(lh - ALTO_CARTA) <= 1 &&
+      Math.abs(lw - anchoEsperado) <= 1 && Math.abs(lh - altoEsperado) <= 1 &&
       Math.abs(factor - factorEsperado) <= 0.01 &&
       Math.abs(centroX - objetivoX) <= 1 && Math.abs(centroY - objetivoY) <= 1;
-    detalle = `fisica=${fx},${fy} ${fw}x${fh} escala=${escala} factor=${factor} -> logica=${lx},${ly} ${lw}x${lh} ` +
-      `(esperado ${ANCHO_CARTA}x${ALTO_CARTA} en ${esperadoX},${esperadoY}; centro ${centroX.toFixed(1)},${centroY.toFixed(1)} vs ${objetivoX.toFixed(1)},${objetivoY.toFixed(1)})`;
+    detalle = `pantalla=${px},${py} ${pw}x${ph} factor=${factor} -> tarjeta ${lx},${ly} ${lw}x${lh} ` +
+      `(esperado ${anchoEsperado}x${altoEsperado}; centro ${centroX.toFixed(1)},${centroY.toFixed(1)} vs ${objetivoX.toFixed(1)},${objetivoY.toFixed(1)})`;
   }
 } catch (_) {}
 
