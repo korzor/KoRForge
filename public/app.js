@@ -16,6 +16,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return (g && g.name) || String(gameId || '');
   };
 
+  /**
+   * Texto de un error que viene del servidor.
+   *
+   * El servidor manda `code` (una clave de i18n) y, cuando hace falta, `params` con los datos para
+   * el mensaje. El caso que lo motivó (dueño, 21-10-2026): «no hay ruta del juego» sin decir CUÁL,
+   * con la ruta configurada en otro de los cuatro juegos. Ahora `err_game_path_missing` viene con
+   * `params.juego` (el activo) y `params.otros` (los que sí tienen ruta), y se cuentan los dos.
+   */
+  function mensajeDeError(data) {
+    if (!data) return '';
+    if (!data.code) return data.error || '';
+    const params = data.params || {};
+    if (data.code === 'err_game_path_missing') {
+      let msg = T('err_game_path_missing');
+      if (params.juego) msg += ' ' + T('err_game_path_missing_juego', { juego: params.juego });
+      if (params.otros) msg += ' ' + T('err_game_path_missing_otros', { otros: params.otros });
+      return msg;
+    }
+    return T('err_' + data.code, params);
+  }
+
   // Navigation & Shell
   const navItems = document.querySelectorAll('.nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
@@ -373,7 +394,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (activeGameSelect) activeGameSelect.value = currentActiveGame;
       if (widgetGameIcon) widgetGameIcon.textContent = currentGamesData[currentActiveGame]?.icon || '⚔️';
-      if (detectedPathEl) detectedPathEl.textContent = currentGamesData[currentActiveGame]?.path || data.wowDir || 'No configurado';
+      if (detectedPathEl) detectedPathEl.textContent = currentGamesData[currentActiveGame]?.resolvedPath || currentGamesData[currentActiveGame]?.path || data.wowDir || T('game_path_empty');
       if (rootWoWPath) rootWoWPath.value = data.rootWoWDir || '';
 
       if (settingAutoStart) settingAutoStart.checked = !!data.autoStart;
@@ -412,8 +433,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const subKey = 'game_sub_' + key;
       const gameSubtitle = (window.I18N && window.I18N.hasKey(subKey)) ? T(subKey) : (g.subtitle || '');
       const statusTxt = g.addonsExists
-        ? T('game_status_connected', { path: g.path })
-        : (g.folderExists ? T('game_status_detected', { path: g.path }) : T('game_status_missing'));
+        ? T('game_status_connected', { path: g.resolvedPath || g.path })
+        : (g.folderExists ? T('game_status_detected', { path: g.resolvedPath || g.path }) : T('game_status_missing'));
 
       item.innerHTML = `
         <div class="game-manage-top">
@@ -429,7 +450,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
         </div>
         <div class="game-manage-input-row">
-          <input type="text" class="game-path-input" data-game-id="${g.id}" value="${g.path || ''}" placeholder="${T('game_path_placeholder', { folder: g.subfolder })}">
+          <input type="text" class="game-path-input" data-game-id="${g.id}" value="${g.path || g.resolvedPath || ''}" placeholder="${T('game_path_placeholder', { folder: g.subfolder })}">
           <button class="btn btn-primary btn-sm btn-save-game-path" data-game-id="${g.id}">${T('game_save')}</button>
           <button class="btn btn-secondary btn-sm btn-open-game-folder" data-game-id="${g.id}">${T('game_open')}</button>
         </div>
@@ -487,7 +508,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update sidebar widget
         if (activeGameSelect) activeGameSelect.value = currentActiveGame;
         if (widgetGameIcon) widgetGameIcon.textContent = activeGameObj?.icon || '⚔️';
-        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.path || 'No configurado';
+        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
 
         // Re-render settings list
         renderGamesManagement(currentGamesData, currentActiveGame);
@@ -579,10 +600,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const activeGameObj = currentGamesData[currentActiveGame];
-        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.path || T('game_path_empty');
+        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
         await loadInstalledAddons();
       } else {
-        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_autodetect_error')));
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_autodetect_error')));
       }
     } catch (err) {
       showToast(err.message, 'error');
@@ -1459,7 +1480,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 versionsRow.appendChild(myPillEl);
               }
             } else {
-              throw new Error(installData.code ? T('err_' + installData.code) : (installData.error || T('toast_install_error', { message: '' })));
+              throw new Error(installData.code ? mensajeDeError(installData) : (installData.error || T('toast_install_error', { message: '' })));
             }
           } catch (err) {
             btnInstall.classList.remove('loading');
@@ -1549,7 +1570,7 @@ document.addEventListener('DOMContentLoaded', () => {
           updateTranslateButtonUI(false, true);
           showToast(T('toast_translated_ok'));
         } else {
-          throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_translate_error', { message: '' })));
+          throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_translate_error', { message: '' })));
         }
       } catch (err) {
         updateTranslateButtonUI(false, false);
@@ -1878,7 +1899,7 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(T('toast_install_done', { name: lastDetailAddonName }));
             loadInstalledAddons();
           } else {
-            throw new Error(resData.code ? T('err_' + resData.code) : (resData.error || T('toast_install_error', { message: '' })));
+            throw new Error(resData.code ? mensajeDeError(resData) : (resData.error || T('toast_install_error', { message: '' })));
           }
         } catch (err) {
           btnInst.disabled = false;
@@ -1934,7 +1955,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(T('toast_install_done', { name: currentDetailMod.name }));
         loadInstalledAddons();
       } else {
-        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_install_error', { message: '' })));
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_install_error', { message: '' })));
       }
     } catch (err) {
       btnDetailInstall.disabled = false;
@@ -1975,7 +1996,7 @@ document.addEventListener('DOMContentLoaded', () => {
         installUrlInput.value = '';
         loadInstalledAddons();
       } else {
-        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('manual_error_unknown')));
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || T('manual_error_unknown')));
       }
     } catch (err) {
       log(`❌ ${T('manual_log_error', { message: err.message })}`, 'error');
@@ -2077,7 +2098,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showToast(T('toast_backup_created', { file: data.fileName, size: data.sizeMb }));
         loadBackups();
       } else {
-        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_backup_error')));
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_backup_error')));
       }
     } catch (err) {
       showToast(err.message, 'error');
@@ -2382,7 +2403,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.code ? T('err_' + data.code) : (data.error || `HTTP ${res.status}`));
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || `HTTP ${res.status}`));
       }
     } catch (err) {
       showToast(T('toast_restart_error', { message: err.message }), 'error');
@@ -2462,7 +2483,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bulkUpdateResultsList && Array.isArray(data.results)) {
         bulkUpdateResultsList.innerHTML = data.results.map(r => `
           <div style="padding: 4px 0; color: ${r.success ? '#4ade80' : '#f87171'};">
-            ${r.success ? '✓' : '✗'} <strong>${r.name}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? T('err_' + r.code) : r.error})`}
+            ${r.success ? '✓' : '✗'} <strong>${r.name}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? mensajeDeError(r) : r.error})`}
           </div>
         `).join('');
       }
@@ -2509,7 +2530,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (availableAddonUpdates.length === 0 && bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
         loadInstalledAddons();
       } else {
-        throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_update_one_error', { message: '' })));
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_update_one_error', { message: '' })));
       }
     } catch (err) {
       showToast(T('toast_update_one_error', { message: err.message }), 'error');
@@ -2602,7 +2623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ code: raw, gameId: currentActiveGame })
       });
       const data = await res.json();
-      if (!data.success) throw new Error(data.code ? T('err_' + data.code) : (data.error || T('toast_pack_analyze_error', { message: '' })));
+      if (!data.success) throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_pack_analyze_error', { message: '' })));
 
       currentAnalyzedProfile = data.analysis;
       if (importInputPhase) importInputPhase.style.display = 'none';

@@ -13,7 +13,9 @@ const registry = require('./modules/installedRegistry');
 const profiles = require('./modules/profiles');
 
 const app = express();
-const PORT = 3847;
+/* El puerto de siempre es 3847 (la ventana lo carga así). `KORFORGE_PORT` permite levantar una
+   segunda instancia para probar sin cerrar la que el usuario tiene abierta. */
+const PORT = Number(process.env.KORFORGE_PORT) || 3847;
 
 const USER_DATA_DIR = process.env.KORFORGE_USER_DATA || path.join(process.env.APPDATA || '', 'KoRForge');
 if (!fs.existsSync(USER_DATA_DIR)) {
@@ -155,7 +157,9 @@ function saveConfig(cfg) {
 let config = loadConfig();
 
 function getGameStatus(game) {
-  const gamePath = game.path ? game.path.trim() : '';
+  /* La ruta EFECTIVA (la suya, o la derivada de la raíz configurada): así la interfaz no dice
+     «no configurado» cuando el cliente sí está y se puede usar. */
+  const gamePath = rutaDeJuego(game && game.id) || '';
   const folderExists = !!gamePath && fs.existsSync(gamePath);
   const addonsDir = folderExists ? path.join(gamePath, 'Interface', 'AddOns') : '';
   const wtfDir = folderExists ? path.join(gamePath, 'WTF') : '';
@@ -163,6 +167,7 @@ function getGameStatus(game) {
   const wtfExists = !!wtfDir && fs.existsSync(wtfDir);
   return {
     ...game,
+    resolvedPath: gamePath,
     folderExists,
     addonsDir,
     wtfDir,
@@ -171,20 +176,71 @@ function getGameStatus(game) {
   };
 }
 
-function getAddonsDir(gameId) {
+/**
+ * Ruta del cliente de un juego, con una red de seguridad.
+ *
+ * POR QUÉ (dueño, 21-10-2026: «intento meter un addon en la classic y me dice game path missing,
+ * y lo tengo bien configurado en opciones»). Se configuran cuatro juegos por separado
+ * (`games.<id>.path`), y es fácil tener la ruta puesta en «Classic Progression» y estar mirando
+ * «Classic Era»: entonces el juego activo no tiene ruta aunque el usuario haya configurado *una*.
+ * Dos arreglos aquí: (1) si el juego no tiene ruta propia pero la carpeta del cliente existe bajo
+ * la raíz configurada (`rootWoWDir` + `subfolder`), se usa esa; y (2) los errores dicen qué juego
+ * falta y cuáles sí valen (`respuestaSinRuta`), que es lo que de verdad desatasca.
+ */
+function rutaDeJuego(gameId) {
   const gKey = gameId || config.activeGame || 'forever';
   const game = config.games[gKey];
   const p = (game?.path || '').trim();
+  if (p) return p;
+  const raiz = (config.rootWoWDir || '').trim();
+  const sub = (game?.subfolder || '').trim();
+  if (raiz && sub) {
+    const derivada = path.join(raiz, sub);
+    if (fs.existsSync(derivada)) return derivada;
+  }
+  return '';
+}
+
+function getAddonsDir(gameId) {
+  const p = rutaDeJuego(gameId);
   if (!p) return '';
   return path.join(p, 'Interface', 'AddOns');
 }
 
 function getWtfDir(gameId) {
-  const gKey = gameId || config.activeGame || 'forever';
-  const game = config.games[gKey];
-  const p = (game?.path || '').trim();
+  const p = rutaDeJuego(gameId);
   if (!p) return '';
   return path.join(p, 'WTF');
+}
+
+/** Nombre visible de un juego, para los mensajes de error. */
+function nombreDeJuego(gameId) {
+  const g = config.games[gameId || config.activeGame || 'forever'];
+  return (g && g.name) || String(gameId || '');
+}
+
+/** Juegos que hoy tienen una ruta que existe en disco: «WoW Forever, WoW Classic Progression». */
+function juegosConRuta() {
+  return Object.entries(config.games)
+    .filter(([key]) => {
+      const p = rutaDeJuego(key);
+      return !!p && fs.existsSync(p);
+    })
+    .map(([, g]) => g.name)
+    .join(', ');
+}
+
+/**
+ * Respuesta estándar de «a este juego le falta la ruta». Lleva el nombre del juego y los que sí
+ * tienen ruta para que la interfaz pueda decirlo con palabras en vez de un mensaje genérico.
+ */
+function respuestaSinRuta(res, gameId) {
+  const juego = nombreDeJuego(gameId);
+  return res.status(400).json({
+    error: `No hay ruta configurada para ${juego}. Configúrala en Ajustes.`,
+    code: 'err_game_path_missing',
+    params: { juego, otros: juegosConRuta() }
+  });
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
@@ -538,11 +594,8 @@ app.delete('/api/addons/:folderName', (req, res) => {
 app.post('/api/addons/open-folder', (req, res) => {
   const { gameId, folderName } = req.body || {};
   const gKey = gameId || config.activeGame || 'forever';
-  const targetGame = config.games[gKey] || config.games.forever;
-  const targetPath = (targetGame?.path || '').trim();
-  if (!targetPath) {
-    return res.status(400).json({ error: 'No hay ruta configurada para este juego.', code: 'err_game_path_missing' });
-  }
+  const targetPath = rutaDeJuego(gKey);
+  if (!targetPath) return respuestaSinRuta(res, gKey);
   const addonsPath = path.join(targetPath, 'Interface', 'AddOns');
   let dirToOpen = addonsPath;
   if (folderName) {
@@ -663,7 +716,7 @@ app.post('/api/install-curseforge', async (req, res) => {
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
-      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.', code: 'err_game_path_missing' });
+      return respuestaSinRuta(res, targetGame);
     }
 
     console.log(`[KoRForge] Obteniendo archivo para mod ${modId} (${name || 'Addon'}) en ${targetGame}...`);
@@ -734,7 +787,7 @@ app.post('/api/install-file', async (req, res) => {
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
-      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.', code: 'err_game_path_missing' });
+      return respuestaSinRuta(res, targetGame);
     }
 
     console.log(`[KoRForge] Instalando archivo específico en ${targetGame}: ${downloadUrl}`);
@@ -770,7 +823,7 @@ app.post('/api/install-url', async (req, res) => {
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
-      return res.status(400).json({ error: 'No hay ruta configurada para este juego. Configúrala en Ajustes.', code: 'err_game_path_missing' });
+      return respuestaSinRuta(res, targetGame);
     }
 
     console.log(`[KoRForge] Instalando desde URL/GitHub en ${targetGame}: ${url}`);
@@ -953,7 +1006,7 @@ app.get('/api/profiles/export', (req, res) => {
     const gameId = req.query.gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(gameId);
     if (!dir || !fs.existsSync(dir)) {
-      return res.status(400).json({ error: 'Ruta del juego no configurada', code: 'err_game_path_missing' });
+      return respuestaSinRuta(res, gameId);
     }
     const scanned = scanner.scanAddons(dir, gameId);
     const gameInfo = config.games[gameId] || { name: 'WoW Forever' };
