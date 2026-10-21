@@ -37,6 +37,43 @@ document.addEventListener('DOMContentLoaded', () => {
     return T('err_' + data.code, params);
   }
 
+  /**
+   * Aviso de «este cliente no tiene carpeta».
+   *
+   * Sin carpeta de juego el servidor rechaza toda instalación (`err_game_path_missing`), pero el
+   * error salía en un rincón y en Ajustes hay cuatro clientes (dos llamados «Classic»), así que se
+   * podía estar mirando la ruta de otro y creer que estaba todo puesto (dueño, 21-10-2026).
+   * El aviso va arriba, en todas las pestañas, y ofrece el salto al cliente que sí tiene carpeta.
+   */
+  function actualizarAvisoDeRuta() {
+    const caja = document.getElementById('gamePathWarning');
+    if (!caja) return;
+    const activo = currentGamesData[currentActiveGame];
+    if (!activo || activo.folderExists) {
+      caja.hidden = true;
+      return;
+    }
+    const nombre = activo.name || String(currentActiveGame || '');
+    const alternativa = Object.entries(currentGamesData)
+      .find(([id, g]) => id !== currentActiveGame && g && g.folderExists);
+    const texto = document.getElementById('gamePathWarningText');
+    if (texto) {
+      texto.textContent = T(alternativa ? 'warn_no_path' : 'warn_no_path_any', {
+        juego: nombre,
+        otros: alternativa ? alternativa[1].name : ''
+      });
+    }
+    const boton = document.getElementById('btnGamePathWarningSwitch');
+    if (boton) {
+      boton.hidden = !alternativa;
+      if (alternativa) {
+        boton.textContent = T('warn_switch_btn', { juego: alternativa[1].name });
+        boton.onclick = () => switchActiveGame(alternativa[0]);
+      }
+    }
+    caja.hidden = false;
+  }
+
   // Navigation & Shell
   const navItems = document.querySelectorAll('.nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
@@ -394,7 +431,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (activeGameSelect) activeGameSelect.value = currentActiveGame;
       if (widgetGameIcon) widgetGameIcon.textContent = currentGamesData[currentActiveGame]?.icon || '⚔️';
-      if (detectedPathEl) detectedPathEl.textContent = currentGamesData[currentActiveGame]?.resolvedPath || currentGamesData[currentActiveGame]?.path || data.wowDir || T('game_path_empty');
+      /* Sin la ruta de OTRO juego de por medio: si el cliente activo no tiene carpeta, se dice
+         «No configurado» y ya (antes caía a `wowDir`, que es la ruta del juego activo ANTERIOR y
+         hacía creer al dueño que estaba configurado, 21-10-2026). */
+      if (detectedPathEl) detectedPathEl.textContent = currentGamesData[currentActiveGame]?.resolvedPath || currentGamesData[currentActiveGame]?.path || T('game_path_empty');
       if (rootWoWPath) rootWoWPath.value = data.rootWoWDir || '';
 
       if (settingAutoStart) settingAutoStart.checked = !!data.autoStart;
@@ -415,6 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       renderGamesManagement(currentGamesData, currentActiveGame);
+      actualizarAvisoDeRuta();
     } catch (err) {
       console.error('Error cargando configuración:', err);
     }
@@ -509,6 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeGameSelect) activeGameSelect.value = currentActiveGame;
         if (widgetGameIcon) widgetGameIcon.textContent = activeGameObj?.icon || '⚔️';
         if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
+        actualizarAvisoDeRuta();
 
         // Re-render settings list
         renderGamesManagement(currentGamesData, currentActiveGame);
@@ -562,6 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (detectedPathEl) detectedPathEl.textContent = newPath || T('game_path_empty');
           await loadInstalledAddons(true);
         }
+        actualizarAvisoDeRuta();
         showToast(T('toast_path_saved'));
       }
     } catch (err) {

@@ -114,6 +114,16 @@
       <!-- Main Workspace View -->
       <main class="app-content">
 
+        <!-- Aviso permanente: el cliente activo no tiene carpeta de juego.
+             Sin carpeta no se puede instalar NADA (el servidor contesta err_game_path_missing) y era
+             fácil no enterarse: en Ajustes hay cuatro clientes y dos se llaman «Classic».
+             Dueño, 21-10-2026. -->
+        <div class="game-path-warning" id="gamePathWarning" hidden>
+          <span class="game-path-warning-icon" aria-hidden="true">⚠️</span>
+          <p class="game-path-warning-text" id="gamePathWarningText"></p>
+          <button class="btn btn-primary btn-sm" id="btnGamePathWarningSwitch" hidden></button>
+        </div>
+
         <!-- View: Mis Addons -->
         <section class="tab-pane" id="pane-addons">
           <div class="content-header">

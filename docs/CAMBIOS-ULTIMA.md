@@ -2,8 +2,8 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: El aviso de «ruta del juego» dice qué juego falta
+# Titulo: Aviso cuando el cliente activo no tiene carpeta
 
-- Si un cliente no tiene ruta configurada, el aviso dice cuál es y cuáles sí tienen ruta, en vez de un mensaje genérico.
-- Si el cliente está dentro de la carpeta raíz configurada, se usa su carpeta sin tener que rellenar la ruta del juego a mano.
-- Los Ajustes enseñan la ruta que se está usando de verdad, también cuando sale de la carpeta raíz.
+- Si el cliente activo no tiene carpeta de juego, sale un aviso arriba en todas las pestañas con un botón para saltar al cliente que sí la tiene.
+- La ruta que se enseña es siempre la del cliente en uso: ya no puede aparecer la de otro cliente distinto.
+- Los Ajustes muestran «No configurado» cuando toca, sin heredar la ruta de otro cliente.
