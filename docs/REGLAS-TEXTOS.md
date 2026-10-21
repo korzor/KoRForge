@@ -50,3 +50,6 @@ for (const f of ficheros) {
   Fallo real: el cartel de la 1.2.4 ofrecía «Cambiar a WoW Forever» porque cogía el primer cliente de
   la lista con carpeta, que no tenía nada que ver.
 - El cambio de cliente se hace con los **cuatro logos de la barra superior** (son botones, no adornos).
+- **No se pinta interfaz que no se haya pedido.** Si algo parece necesario (un texto nuevo, un
+  aviso), se propone y se espera el sí. Ejemplo real: el 21-10-2026 se añadió por iniciativa propia
+  un texto a la derecha del selector de clientes; el dueño no lo había pedido y se tuvo que quitar.

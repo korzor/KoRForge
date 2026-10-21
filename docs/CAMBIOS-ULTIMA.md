@@ -2,8 +2,8 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: La barra de clientes deja claro cuál usas y cuál no sirve
+# Titulo: Fuera el texto del selector de clientes
 
-- Junto a los logos se escribe el nombre del cliente activo: dos de los cuatro son de Classic y solo se distinguían por el dibujo.
-- Los clientes sin carpeta configurada salen apagados y no se pueden elegir desde la barra: el tooltip dice qué falta.
-- El cliente activo que no tiene carpeta se marca en ámbar.
+- Se quita el texto que se había añadido a la derecha del selector de clientes: la barra vuelve a ser solo los logos.
+- Los logos de los clientes sin carpeta siguen apagados y sin poder elegirse desde la barra.
+- El cliente activo que no tiene carpeta se marca en ámbar, y el aviso sigue saliendo en un toast.
