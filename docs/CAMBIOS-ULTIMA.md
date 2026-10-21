@@ -2,11 +2,10 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: La tarjeta de actualización se adapta a cualquier pantalla
+# Titulo: El logo del actualizador se quita antes de que la app arranque
 
-- La tarjeta de actualización se centra en el medio de la pantalla en cualquier tamaño: portátil, 1080p, 2K, 4K o ultrapanorámica.
-- Su tamaño va en proporción a la pantalla: no se queda diminuta en un 4K ni enorme en un portátil pequeño.
-- Se centra en el monitor donde tienes la app abierta, nunca en el cursor.
-- Corregido el descuadre en pantallas con escalado al 125% o 150%.
-- El logo se reescala con calidad para que no salga a cuadros en pantallas grandes.
+- El logo de la actualización desaparece medio segundo antes de que la app termine de iniciar: en cuanto KoRForge pinta su primera ventana.
+- Ya no se queda tapando la app nueva medio segundo de más: el relevo lo coge el splash de la propia app.
+- Se mantiene lo de la 1.1.10: la tarjeta va centrada en el medio de la pantalla y se adapta a cualquier tamaño y escalado.
+- Si la app arranca minimizada en la bandeja, la tarjeta se quita igual y no se queda colgada.
 

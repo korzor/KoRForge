@@ -124,9 +124,18 @@ while (Date.now() < fin) {
 }
 Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
 
-const lineas = fs.existsSync(salidaVentanas)
-  ? [...new Set(fs.readFileSync(salidaVentanas, 'utf-8').split(/\r?\n/).map((l) => l.trim()).filter(Boolean))]
-  : [];
+// El vigilante puede tener el fichero abierto justo en ese instante (Windows da EBUSY al leer)
+let lineas = [];
+for (let intento = 0; intento < 20; intento++) {
+  try {
+    lineas = fs.existsSync(salidaVentanas)
+      ? [...new Set(fs.readFileSync(salidaVentanas, 'utf-8').split(/\r?\n/).map((l) => l.trim()).filter(Boolean))]
+      : [];
+    break;
+  } catch (_) {
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 250);
+  }
+}
 
 const tarjetaVista = lineas.some((l) => /^KoRForge ::/.test(l));
 
