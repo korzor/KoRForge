@@ -256,6 +256,20 @@ function isFileCompatibleWithGame(file, gameId = 'forever') {
   return false;
 }
 
+/**
+ * ¿El fichero está etiquetado para Retail (11.x / 12.x)?
+ *
+ * Los autores suelen etiquetar el MISMO fichero con Retail y con Classic (o suben el de Retail con
+ * etiquetas de más). Pasó el 21-10-2026: en el cliente de MoP se instaló «TipTac Reborn» con un .toc
+ * `Interface: 120100` (Retail) y el addon salía como incompatible aunque el juego lo cargara.
+ */
+function tieneEtiquetaRetail(file) {
+  const vers = Array.isArray(file && file.gameVersions)
+    ? file.gameVersions.map(v => String(v).toLowerCase())
+    : [];
+  return vers.some(v => v.startsWith('11.') || v.startsWith('12.') || v.includes('retail') || v.includes('within'));
+}
+
 async function getLatestFile(modId, gameId = 'forever') {
   try {
     const files = await getModFiles(modId, 30);
@@ -269,9 +283,15 @@ async function getLatestFile(modId, gameId = 'forever') {
       return null;
     }
 
-    const validFile = compatibleFiles.find(f => f.downloadUrl && f.releaseType === 1) || 
-                      compatibleFiles.find(f => f.downloadUrl) || 
-                      compatibleFiles[0];
+    /* En los clientes Classic, si hay ficheros SIN etiqueta de Retail, esos mandan: son los que
+       llevan el `Interface` del cliente. Si todos la llevan, se usa lo que haya (mejor eso que nada). */
+    const esClienteClassic = gameId === 'classic' || gameId === 'classic_era';
+    const sinRetail = compatibleFiles.filter(f => !tieneEtiquetaRetail(f));
+    const candidatos = (esClienteClassic && sinRetail.length > 0) ? sinRetail : compatibleFiles;
+
+    const validFile = candidatos.find(f => f.downloadUrl && f.releaseType === 1) || 
+                      candidatos.find(f => f.downloadUrl) || 
+                      candidatos[0];
     
     if (validFile && !validFile.downloadUrl) {
       const urlRes = await fetch(`${BASE_URL}/mods/${modId}/files/${validFile.id}/download-url`, {

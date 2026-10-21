@@ -738,6 +738,35 @@ document.addEventListener('DOMContentLoaded', () => {
     return favoriteMods.some(f => f && f.id === modId);
   }
 
+  /**
+   * Identificador con el que se guarda en favoritos un addon instalado.
+   * Si lo instaló la app, el registro ya sabe su modId de CurseForge. Si se instaló a mano (ZIP o
+   * URL) no hay modId: se usa un número negativo estable sacado del nombre de la carpeta, para poder
+   * marcarlo igual y no chocar con ningún modId real (los de CurseForge son positivos).
+   */
+  function idFavoritoDeAddon(addon) {
+    if (!addon) return 0;
+    if (addon.modId) return Number(addon.modId);
+    const clave = String(addon.actualName || addon.folderName || '').toLowerCase();
+    let h = 0;
+    for (let i = 0; i < clave.length; i += 1) h = ((h * 31) + clave.charCodeAt(i)) % 1000000000;
+    return -(h + 1);
+  }
+
+  /** Los datos que guarda la lista de favoritos, sacados del addon instalado. */
+  function modFavoritoDeAddon(addon) {
+    const icono = getInstalledAddonIcon(addon);
+    return {
+      id: idFavoritoDeAddon(addon),
+      name: addon.title || addon.actualName || addon.folderName,
+      slug: addon.actualName || addon.folderName || '',
+      summary: addon.notes || '',
+      author: addon.author || '',
+      iconUrl: /^https?:/i.test(String(icono || '')) ? icono : '',
+      categories: []
+    };
+  }
+
   function renderFavoritesTab(searchTerm = '') {
     if (!favoritesTabGrid) return;
     favoritesTabGrid.innerHTML = '';
@@ -908,6 +937,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const missingDepsHtml = (addon.missingDependencies && addon.missingDependencies.length > 0)
         ? `<div class="missing-deps-alert" title="${T('missing_deps_hint')}">${T('missing_deps_label', { deps: `<strong>${addon.missingDependencies.join(', ')}</strong>` })}</div>`
         : '';
+      const esFavorito = isModFavorite(idFavoritoDeAddon(addon));
       const updateInfo = (availableAddonUpdates || []).find(u => (addon.modId && u.modId === addon.modId) || u.folderName === addon.folderName);
       const updatePillHtml = updateInfo ? `
         <span class="addon-card-update-pill" title="${T('card_update_hint', { version: updateInfo.newVersion })}">⚡ v${updateInfo.newVersion}</span>
@@ -949,6 +979,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="installed-card-actions">
               ${updateInfo ? `<button class="btn-card-update-action btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_action_hint', { name: addon.title, version: updateInfo.newVersion })}">${T('card_btn_update')}</button>` : ''}
+              <button class="installed-btn-action btn-addon-fav ${esFavorito ? 'is-fav' : ''}" data-folder="${addon.folderName}" title="${esFavorito ? T('card_fav_remove_hint') : T('detail_fav_add')}">
+                <span class="fav-star">${esFavorito ? '★' : '☆'}</span>
+              </button>
               <button class="installed-btn-action btn-addon-folder" data-folder="${addon.folderName}" title="${T('card_open_folder_hint', { folder: addon.folderName })}">
                 <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
@@ -1025,6 +1058,14 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
           showToast(T('toast_uninstall_error'), 'error');
         }
+      });
+
+      // 5. Favorite Button (dueño, 21-10-2026: poder marcar favorito desde Mis Addons)
+      const btnFav = card.querySelector('.btn-addon-fav');
+      btnFav?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        await toggleFavorite(modFavoritoDeAddon(addon));
+        renderInstalledAddons(filter, searchTerm);
       });
 
       addonsGrid.appendChild(card);
