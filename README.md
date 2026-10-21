@@ -69,7 +69,7 @@ Compiling or running the code for yourself is allowed. Modifying it, distributin
 
 ### License and Terms of Use
 
-This software is the exclusive property of **KorzoR**.
+This software is the exclusive property of **KoRZoR**.
 
 Free download and use as an end-user application is granted. Selling, redistributing unofficial copies, modifying the code or creating derivative forks is strictly forbidden. See the [LICENSE](LICENSE) file for details.
 
@@ -130,7 +130,7 @@ Compilar o ejecutar el código para ti está permitido. Modificarlo, distribuir 
 
 ## Licencia y Términos de Uso
 
-Este software es propiedad exclusiva de **KorzoR**. 
+Este software es propiedad exclusiva de **KoRZoR**. 
 
 Se autoriza su descarga y uso gratuito como aplicación final. Queda estrictamente prohibida la venta, redistribución de copias no oficiales, modificación del código o creación de forks derivados. Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
