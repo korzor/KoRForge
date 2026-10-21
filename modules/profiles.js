@@ -1,4 +1,34 @@
 const path = require('path');
+const zlib = require('zlib');
+
+/* Codigos de pack: "KORP2-..." (compacto, gzip + base64url) y "KORP-..." (formato viejo,
+   base64 de un JSON completo). Los dos se leen; solo se escribe el compacto, porque el viejo
+   ocupaba ~10.000 caracteres con 39 addons y no cabia en un mensaje de Discord (limite 2.000).
+   El compacto guarda por addon [nombre, modId, version]: el resto (titulo con colores, fileId,
+   interfaz) no lo usa el importar. */
+const CODE_PREFIX = 'KORP2-';
+const LEGACY_PREFIX = 'KORP-';
+
+const toBase64Url = (buf) => buf.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+function fromBase64Url(str) {
+  const limpio = str.replace(/-/g, '+').replace(/_/g, '/');
+  return Buffer.from(limpio, 'base64');
+}
+
+/** Nombre de carpeta del addon, saneado para que quepa en el codigo y no traiga basura. */
+function nombreDeCarpeta(a) {
+  const bruto = String((a && (a.actualName || a.folderName || a.name)) || '').trim();
+  return bruto.replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 120);
+}
+
+function addonCompacto(a) {
+  return [
+    nombreDeCarpeta(a),
+    Number(a && a.modId) || 0,
+    String((a && a.version) || '').replace(/[\u0000-\u001f\u007f]/g, '').slice(0, 40)
+  ];
+}
 
 function exportProfile(scannedAddons, gameId = 'forever', gameName = 'WoW Forever', customTitle = '') {
   const addonsData = (scannedAddons || [])
@@ -28,13 +58,53 @@ function exportProfile(scannedAddons, gameId = 'forever', gameName = 'WoW Foreve
     addons: addonsData
   };
 
-  const jsonStr = JSON.stringify(profile);
-  const base64Code = 'KORP-' + Buffer.from(jsonStr, 'utf-8').toString('base64');
+  // Solo lo que el importar necesita: una terna por addon.
+  const compacto = {
+    v: 2,
+    g: gameId,
+    t: profile.title,
+    a: addonsData.map(addonCompacto)
+  };
+  const jsonStr = JSON.stringify(compacto);
+  const code = CODE_PREFIX + toBase64Url(zlib.gzipSync(Buffer.from(jsonStr, 'utf-8'), { level: 9 }));
 
   return {
     profile,
     json: JSON.stringify(profile, null, 2),
-    code: base64Code
+    code
+  };
+}
+
+/** Convierte el JSON compacto en el perfil completo que ya espera el resto de la app. */
+function perfilDesdeCompacto(compacto) {
+  if (!compacto || typeof compacto !== 'object' || compacto.v !== 2 || !Array.isArray(compacto.a)) {
+    throw new Error('Formato de código inválido o dañado. Asegúrate de copiar el código completo.');
+  }
+
+  const addons = compacto.a
+    .map((t) => {
+      const nombre = String((t && t[0]) || '').trim();
+      return {
+        name: nombre,
+        title: nombre,
+        version: String((t && t[2]) || ''),
+        modId: Number(t && t[1]) > 0 ? Number(t[1]) : null,
+        fileId: null,
+        folderName: nombre,
+        interface: ''
+      };
+    })
+    .filter((a) => a.name);
+
+  return {
+    korforgeProfile: true,
+    version: '2.0',
+    createdAt: '',
+    gameId: compacto.g || 'forever',
+    gameName: '', // la rellena el servidor con el nombre del juego activo
+    title: String(compacto.t || '').trim(),
+    addonsCount: addons.length,
+    addons
   };
 }
 
@@ -44,8 +114,26 @@ function parseProfile(rawInput) {
   }
 
   let text = rawInput.trim();
-  if (text.startsWith('KORP-')) {
-    const rawB64 = text.slice(5).trim();
+
+  if (text.startsWith(CODE_PREFIX)) {
+    let jsonStr;
+    try {
+      jsonStr = zlib.gunzipSync(fromBase64Url(text.slice(CODE_PREFIX.length).trim())).toString('utf-8');
+    } catch (_) {
+      throw new Error('Formato de código inválido o dañado. Asegúrate de copiar el código completo.');
+    }
+    let compacto;
+    try {
+      compacto = JSON.parse(jsonStr);
+    } catch (err) {
+      throw new Error('Formato de código inválido o dañado. Asegúrate de copiar el código completo.');
+    }
+    return perfilDesdeCompacto(compacto);
+  }
+
+  // Formato viejo (anterior a la 1.2.14): base64 de un JSON completo.
+  if (text.startsWith(LEGACY_PREFIX)) {
+    const rawB64 = text.slice(LEGACY_PREFIX.length).trim();
     text = Buffer.from(rawB64, 'base64').toString('utf-8');
   }
 

@@ -1027,6 +1027,10 @@ app.post('/api/profiles/analyze', (req, res) => {
     const scanned = (dir && fs.existsSync(dir)) ? scanner.scanAddons(dir, targetGame) : [];
 
     const parsedProfile = profileData || profiles.parseProfile(code);
+    // El codigo compacto no lleva el nombre del juego (lo pone el servidor segun el cliente)
+    if (!parsedProfile.gameName && config.games[parsedProfile.gameId]) {
+      parsedProfile.gameName = config.games[parsedProfile.gameId].name;
+    }
     const analysis = profiles.analyzeProfile(parsedProfile, scanned);
     res.json({ success: true, profile: parsedProfile, analysis });
   } catch (err) {
