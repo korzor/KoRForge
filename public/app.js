@@ -40,38 +40,22 @@ document.addEventListener('DOMContentLoaded', () => {
   /**
    * Aviso de «este cliente no tiene carpeta».
    *
-   * Sin carpeta de juego el servidor rechaza toda instalación (`err_game_path_missing`), pero el
-   * error salía en un rincón y en Ajustes hay cuatro clientes (dos llamados «Classic»), así que se
-   * podía estar mirando la ruta de otro y creer que estaba todo puesto (dueño, 21-10-2026).
-   * El aviso va arriba, en todas las pestañas, y ofrece el salto al cliente que sí tiene carpeta.
+   * Sin carpeta de juego el servidor rechaza toda instalación (`err_game_path_missing`). El dueño
+   * (21-10-2026) no quiere carteles grandes en la pantalla principal: sale un toast, una sola vez por
+   * cliente y sesión, y sin proponer otro cliente (antes proponía «WoW Forever», que no venía a
+   * cuento: era el primero de la lista, no el que tiene que ver).
    */
-  function actualizarAvisoDeRuta() {
-    const caja = document.getElementById('gamePathWarning');
-    if (!caja) return;
+  let avisoRutaDada = '';
+
+  function avisarFaltaDeCarpeta() {
     const activo = currentGamesData[currentActiveGame];
     if (!activo || activo.folderExists) {
-      caja.hidden = true;
+      avisoRutaDada = '';
       return;
     }
-    const nombre = activo.name || String(currentActiveGame || '');
-    const alternativa = Object.entries(currentGamesData)
-      .find(([id, g]) => id !== currentActiveGame && g && g.folderExists);
-    const texto = document.getElementById('gamePathWarningText');
-    if (texto) {
-      texto.textContent = T(alternativa ? 'warn_no_path' : 'warn_no_path_any', {
-        juego: nombre,
-        otros: alternativa ? alternativa[1].name : ''
-      });
-    }
-    const boton = document.getElementById('btnGamePathWarningSwitch');
-    if (boton) {
-      boton.hidden = !alternativa;
-      if (alternativa) {
-        boton.textContent = T('warn_switch_btn', { juego: alternativa[1].name });
-        boton.onclick = () => switchActiveGame(alternativa[0]);
-      }
-    }
-    caja.hidden = false;
+    if (avisoRutaDada === currentActiveGame) return;
+    avisoRutaDada = currentActiveGame;
+    showToast(T('toast_no_path', { juego: activo.name || String(currentActiveGame || '') }), 'warning');
   }
 
   // Navigation & Shell
@@ -455,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       renderGamesManagement(currentGamesData, currentActiveGame);
-      actualizarAvisoDeRuta();
+      avisarFaltaDeCarpeta();
     } catch (err) {
       console.error('Error cargando configuración:', err);
     }
@@ -550,7 +534,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (activeGameSelect) activeGameSelect.value = currentActiveGame;
         if (widgetGameIcon) widgetGameIcon.textContent = activeGameObj?.icon || '⚔️';
         if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
-        actualizarAvisoDeRuta();
+        avisarFaltaDeCarpeta();
 
         // Re-render settings list
         renderGamesManagement(currentGamesData, currentActiveGame);
@@ -604,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (detectedPathEl) detectedPathEl.textContent = newPath || T('game_path_empty');
           await loadInstalledAddons(true);
         }
-        actualizarAvisoDeRuta();
+        avisarFaltaDeCarpeta();
         showToast(T('toast_path_saved'));
       }
     } catch (err) {

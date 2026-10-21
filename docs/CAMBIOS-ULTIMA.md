@@ -2,8 +2,7 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: Aviso cuando el cliente activo no tiene carpeta
+# Titulo: El aviso de carpeta, en un toast
 
-- Si el cliente activo no tiene carpeta de juego, sale un aviso arriba en todas las pestañas con un botón para saltar al cliente que sí la tiene.
-- La ruta que se enseña es siempre la del cliente en uso: ya no puede aparecer la de otro cliente distinto.
-- Los Ajustes muestran «No configurado» cuando toca, sin heredar la ruta de otro cliente.
+- Si el cliente activo no tiene carpeta de juego, el aviso sale como toast discreto una sola vez, en vez de un cartel grande sobre la lista de addons.
+- El aviso no propone cambiar a otro cliente: solo dice cuál no tiene carpeta y que se cambie en Ajustes o con los logos de la barra de arriba.
