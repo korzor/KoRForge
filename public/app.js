@@ -1079,18 +1079,46 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       // 4. Uninstall Button
+      // Se lleva TODO lo que trajo el pack (todas sus carpetas), avisa si otro addon depende de
+      // alguna y pregunta si borrar tambien los datos guardados (SavedVariables).
       const btnUninstall = card.querySelector('.btn-addon-trash');
       btnUninstall?.addEventListener('click', async (e) => {
         e.stopPropagation();
-        if (!confirm(T('confirm_uninstall', { name: addon.title, folder: addon.folderName }))) return;
+
+        let info = null;
         try {
-          const res = await fetch(`/api/addons/${encodeURIComponent(addon.folderName)}?gameId=${encodeURIComponent(currentActiveGame)}`, {
+          const resInfo = await fetch(`/api/addons/uninstall-preview?gameId=${encodeURIComponent(currentActiveGame)}&folder=${encodeURIComponent(addon.folderName)}`);
+          info = await resInfo.json();
+        } catch (_) { /* sin vista previa: se desinstala como siempre */ }
+
+        let mensaje = T('confirm_uninstall', { name: addon.title, folder: addon.folderName });
+        const carpetas = (info && Array.isArray(info.folders)) ? info.folders : [];
+        if (carpetas.length > 1) {
+          mensaje += '\n\n' + T('confirm_uninstall_folders', { count: carpetas.length, list: carpetas.join(', ') });
+        }
+        if (info && Array.isArray(info.dependents) && info.dependents.length > 0) {
+          mensaje += '\n\n' + T('confirm_uninstall_dependents', { list: info.dependents.map(d => d.title || d.folderName).join(', ') });
+        }
+        if (!confirm(mensaje)) return;
+
+        let borrarDatos = false;
+        if (info && Array.isArray(info.savedVariables) && info.savedVariables.length > 0) {
+          borrarDatos = confirm(T('confirm_uninstall_savedvars', { name: addon.title }));
+        }
+
+        try {
+          const res = await fetch(`/api/addons/${encodeURIComponent(addon.folderName)}?gameId=${encodeURIComponent(currentActiveGame)}&deleteSaved=${borrarDatos ? 1 : 0}`, {
             method: 'DELETE'
           });
           const resData = await res.json();
           if (resData.deleted) {
-            showToast(T('toast_uninstall_done', { name: addon.title }));
+            const datosBorrados = Array.isArray(resData.savedVariablesDeleted) ? resData.savedVariablesDeleted.length : 0;
+            showToast(datosBorrados > 0
+              ? T('toast_uninstall_savedvars', { name: addon.title, count: datosBorrados })
+              : T('toast_uninstall_done', { name: addon.title }));
             loadInstalledAddons();
+          } else {
+            showToast(T('toast_uninstall_error'), 'error');
           }
         } catch (err) {
           showToast(T('toast_uninstall_error'), 'error');

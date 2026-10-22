@@ -53,7 +53,8 @@ function parseTocFile(filePath) {
       optionalDeps: '',
       icon: '',
       group: '',
-      partOf: ''
+      partOf: '',
+      savedVariables: []
     };
 
     for (const line of lines) {
@@ -71,6 +72,12 @@ function parseTocFile(filePath) {
         else if (key === 'icontexture') meta.icon = rawVal;
         else if (key === 'group') meta.group = cleanWoWFormatting(rawVal);
         else if (key === 'x-part-of') meta.partOf = cleanWoWFormatting(rawVal);
+        // Nombres de los datos guardados: sirven para preguntar si borrarlos al desinstalar.
+        else if (key === 'savedvariables' || key === 'savedvariablespercharacter') {
+          for (const nombre of rawVal.split(/[\s,]+/)) {
+            if (nombre && !meta.savedVariables.includes(nombre)) meta.savedVariables.push(nombre);
+          }
+        }
       }
     }
 
@@ -250,6 +257,7 @@ function scanAddons(addonsDir, gameId = 'forever') {
       missingDependencies: depsAudit.missing,
       hasMissingDeps: depsAudit.isMissingAny,
       optionalDeps: (tocMeta?.optionalDeps || '').split(/[\s,]+/).filter(Boolean),
+      savedVariables: tocMeta?.savedVariables || [],
       icon: tocMeta?.icon || '',
       enabled: !isExplicitlyDisabled,
       path: folderPath,
@@ -307,6 +315,7 @@ function scanAddons(addonsDir, gameId = 'forever') {
       missingDependencies: addon.missingDependencies,
       hasMissingDeps: addon.hasMissingDeps,
       optionalDeps: addon.optionalDeps,
+      savedVariables: addon.savedVariables,
       icon: addon.icon,
       enabled: addon.enabled,
       path: addon.path,
@@ -337,43 +346,93 @@ function toggleAddon(addonsDir, folderName) {
   };
 }
 
-function deleteAddon(addonsDir, folderName, gameId = 'forever') {
-  /* Un addon puede ocupar varias carpetas (Questie, QuestieDB; o los 23 modulos de
-     EllesmereUI). Antes se borraba solo la carpeta pulsada, asi que quedaba el resto en disco
-     y el addon seguia contando como instalado en Favoritos (dueño, 21-10-2026). */
+/**
+ * Resuelve qué carpetas forman el addon que se quiere desinstalar.
+ * Un addon puede ocupar varias carpetas (Questie, QuestieDB; o los 23 modulos de EllesmereUI).
+ * Si lo instalo la app, el registro sabe cuales son; si no, es la carpeta pulsada y ya.
+ */
+function carpetasDelAddon(addonsDir, folderName, gameId = 'forever') {
   const base = String(folderName || '').replace(/\.disabled$/i, '');
   const entry = registry.findByFolder(gameId, base);
-  const objetivos = (entry && Array.isArray(entry.folders) && entry.folders.length > 0)
+  const nombres = (entry && Array.isArray(entry.folders) && entry.folders.length > 0)
     ? entry.folders.slice()
     : [base];
 
-  const borradas = [];
-  for (const nombre of objetivos) {
+  const existentes = [];
+  for (const nombre of nombres) {
     // La carpeta puede estar deshabilitada: en disco el nombre lleva .disabled.
     for (const candidato of [nombre, `${nombre}.disabled`]) {
-      const ruta = path.join(addonsDir, candidato);
-      if (fs.existsSync(ruta)) {
-        fs.rmSync(ruta, { recursive: true, force: true });
-        borradas.push(candidato);
-      }
+      if (fs.existsSync(path.join(addonsDir, candidato))) existentes.push(candidato);
     }
   }
 
-  if (borradas.length === 0) {
+  return { base, nombres, existentes };
+}
+
+/**
+ * Lo que se llevaría por delante desinstalar este addon, para preguntar antes de tocar disco:
+ * las carpetas que se borran, los otros addons que las usan (dependencias cruzadas) y los
+ * nombres de los datos guardados (SavedVariables) que el usuario puede querer borrar también.
+ */
+function describeUninstall(addonsDir, scannedAddons, folderName, gameId = 'forever') {
+  const { base, nombres, existentes } = carpetasDelAddon(addonsDir, folderName, gameId);
+
+  const dentroDelPack = new Set(nombres.map(n => String(n).toLowerCase()));
+  const nombresDelPack = new Set(existentes.map(n => String(n).toLowerCase().replace(/\.disabled$/, '')));
+
+  const dependents = [];
+  const savedVariables = [];
+
+  for (const addon of scannedAddons || []) {
+    const carpeta = String(addon.actualName || addon.folderName || '').toLowerCase();
+
+    if (dentroDelPack.has(carpeta)) {
+      for (const nombre of addon.savedVariables || []) {
+        if (!savedVariables.includes(nombre)) savedVariables.push(nombre);
+      }
+      continue;
+    }
+
+    // Dependencias cruzadas: otros addons que piden alguna de las carpetas que se van a borrar.
+    const necesita = [...(addon.dependencies || []), ...(addon.optionalDeps || [])]
+      .filter(d => nombresDelPack.has(String(d).toLowerCase().replace(/\.disabled$/, '')));
+    if (necesita.length > 0) {
+      dependents.push({
+        folderName: addon.folderName,
+        title: addon.title,
+        requires: [...new Set(necesita)]
+      });
+    }
+  }
+
+  return { folderName, base, folders: existentes, dependents, savedVariables };
+}
+
+function deleteAddon(addonsDir, folderName, gameId = 'forever') {
+  /* Antes se borraba solo la carpeta pulsada, asi que quedaba el resto del pack en disco y el
+     addon seguia contando como instalado en Favoritos (dueño, 21-10-2026). */
+  const { base, nombres, existentes } = carpetasDelAddon(addonsDir, folderName, gameId);
+
+  if (existentes.length === 0) {
     throw new Error(`La carpeta ${folderName} no existe.`);
   }
 
-  for (const nombre of new Set([...objetivos, base])) {
+  for (const candidato of existentes) {
+    fs.rmSync(path.join(addonsDir, candidato), { recursive: true, force: true });
+  }
+
+  for (const nombre of new Set([...nombres, base])) {
     registry.removeByFolderName(gameId, nombre);
   }
 
-  return { deleted: true, folderName, folders: borradas };
+  return { deleted: true, folderName, folders: existentes };
 }
 
 module.exports = {
   scanAddons,
   toggleAddon,
   deleteAddon,
+  describeUninstall,
   auditCompatibility,
   auditDependencies
 };

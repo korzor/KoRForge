@@ -213,6 +213,38 @@ function getWtfDir(gameId) {
   return path.join(p, 'WTF');
 }
 
+/**
+ * Borra los ficheros de datos guardados (SavedVariables) de un addon dentro de WTF.
+ * Barre cuentas y personajes: Name.lua, Name.lua.bak y Name.bak de cada nombre pedido.
+ * Devuelve las rutas borradas (relativas a WTF) para poder decirlo en el aviso.
+ */
+function borrarSavedVariables(gameId, nombres) {
+  const wtf = getWtfDir(gameId);
+  if (!wtf || !fs.existsSync(wtf)) return [];
+
+  const buscados = new Set((nombres || []).map(n => String(n).toLowerCase()));
+  if (buscados.size === 0) return [];
+
+  const borrados = [];
+  const recorrer = (dir) => {
+    let entradas;
+    try { entradas = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return; }
+    for (const e of entradas) {
+      const ruta = path.join(dir, e.name);
+      if (e.isDirectory()) { recorrer(ruta); continue; }
+      const m = e.name.match(/^(.+?)\.lua(\.bak)?$/i);
+      if (!m || !buscados.has(m[1].toLowerCase())) continue;
+      try {
+        fs.unlinkSync(ruta);
+        borrados.push(path.relative(wtf, ruta));
+      } catch (_) { /* fichero en uso: se deja y se sigue con los demás */ }
+    }
+  };
+
+  recorrer(wtf);
+  return borrados;
+}
+
 /** Nombre visible de un juego, para los mensajes de error. */
 function nombreDeJuego(gameId) {
   const g = config.games[gameId || config.activeGame || 'forever'];
@@ -578,14 +610,39 @@ app.post('/api/addons/toggle', (req, res) => {
   }
 });
 
+// API: Uninstall preview (carpetas, dependencias cruzadas y datos guardados que se llevaria)
+app.get('/api/addons/uninstall-preview', (req, res) => {
+  try {
+    const gameId = req.query.gameId || config.activeGame || 'forever';
+    const dir = getAddonsDir(gameId);
+    if (!dir || !fs.existsSync(dir)) return respuestaSinRuta(res, gameId);
+    const scanned = scanner.scanAddons(dir, gameId);
+    const info = scanner.describeUninstall(dir, scanned, req.query.folder, gameId);
+    res.json({ success: true, ...info });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.delete('/api/addons/:folderName', (req, res) => {
   try {
     const { folderName } = req.params;
     const gameId = req.query.gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(gameId);
     if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
+
+    // Los datos guardados se resuelven ANTES de borrar: los nombres salen del .toc y el .toc se va.
+    const scanned = scanner.scanAddons(dir, gameId);
+    const info = scanner.describeUninstall(dir, scanned, folderName, gameId);
+
     const result = scanner.deleteAddon(dir, folderName, gameId);
-    res.json(result);
+
+    const borrarDatos = String(req.query.deleteSaved || '') === '1';
+    const savedVariablesDeleted = (borrarDatos && info.savedVariables.length > 0)
+      ? borrarSavedVariables(gameId, info.savedVariables)
+      : [];
+
+    res.json({ ...result, savedVariablesDeleted });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
