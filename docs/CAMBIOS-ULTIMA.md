@@ -2,8 +2,9 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: Desinstalar se lo lleva todo y pregunta antes
+# Titulo: El desinstalar y la Bóveda preguntan con un modal propio
 
-- Al desinstalar se borran todas las carpetas que trajo el addon (Questie y QuestieDB, los módulos de EllesmereUI), no solo la que pulsabas.
-- Si otro addon depende de alguna de esas carpetas, sale un aviso con la lista antes de seguir, por si quieres cancelar.
-- Antes de desinstalar pregunta si quieres borrar también los datos guardados (SavedVariables); si dices que no, tu configuración se queda para cuando lo reinstales.
+- El desinstalar y la Bóveda WTF preguntan con un modal de KoRForge: ya no se abre una ventana del sistema.
+- La pregunta de los datos guardados (SavedVariables) sale en el mismo modal, con "Sí, borrarlos" y "No, conservarlos".
+- Sin addons instalados el mensaje y su botón salen centrados en la zona, y la Bóveda vacía también.
+- El buscador de Mis Addons ocupa el ancho de la app y queda pegado a los filtros.
