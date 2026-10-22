@@ -338,14 +338,36 @@ function toggleAddon(addonsDir, folderName) {
 }
 
 function deleteAddon(addonsDir, folderName, gameId = 'forever') {
-  const folderPath = path.join(addonsDir, folderName);
-  if (!fs.existsSync(folderPath)) {
+  /* Un addon puede ocupar varias carpetas (Questie, QuestieDB; o los 23 modulos de
+     EllesmereUI). Antes se borraba solo la carpeta pulsada, asi que quedaba el resto en disco
+     y el addon seguia contando como instalado en Favoritos (dueño, 21-10-2026). */
+  const base = String(folderName || '').replace(/\.disabled$/i, '');
+  const entry = registry.findByFolder(gameId, base);
+  const objetivos = (entry && Array.isArray(entry.folders) && entry.folders.length > 0)
+    ? entry.folders.slice()
+    : [base];
+
+  const borradas = [];
+  for (const nombre of objetivos) {
+    // La carpeta puede estar deshabilitada: en disco el nombre lleva .disabled.
+    for (const candidato of [nombre, `${nombre}.disabled`]) {
+      const ruta = path.join(addonsDir, candidato);
+      if (fs.existsSync(ruta)) {
+        fs.rmSync(ruta, { recursive: true, force: true });
+        borradas.push(candidato);
+      }
+    }
+  }
+
+  if (borradas.length === 0) {
     throw new Error(`La carpeta ${folderName} no existe.`);
   }
 
-  fs.rmSync(folderPath, { recursive: true, force: true });
-  registry.removeByFolderName(gameId, folderName);
-  return { deleted: true, folderName };
+  for (const nombre of new Set([...objetivos, base])) {
+    registry.removeByFolderName(gameId, nombre);
+  }
+
+  return { deleted: true, folderName, folders: borradas };
 }
 
 module.exports = {

@@ -1418,17 +1418,36 @@ document.addEventListener('DOMContentLoaded', () => {
     return tail || str.slice(-6);
   }
 
+  /**
+   * Clave para comparar nombres de addon sin depender de tildes, guiones ni mayusculas:
+   * "Leatrix_Plus", "leatrix-plus" y "Leatrix Plus" dan la misma clave ("leatrixplus").
+   * Tambien quita el .disabled de una carpeta deshabilitada.
+   */
+  function claveDeAddon(valor) {
+    return String(valor || '')
+      .toLowerCase()
+      .replace(/\.disabled$/, '')
+      .replace(/[^a-z0-9]/g, '');
+  }
+
   function findInstalledAddon(mod) {
     if (!mod) return null;
-    const modNameLower = (mod.name || '').toLowerCase().trim();
-    const slugLower = (mod.slug || '').toLowerCase().trim();
+    const modName = claveDeAddon(mod.name);
+    const modSlug = claveDeAddon(mod.slug);
+    const modId = Number(mod.id) || null;
+
     return installedAddons.find(a => {
-      const actualLower = (a.actualName || '').toLowerCase().trim();
-      const titleLower = (a.title || '').toLowerCase().trim();
-      const folderLower = (a.folderName || '').toLowerCase().trim();
-      return actualLower === modNameLower || 
-             titleLower === modNameLower || 
-             (slugLower && (actualLower === slugLower || folderLower.includes(slugLower)));
+      // Si lo instalo la app, el registro sabe su modId: es la senal mas fiable.
+      if (modId && a.modId && Number(a.modId) === modId) return true;
+
+      const carpeta = claveDeAddon(a.actualName || a.folderName);
+      const titulo = claveDeAddon(a.title);
+      /* Comparacion EXACTA de la clave, nunca "incluye": con includes, "QuestieDB" contaba
+         como "Questie" y "Bagnon_Bank" como "Bagnon", y en Favoritos salian como instalados
+         addons ya desinstalados (dueño, 21-10-2026). */
+      if (carpeta && (carpeta === modName || carpeta === modSlug)) return true;
+      if (titulo && titulo === modName) return true;
+      return false;
     }) || null;
   }
 
