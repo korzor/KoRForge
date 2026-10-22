@@ -822,6 +822,29 @@
     </div>
   </div>
 
+  <!-- Modal: Confirmación (sustituye a las ventanas del sistema; dueño, 22-10-2026) -->
+  <div class="app-modal-backdrop" id="confirmModal" style="display: none;">
+    <div class="app-modal-dialog confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+      <div class="app-modal-header">
+        <div class="modal-title-wrap">
+          <span class="modal-icon" id="confirmIcon" aria-hidden="true">⚠️</span>
+          <div>
+            <h3 id="confirmTitle" data-i18n="modal_confirm_title">Confirm</h3>
+            <span class="modal-sub" id="confirmSub" data-i18n-skip hidden></span>
+          </div>
+        </div>
+        <button class="btn-modal-close" id="btnCloseConfirmModal" data-i18n-title="modal_close_hint">✕</button>
+      </div>
+      <div class="app-modal-body">
+        <p class="confirm-text" id="confirmText" data-i18n-skip></p>
+      </div>
+      <div class="app-modal-footer">
+        <button class="btn btn-secondary" id="btnConfirmCancel" data-i18n="modal_cancel">Cancel</button>
+        <button class="btn btn-gold" id="btnConfirmOk" data-i18n="modal_continue">Continue</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Notification Toast Container -->
   <div id="toastContainer" class="toast-container"></div>
 

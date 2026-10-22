@@ -757,8 +757,53 @@ body.is-maximized .app-sidebar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   margin-bottom: 20px;
+}
+
+/* El buscador ocupa el ancho libre de la app y queda pegado a los filtros (dueño, 22-10-2026). */
+.toolbar .search-box {
+  max-width: none;
+}
+
+.toolbar .filter-pills {
+  flex-shrink: 0;
+}
+
+/* Estado vacío: centrado en la zona, no en una esquina (dueño, 22-10-2026). */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+  grid-column: 1 / -1;
+  width: 100%;
+  min-height: min(52vh, 430px);
+  padding: 40px 24px;
+}
+
+.empty-state .empty-icon {
+  font-size: 2.6rem;
+  line-height: 1;
+}
+
+.empty-state .empty-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.empty-state .empty-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  max-width: 460px;
+  line-height: 1.55;
+}
+
+.empty-state .btn {
+  margin-top: 8px;
 }
 
 /* Navegación (atrás / adelante / recargar) a la izquierda de la barra de búsqueda del catálogo
@@ -2914,6 +2959,20 @@ input:checked + .slider:before {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+/* Modal de confirmación (dueño, 22-10-2026): el texto largo se lee cómodo y respeta las líneas. */
+.confirm-dialog {
+  max-width: 480px;
+}
+
+.confirm-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: var(--text-main);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .update-version-card {

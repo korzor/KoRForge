@@ -84,6 +84,65 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 3500);
   }
 
+  /**
+   * Pregunta de sí/no con el modal de la casa.
+   * Dueño, 22-10-2026: *«en vez de ventana del sistema, un modal»*. Devuelve una promesa que se
+   * resuelve a true (aceptar) o false (cancelar, Esc o clic fuera). El texto va en el cuerpo y los
+   * botones se pueden renombrar (p. ej. la pregunta de los SavedVariables: Sí borrar / No conservar).
+   */
+  function askConfirm({ title = '', sub = '', mensaje = '', okLabel = null, cancelLabel = null } = {}) {
+    return new Promise((resolve) => {
+      const modal = document.getElementById('confirmModal');
+      const elTitulo = document.getElementById('confirmTitle');
+      const elSub = document.getElementById('confirmSub');
+      const elTexto = document.getElementById('confirmText');
+      const btnOk = document.getElementById('btnConfirmOk');
+      const btnCancel = document.getElementById('btnConfirmCancel');
+      const btnClose = document.getElementById('btnCloseConfirmModal');
+      if (!modal || !elTitulo || !elTexto || !btnOk || !btnCancel) {
+        resolve(false);
+        return;
+      }
+
+      elTitulo.textContent = title || T('modal_confirm_title');
+      if (elSub) {
+        if (sub) { elSub.textContent = sub; elSub.hidden = false; } else { elSub.textContent = ''; elSub.hidden = true; }
+      }
+      elTexto.textContent = mensaje;
+      btnOk.textContent = okLabel || T('modal_continue');
+      btnCancel.textContent = cancelLabel || T('modal_cancel');
+
+      let hecho = false;
+      const alTeclear = (e) => {
+        if (e.key === 'Escape') { e.preventDefault(); cerrar(false); }
+        if (e.key === 'Enter') { e.preventDefault(); cerrar(true); }
+      };
+      const alFondo = (e) => { if (e.target === modal) cerrar(false); };
+      const alAceptar = () => cerrar(true);
+      const alCerrar = () => cerrar(false);
+
+      function cerrar(valor) {
+        if (hecho) return;
+        hecho = true;
+        modal.style.display = 'none';
+        document.removeEventListener('keydown', alTeclear);
+        modal.removeEventListener('click', alFondo);
+        btnOk.removeEventListener('click', alAceptar);
+        btnCancel.removeEventListener('click', alCerrar);
+        if (btnClose) btnClose.removeEventListener('click', alCerrar);
+        resolve(valor);
+      }
+
+      btnOk.addEventListener('click', alAceptar);
+      btnCancel.addEventListener('click', alCerrar);
+      if (btnClose) btnClose.addEventListener('click', alCerrar);
+      document.addEventListener('keydown', alTeclear);
+      modal.addEventListener('click', alFondo);
+      modal.style.display = 'flex';
+      try { btnOk.focus(); } catch (_) {}
+    });
+  }
+
   // Multi-Game Version Management Elements
   const activeGameSelect = document.getElementById('activeGameSelect');
   const widgetGameIcon = document.getElementById('widgetGameIcon');
@@ -1099,11 +1158,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (info && Array.isArray(info.dependents) && info.dependents.length > 0) {
           mensaje += '\n\n' + T('confirm_uninstall_dependents', { list: info.dependents.map(d => d.title || d.folderName).join(', ') });
         }
-        if (!confirm(mensaje)) return;
+        const seguir = await askConfirm({
+          title: T('modal_confirm_title'),
+          sub: T('card_uninstall_hint'),
+          mensaje,
+          okLabel: T('modal_continue'),
+        });
+        if (!seguir) return;
 
         let borrarDatos = false;
         if (info && Array.isArray(info.savedVariables) && info.savedVariables.length > 0) {
-          borrarDatos = confirm(T('confirm_uninstall_savedvars', { name: addon.title }));
+          borrarDatos = await askConfirm({
+            title: T('modal_confirm_title'),
+            mensaje: T('confirm_uninstall_savedvars', { name: addon.title }),
+            okLabel: T('modal_yes_delete'),
+            cancelLabel: T('modal_no_keep'),
+          });
         }
 
         try {
@@ -2243,7 +2313,12 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
 
         item.querySelector('.btn-restore-backup').addEventListener('click', async () => {
-          if (!confirm(T('confirm_restore', { file: b.fileName, game: gameLabel(currentActiveGame) }))) return;
+          const ok = await askConfirm({
+            title: T('modal_confirm_title'),
+            mensaje: T('confirm_restore', { file: b.fileName, game: gameLabel(currentActiveGame) }),
+            okLabel: T('modal_continue'),
+          });
+          if (!ok) return;
           try {
             const res = await fetch('/api/backups/restore', {
               method: 'POST',
@@ -2260,7 +2335,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         item.querySelector('.btn-delete-backup').addEventListener('click', async () => {
-          if (!confirm(T('confirm_delete_backup', { file: b.fileName }))) return;
+          const ok = await askConfirm({
+            title: T('modal_confirm_title'),
+            mensaje: T('confirm_delete_backup', { file: b.fileName }),
+            okLabel: T('modal_continue'),
+          });
+          if (!ok) return;
           try {
             await fetch(`/api/backups/${encodeURIComponent(b.fileName)}?gameId=${encodeURIComponent(currentActiveGame)}`, { method: 'DELETE' });
             showToast(T('toast_delete_ok'));
