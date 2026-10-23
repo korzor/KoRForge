@@ -1,50 +1,56 @@
 ; Instalador NSIS de KoRForge (electron-builder)
 ;
-; La tarjeta de carga NO la pinta el instalador: la pinta un proceso aparte (script con una ventana
-; WinForms que lanza la app, ver modules/updater.js) porque la instalacion dura ~8 s y la ventana del
-; instalador no sirve para eso. Aqui solo se deja la red de seguridad: si algo fallara y el
-; instalador termina sin que la app vuelva, la reabre. Sin argumentos a proposito: la tarjeta de
-; "instalando al arrancar" solo debe salir como respaldo (marca en disco), no siempre.
+; --- TODA LA INSTALACION PASA POR LA VENTANA DE KoRForge (dueno, 24-10-2026) -------------------
+; *"el instalador no te permite elegir ruta de instalacion... me parece mal"* y *"ya que tenemos la
+; ventana hecha del progreso, no podriamos hacer que todo el proceso transcurriese en esa misma
+; ventana?"*. Las dos cosas van juntas: el asistente de electron-builder se salta la pagina de la
+; carpeta justo cuando es una ACTUALIZACION (`skipPageIfUpdated`), asi que la ruta no se puede
+; cambiar; y sus paginas no tienen hueco para el arte de la marca.
 ;
-; --- LA IMAGEN DE MARCA MIENTRAS INSTALA (dueno, 23-10-2026) ---------------------------------
-; *"esta imagen debe salir en el instalador mientras instala"*. Las paginas del instalador de
-; electron-builder no tienen hueco para una imagen grande (solo la cabecera de 150x57 y el lateral de
-; 164x314 de la bienvenida), asi que la imagen se pinta igual que la tarjeta de las actualizaciones:
-; una ventana aparte (build/instalando.ps1, WinForms) con el arte de la marca, reborde dorado y una
-; barra que se mueve, lanzada OCULTA tras wscript para que no parpadee ninguna consola.
+; Ahora manda la ventana propia (build/instalando.ps1): ensena el arte de KoRForge con su reborde
+; dorado, deja elegir la carpeta, instala y avisa al terminar, con los botones "Abrir KoRForge" y
+; "Cerrar". Aqui solo se hace el relevo:
 ;
-; Cuando se abre: en la pagina de instalacion (MUI_PAGE_CUSTOMFUNCTION_SHOW del instfiles), o sea
-; justo cuando empiezan a copiarse los archivos. Solo en modo con ventana (una actualizacion
-; automatica va con /S y ya trae su propia tarjeta) y nunca en el desinstalador.
-; Cuando se cierra: al terminar `customInstall` se deja una marca en %TEMP% y la tarjeta se cierra
-; sola; si el instalador muriera antes, tambien se cierra al desaparecer su proceso.
+;   1. Este proceso suelta la ventana y sus imagenes en %TEMP%\korforge-instalador (NO en
+;      $PLUGINSDIR, que se borra al salir) y la lanza oculta tras wscript, sin consola.
+;   2. Si wscript la ha lanzado, este proceso se aparta (`Quit`).
+;   3. La ventana, cuando el usuario pulsa "Instalar", ejecuta ESTE MISMO instalador en silencio con
+;      la carpeta elegida: `KoRForge-x.y.z-Windows.exe /S /D=<ruta>`. El trabajo de verdad (archivos,
+;      accesos directos, desinstalador y registro) lo sigue haciendo NSIS: aqui no se reimplementa
+;      nada. El `/D=` de NSIS no admite comillas y tiene que ir al final, y asi se pasa.
+;   4. Con `KORFORGE_SIN_ABRIR` puesta, el instalador silencioso NO reabre la app: la abre el boton de
+;      la ventana. Sin esa variable (actualizacion automatica) se comporta como siempre.
+;
+; SI LA VENTANA NO ARRANCA, el instalador sigue con el asistente de siempre: el usuario nunca se
+; queda sin poder instalar.
 
-!macro customPageAfterChangeDir
-  !define MUI_PAGE_CUSTOMFUNCTION_SHOW kfTarjetaInstalando
-
-  Function kfTarjetaInstalando
-    ${If} ${Silent}
-      Return
-    ${EndIf}
-    InitPluginsDir
-    ; Los dos recursos viajan DENTRO del instalador y se sueltan en $PLUGINSDIR al empezar.
-    File /oname=$PLUGINSDIR\kf-instalando.ps1 "${BUILD_RESOURCES_DIR}\instalando.ps1"
-    File /oname=$PLUGINSDIR\kf-instalando.png "${BUILD_RESOURCES_DIR}\instalando.png"
-    Delete "$TEMP\korforge_instalador_listo"
-    ; El PID y el texto van por entorno: asi la tarjeta sabe cuando cerrarse y el texto sale ya
-    ; traducido por el propio instalador ($(installing)).
-    System::Call 'kernel32::GetCurrentProcessId() i .r0'
-    System::Call 'kernel32::SetEnvironmentVariable(t "KORFORGE_INSTALADOR_PID", t "$0")'
-    System::Call 'kernel32::SetEnvironmentVariable(t "KORFORGE_INSTALANDO_TEXTO", t "$(installing)")'
-    FileOpen $1 "$PLUGINSDIR\kf-oculto.vbs" w
-    FileWrite $1 'CreateObject("WScript.Shell").Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""$PLUGINSDIR\kf-instalando.ps1""", 0, False'
+!macro customInit
+  ${IfNot} ${Silent}
+    CreateDirectory "$TEMP\korforge-instalador"
+    SetOutPath "$TEMP\korforge-instalador"
+    File "${BUILD_RESOURCES_DIR}\instalando.ps1"
+    File "${BUILD_RESOURCES_DIR}\instalando.png"
+    SetOutPath "$TEMP"
+    ; Lo que la ventana necesita saber: con que ejecutable instala, donde esta (o deberia estar)
+    ; KoRForge hoy y en que idioma hablar.
+    System::Call 'kernel32::SetEnvironmentVariable(t "KORFORGE_INSTALADOR_EXE", t "$EXEPATH")'
+    System::Call 'kernel32::SetEnvironmentVariable(t "KORFORGE_INSTDIR", t "$INSTDIR")'
+    System::Call 'kernel32::SetEnvironmentVariable(t "KF_IDIOMA", t "$LANGUAGE")'
+    FileOpen $1 "$TEMP\korforge-instalador\lanzar.vbs" w
+    FileWrite $1 'CreateObject("WScript.Shell").Run "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""$TEMP\korforge-instalador\instalando.ps1""", 0, False'
     FileClose $1
-    Exec 'wscript.exe "$PLUGINSDIR\kf-oculto.vbs"'
-  FunctionEnd
+    nsExec::Exec 'wscript.exe "$TEMP\korforge-instalador\lanzar.vbs"'
+    Pop $0
+    ${If} $0 == 0
+      ; La ventana ya esta en pantalla: este proceso no pinta nada mas.
+      Quit
+    ${EndIf}
+  ${EndIf}
 !macroend
 
 !macro customInstall
-  ; La tarjeta se aparta en cuanto los archivos estan dentro (para que se vea la pagina final).
+  ; Marca para la tarjeta de la actualizacion automatica (modules/updater.js), que se cierra al
+  ; verla: la ventana del instalador no la necesita, se guia por el proceso del instalador.
   ${IfNot} ${Silent}
     FileOpen $1 "$TEMP\korforge_instalador_listo" w
     FileWrite $1 'listo'
@@ -53,6 +59,13 @@
   IfSilent app_launch
   Goto done
   app_launch:
+    ; Instalacion silenciosa: la lanza la actualizacion automatica (que quiere la app de vuelta) o
+    ; la ventana del instalador (que la abre con su boton). En el segundo caso no se toca nada.
+    ClearErrors
+    ReadEnvStr $2 "KORFORGE_SIN_ABRIR"
+    ${If} $2 != ""
+      Goto done
+    ${EndIf}
     Exec '"$INSTDIR\KoRForge.exe"'
   done:
 !macroend

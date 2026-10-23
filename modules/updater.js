@@ -919,7 +919,11 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
          (`public/actualizando.png`, el mismo de la ficha del repo), no el yunque del splash. */
       const splashPng = path.join(__dirname, '..', 'public', 'actualizando.png');
       const ps1 = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
-      fs.writeFileSync(ps1, buildApplyScript(installerPath, appExePath, currentDownload.version, { lang, splashPng, pantalla }), 'utf8');
+      /* El .ps1 se escribe con BOM: sin él, PowerShell 5.1 lee el archivo como ANSI y los textos con
+         tilde salen rotos en la tarjeta ("Mise Ã  jour..."). Visto por el dueño el 24-10-2026:
+         *"salen letras mal escritas"*. */
+      const textoPs1 = '\uFEFF' + buildApplyScript(installerPath, appExePath, currentDownload.version, { lang, splashPng, pantalla });
+      fs.writeFileSync(ps1, textoPs1, 'utf8');
 
       /* wscript con estilo de ventana 0: el script corre oculto y no aparece ninguna consola. */
       const vbs = path.join(os.tmpdir(), 'korforge_apply_update.vbs');
