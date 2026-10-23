@@ -286,16 +286,6 @@ app.get('/api/auth/status', (req, res) => {
   res.json({ ok: true, ...sesion.estadoActual() });
 });
 
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    const r = await sesion.loginPassword(req.body && req.body.name, req.body && req.body.password);
-    if (!r.ok) return res.status(401).json({ ok: false, error: r.error || 'No se pudo entrar.' });
-    return res.json({ ok: true, permitido: r.permitido, usuario: r.usuario });
-  } catch (err) {
-    return res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
 app.post('/api/auth/google/start', async (req, res) => {
   try {
     const r = await sesion.iniciarGoogle();

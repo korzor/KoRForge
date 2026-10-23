@@ -318,13 +318,15 @@ function crearVentanaLogin() {
     loginWin.focus();
     return;
   }
-  cerrarSplash();
   loginWin = new BrowserWindow({
-    width: 420,
-    height: 600,
+    width: 360,
+    height: 500,
+    center: true,
     frame: false,
     transparent: true,
     resizable: false,
+    minimizable: true,
+    maximizable: false,
     backgroundColor: '#00000000',
     icon: path.join(__dirname, 'korforge.ico'),
     title: 'KoRForge - Cuenta',
@@ -335,7 +337,14 @@ function crearVentanaLogin() {
     }
   });
   loginWin.setMenu(null);
-  loginWin.loadURL(`http://127.0.0.1:3847/login.html?lang=${idiomaInterfaz()}`);
+  const cargarLogin = () => {
+    if (!loginWin || loginWin.isDestroyed()) return;
+    loginWin.loadURL(`http://127.0.0.1:3847/login.html?lang=${idiomaInterfaz()}`).catch(() => {
+      setTimeout(cargarLogin, 800);
+    });
+  };
+  cargarLogin();
+  loginWin.webContents.on('did-fail-load', () => setTimeout(cargarLogin, 800));
   loginWin.on('closed', () => {
     loginWin = null;
     if (!win) {
@@ -343,14 +352,19 @@ function crearVentanaLogin() {
       app.quit();
     }
   });
+  /* El splash se cierra DESPUÉS de tener la ventana de login viva: si se destruye antes,
+     durante un instante no queda ninguna ventana y salta window-all-closed (app cerrada). */
+  cerrarSplash();
 }
 
 function abrirAplicacion() {
+  /* Primero la ventana principal y DESPUÉS se destruye la de login: al revés, durante un
+     instante no quedaría ninguna ventana y window-all-closed cerraría la app justo al entrar. */
+  if (!win || win.isDestroyed()) createWindow();
   if (loginWin && !loginWin.isDestroyed()) {
     loginWin.destroy();
     loginWin = null;
   }
-  if (!win || win.isDestroyed()) createWindow();
   vigilarSesion();
 }
 
@@ -363,11 +377,11 @@ function pararRevalidacion() {
 
 function bloquearPorSesion() {
   pararRevalidacion();
+  crearVentanaLogin(); /* la ventana de login primero: sin ventanas, la app se cerraría sola */
   try {
     if (win && !win.isDestroyed()) win.destroy();
   } catch (_) {}
   win = null;
-  crearVentanaLogin();
 }
 
 /** Cada 10 minutos se pregunta a la web si la cuenta sigue autorizada. */
@@ -682,13 +696,8 @@ ipcMain.on('korforge:set-language', (e, lang) => {
 });
 
 // ── Cuenta: login contra centolos.org (la ventana de login habla por aquí) ──
+// Solo Google OAuth (dueño, 23-10-2026): no hay usuario/contraseña en la app.
 ipcMain.handle('korforge:auth:estado', () => sesion.estadoActual());
-
-ipcMain.handle('korforge:auth:login', async (_e, nombre, password) => {
-  const r = await sesion.loginPassword(nombre, password);
-  if (r.ok && r.permitido) abrirAplicacion();
-  return r;
-});
 
 ipcMain.handle('korforge:auth:google:iniciar', async () => {
   const r = await sesion.iniciarGoogle();
@@ -792,8 +801,10 @@ app.on('will-quit', () => {
 
 app.on('window-all-closed', () => {
   logBoot('app window-all-closed event fired. isQuitting: ' + isQuitting);
-  if (process.platform !== 'darwin') {
-    isQuitting = true;
-    app.quit();
-  }
+  if (process.platform === 'darwin') return;
+  /* Si la ventana de login sigue viva no se cierra nada: puede ser el paso de «splash fuera,
+     login dentro» y matar la app en ese instante era un fallo real al actualizar. */
+  if (loginWin && !loginWin.isDestroyed()) return;
+  isQuitting = true;
+  app.quit();
 });

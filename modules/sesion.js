@@ -2,15 +2,15 @@
 
 /**
  * Cuenta de KoRForge: la app no arranca «de serie», pregunta a la web por esta cuenta
- * (dueño, 22-10-2026: «la app va a llamar a la web y preguntarle si ese usuario está
- * registrado; si lo está, podrá usar la app; si no, se bloquea»).
+ * (dueño, 22/23-10-2026: «la app va a llamar a la web y preguntarle si ese usuario está
+ * registrado; si lo está, podrá usar la app; si no, se bloquea»; y «nada de login y pass,
+ * solo google oauth»).
  *
- * La web es centolos.org (la misma cuenta que en la web y en la porra):
+ * La web es centolos.org (la misma cuenta que en la web y en la porra). ÚNICA entrada: Google:
  *
- *   - contraseña: POST /api/korforge/login { name, password } → { token, permitido }
  *   - Google:     POST /api/korforge/start → state; se abre el navegador en
- *                 centolos.org/korforge-login?state=…; el usuario entra en la web y confirma;
- *                 la app sondea GET /api/korforge/pending?state=…
+ *                 centolos.org/korforge-login?state=…; el usuario entra en la web con Google y
+ *                 confirma; la app sondea GET /api/korforge/pending?state=…
  *   - validación: GET /api/korforge/session (Bearer token) → { ok, permitido, user }
  *
  * El token se guarda en userData/sesion.json (cifrado con DPAPI si el sistema lo permite).
@@ -108,7 +108,7 @@ function guardarSesionEnDisco() {
  */
 async function iniciar() {
   const guardada = await leerSesionGuardada();
-  if (!guardada) return { ...estado, redOk: false };
+  if (!guardada) return { ...estado, logeado: false, redOk: false };
 
   estado.token = guardada.token;
   estado.usuario = guardada.usuario;
@@ -118,7 +118,7 @@ async function iniciar() {
   if (res === 'revocado') {
     estado = { token: '', usuario: null, permitido: false, validado: 0 };
     guardarSesionEnDisco();
-    return { ...estado, redOk: true };
+    return { ...estado, logeado: false, redOk: true };
   }
   if (res === 'sin-red') {
     /* Sin conexión: se permite arrancar con la sesión de antes (sin llamadas a la web no hay
@@ -126,7 +126,7 @@ async function iniciar() {
     estado.permitido = true;
     estado.validado = Date.now();
     redOk = false;
-    return { ...estado, redOk: false };
+    return { ...estado, logeado: !!estado.token, redOk: false };
   }
   /* valida: res trae { ok, permitido, user } */
   redOk = true;
@@ -137,10 +137,10 @@ async function iniciar() {
     /* Mejor dejarlo fuera con mensaje claro que dentro a medias. El token se conserva por si
        el dueño le añade a la lista y no tiene que volver a escribir la contraseña. */
     guardarSesionEnDisco();
-    return { ...estado, redOk: true };
+    return { ...estado, logeado: !!estado.token, redOk: true };
   }
   guardarSesionEnDisco();
-  return { ...estado, redOk: true };
+  return { ...estado, logeado: !!estado.token, redOk: true };
 }
 
 async function validarConWeb(token) {
@@ -155,41 +155,6 @@ async function validarConWeb(token) {
     return data;
   } catch (_) {
     return 'sin-red';
-  }
-}
-
-/**
- * Login con contraseña de centolos.org.
- * Devuelve { ok, permitido, usuario, error }.
- */
-async function loginPassword(nombre, password) {
-  const name = String(nombre || '').trim();
-  if (!name || !password) {
-    return { ok: false, permitido: false, error: 'Escribe tu usuario y contraseña.' };
-  }
-  try {
-    const res = await pedir(`${WEB_URL}/api/korforge/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, password }),
-    });
-    const data = await leerJsonSeguro(res);
-    if (res.status === 429) {
-      return { ok: false, permitido: false, error: (data && data.error) || 'Demasiados intentos: espera un poco.' };
-    }
-    if (!res.ok || !data || !data.ok) {
-      return { ok: false, permitido: false, error: (data && data.error) || 'Usuario o contraseña incorrectos.' };
-    }
-    redOk = true;
-    estado.token = data.token || '';
-    estado.usuario = (data.user && { name: data.user.name }) || { name };
-    estado.permitido = !!data.permitido;
-    estado.validado = Date.now();
-    guardarSesionEnDisco();
-    return { ok: true, permitido: estado.permitido, usuario: estado.usuario };
-  } catch (_) {
-    redOk = false;
-    return { ok: false, permitido: false, error: 'No se pudo conectar con centolos.org. Comprueba tu conexión.' };
   }
 }
 
@@ -285,7 +250,6 @@ async function salir() {
 module.exports = {
   WEB_URL,
   iniciar,
-  loginPassword,
   iniciarGoogle,
   sondearGoogle,
   validar,

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8">
@@ -38,11 +38,10 @@
     flex-direction: column;
     overflow: hidden;
   }
-  .barra {
-    display: flex;
+  .barra { padding: 8px 12px; display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    
     -webkit-app-region: drag;
     background: linear-gradient(180deg, #1c2230, #171b24);
     border-bottom: 1px solid var(--borde);
@@ -54,36 +53,29 @@
     background: transparent; color: var(--suave); font-size: 13px;
   }
   .barra button:hover { background: #262d3d; color: var(--texto); }
-  .cuerpo { padding: 22px 28px 24px; display: flex; flex-direction: column; gap: 10px; overflow-y: auto; }
-  img.logo { width: 64px; height: 64px; object-fit: contain; align-self: center; margin-bottom: 2px; }
-  h1 { font-size: 20px; text-align: center; font-weight: 600; }
-  .sub { color: var(--suave); text-align: center; font-size: 12.5px; line-height: 1.5; margin-bottom: 6px; }
-  label { font-size: 12px; color: var(--suave); margin-top: 4px; }
-  input {
-    width: 100%; padding: 9px 11px; border-radius: 6px; border: 1px solid var(--borde);
-    background: #0d1017; color: var(--texto); font-size: 14px; outline: none;
+  .cuerpo { padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; justify-content: center; }
+  img.logo { width: 44px; height: 44px; object-fit: contain; align-self: center; margin-bottom: 2px; }
+  h1 { font-size: 17px; text-align: center; font-weight: 600; }
+  .sub { color: var(--suave); text-align: center; font-size: 12px; line-height: 1.45; margin-bottom: 8px; }
+  .boton-google {
+    width: 100%; padding: 10px; border: 0; border-radius: 6px; cursor: pointer;
+    background: #ffffff; color: #1f2937; font-weight: 600; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
   }
-  input:focus { border-color: var(--oro); }
-  .boton-primario {
-    margin-top: 6px; width: 100%; padding: 10px; border: 0; border-radius: 6px; cursor: pointer;
-    background: linear-gradient(180deg, var(--oro-fuerte), var(--oro)); color: #1a1406;
-    font-weight: 700; font-size: 14px;
-  }
-  .boton-primario:hover { filter: brightness(1.07); }
-  .boton-primario:disabled { opacity: .55; cursor: wait; }
-  .separador { display: flex; align-items: center; gap: 10px; color: var(--suave); font-size: 11.5px; margin: 6px 0; }
-  .separador::before, .separador::after { content: ""; flex: 1; height: 1px; background: var(--borde); }
-  .boton-secundario {
-    width: 100%; padding: 10px; border: 1px solid var(--borde); border-radius: 6px; cursor: pointer;
-    background: #1d2432; color: var(--texto); font-size: 13.5px; display: flex; align-items: center; justify-content: center; gap: 8px;
-  }
-  .boton-secundario:hover { background: #242d3f; }
-  .boton-secundario:disabled { opacity: .55; cursor: wait; }
+  .boton-google:hover { filter: brightness(0.96); }
+  .boton-google:disabled { opacity: .6; cursor: wait; }
+  .boton-google svg { width: 18px; height: 18px; }
+  .separador { height: 1px; background: var(--borde); margin: 4px 0; }
   .aviso { min-height: 18px; font-size: 12.5px; text-align: center; line-height: 1.5; }
   .aviso.error { color: var(--error); }
   .aviso.ok { color: var(--ok); }
   .aviso.info { color: var(--suave); }
-  .pie { font-size: 11.5px; color: var(--suave); text-align: center; margin-top: 4px; }
+  .boton-cancelar {
+    width: 100%; padding: 9px; border: 1px solid var(--borde); border-radius: 6px; cursor: pointer;
+    background: #1d2432; color: var(--texto); font-size: 12.5px;
+  }
+  .boton-cancelar:hover { background: #242d3f; }
+  .pie { font-size: 11.5px; color: var(--suave); text-align: center; margin-top: 6px; }
   .pie a { color: var(--oro); text-decoration: none; cursor: pointer; }
   .pie a:hover { text-decoration: underline; }
 </style>
@@ -99,22 +91,18 @@
     </div>
     <div class="cuerpo">
       <img class="logo" src="/korforge-logo.png" alt="KoRForge" onerror="this.remove()">
-      <h1 id="tTitulo">Bienvenido</h1>
-      <p class="sub" id="tSub">Inicia sesión con tu cuenta de centolos.org para usar KoRForge.</p>
+      <h1 id="tTitulo">Entra con Google</h1>
+      <p class="sub" id="tSub">Inicia sesión con tu cuenta de Google de centolos.org para usar KoRForge.</p>
 
-      <label id="tUsuario" for="usuario">Usuario</label>
-      <input id="usuario" autocomplete="username" spellcheck="false">
-      <label id="tPass" for="pass">Contraseña</label>
-      <input id="pass" type="password" autocomplete="current-password">
-
-      <button class="boton-primario" id="btnEntrar">Entrar</button>
-
-      <div class="separador" id="tO">o</div>
-
-      <button class="boton-secundario" id="btnGoogle">Entrar con Google</button>
+      <button class="boton-google" id="btnGoogle">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+        <span>Entrar con Google</span>
+      </button>
+      <button class="boton-cancelar" id="btnCancelar" style="display:none">Cancelar</button>
 
       <div class="aviso" id="aviso"></div>
-      <p class="pie"><span id="tNoCuenta">¿No tienes cuenta?</span> <a id="registro" href="#">centolos.org</a></p>
+      <p class="pie"><span id="tCuenta">Solo cuentas de Google autorizadas.</span></p>
+      <p class="pie pie-telegram"><span id="tNuevas">¿Cuenta nueva?</span> <a id="telegram" href="#">@KoRRoSka en Telegram</a></p>
     </div>
   </div>
 
@@ -123,69 +111,69 @@
   'use strict';
   const T = {
     es: {
-      titulo: 'Bienvenido',
-      sub: 'Inicia sesión con tu cuenta de centolos.org para usar KoRForge.',
-      usuario: 'Usuario', pass: 'Contraseña', entrar: 'Entrar', o: 'o', google: 'Entrar con Google',
-      noCuenta: '¿No tienes cuenta?',
-      esperaEntrar: 'Entrando…',
-      esperaGoogle: 'Esperando a que entres en la web…',
-      noAutorizada: 'Tu cuenta no está autorizada para KoRForge. Pide que te añadan a la lista.',
-      googleNoAutorizada: 'La cuenta que has usado no está autorizada para KoRForge.',
-      googleCancelado: 'Se ha cancelado el login con Google.',
+      titulo: 'Entra con Google',
+      sub: 'Inicia sesión con tu cuenta de Google de centolos.org para usar KoRForge.',
+      google: 'Entrar con Google',
+      cuenta: 'Solo cuentas de Google autorizadas.',
+      nuevas: '¿Cuenta nueva?',
+      telegram: 'Contacta con @KoRRoSka en Telegram y te la activamos.',
+      espera: 'Esperando a que termines de entrar en la web…',
+      noAutorizada: 'Esa cuenta de Google no está autorizada para KoRForge.',
+      cancelado: 'Se ha cancelado el login.',
       sinConexion: 'No se pudo conectar con centolos.org. Comprueba tu conexión.',
-      formato: 'Escribe tu usuario y contraseña.'
+      cancelar: 'Cancelar'
     },
     en: {
-      titulo: 'Welcome',
-      sub: 'Sign in with your centolos.org account to use KoRForge.',
-      usuario: 'Username', pass: 'Password', entrar: 'Sign in', o: 'or', google: 'Sign in with Google',
-      noCuenta: 'No account yet?',
-      esperaEntrar: 'Signing in…',
-      esperaGoogle: 'Waiting for you to sign in on the web…',
-      noAutorizada: 'Your account is not authorized for KoRForge. Ask to be added to the list.',
-      googleNoAutorizada: 'The account you used is not authorized for KoRForge.',
-      googleCancelado: 'Google sign-in was cancelled.',
+      titulo: 'Sign in with Google',
+      sub: 'Sign in with your Google account of centolos.org to use KoRForge.',
+      google: 'Sign in with Google',
+      cuenta: 'Only authorized Google accounts.',
+      nuevas: 'New account?',
+      telegram: 'Message @KoRRoSka on Telegram and we will activate it.',
+      espera: 'Waiting for you to finish signing in on the web…',
+      noAutorizada: 'That Google account is not authorized for KoRForge.',
+      cancelado: 'Sign-in was cancelled.',
       sinConexion: 'Could not reach centolos.org. Check your connection.',
-      formato: 'Enter your username and password.'
+      cancelar: 'Cancel'
     },
     gl: {
-      titulo: 'Benvido',
-      sub: 'Inicia sesión coa túa conta de centolos.org para usar KoRForge.',
-      usuario: 'Usuario', pass: 'Contrasinal', entrar: 'Entrar', o: 'ou', google: 'Entrar con Google',
-      noCuenta: '¿Aínda non tes conta?',
-      esperaEntrar: 'Entrando…',
-      esperaGoogle: 'Agardando a que entres na web…',
-      noAutorizada: 'A túa conta non está autorizada para KoRForge. Pide que te engadan á lista.',
-      googleNoAutorizada: 'A conta que usaches non está autorizada para KoRForge.',
-      googleCancelado: 'Cancelouse o inicio de sesión con Google.',
+      titulo: 'Entra con Google',
+      sub: 'Inicia sesión coa túa conta de Google de centolos.org para usar KoRForge.',
+      google: 'Entrar con Google',
+      cuenta: 'Só contas de Google autorizadas.',
+      nuevas: '¿Conta nova?',
+      telegram: 'Contacta con @KoRRoSka en Telegram e activámoste.',
+      espera: 'Agardando a que remates de entrar na web…',
+      noAutorizada: 'Esa conta de Google non está autorizada para KoRForge.',
+      cancelado: 'Cancelouse o inicio de sesión.',
       sinConexion: 'Non se puido conectar con centolos.org. Comproba a túa conexión.',
-      formato: 'Escribe o teu usuario e contrasinal.'
+      cancelar: 'Cancelar'
     },
     fr: {
-      titulo: 'Bienvenue',
-      sub: 'Connectez-vous avec votre compte centolos.org pour utiliser KoRForge.',
-      usuario: 'Utilisateur', pass: 'Mot de passe', entrar: 'Se connecter', o: 'ou', google: 'Se connecter avec Google',
-      noCuenta: 'Pas encore de compte ?',
-      esperaEntrar: 'Connexion…',
-      esperaGoogle: 'En attente de votre connexion sur le web…',
-      noAutorizada: 'Votre compte n\'est pas autorisé pour KoRForge. Demandez à être ajouté à la liste.',
-      googleNoAutorizada: 'Le compte utilisé n\'est pas autorisé pour KoRForge.',
-      googleCancelado: 'La connexion Google a été annulée.',
+      titulo: 'Connexion avec Google',
+      sub: 'Connectez-vous avec votre compte Google de centolos.org pour utiliser KoRForge.',
+      google: 'Se connecter avec Google',
+      cuenta: 'Comptes Google autorisés uniquement.',
+      nuevas: 'Nouveau compte ?',
+      telegram: 'Écris à @KoRRoSka sur Telegram et nous l\'activons.',
+      espera: 'En attente de votre connexion sur le web…',
+      noAutorizada: 'Ce compte Google n\'est pas autorisé pour KoRForge.',
+      cancelado: 'Connexion annulée.',
       sinConexion: 'Impossible de joindre centolos.org. Vérifiez votre connexion.',
-      formato: 'Entrez votre utilisateur et votre mot de passe.'
+      cancelar: 'Annuler'
     },
     it: {
-      titulo: 'Benvenuto',
-      sub: 'Accedi con il tuo account centolos.org per usare KoRForge.',
-      usuario: 'Utente', pass: 'Password', entrar: 'Accedi', o: 'oppure', google: 'Accedi con Google',
-      noCuenta: 'Non hai un account?',
-      esperaEntrar: 'Accesso…',
-      esperaGoogle: 'In attesa che accedi sul web…',
-      noAutorizada: 'Il tuo account non è autorizzato per KoRForge. Chiedi di essere aggiunto alla lista.',
-      googleNoAutorizada: 'L\'account usato non è autorizzato per KoRForge.',
-      googleCancelado: 'Accesso con Google annullato.',
+      titulo: 'Accedi con Google',
+      sub: 'Accedi con il tuo account Google di centolos.org per usare KoRForge.',
+      google: 'Accedi con Google',
+      cuenta: 'Solo account Google autorizzati.',
+      nuevas: 'Nuovo account?',
+      telegram: 'Scrivi a @KoRRoSka su Telegram e lo attiviamo.',
+      espera: 'In attesa che completi l\'accesso sul web…',
+      noAutorizada: 'Questo account Google non è autorizzato per KoRForge.',
+      cancelado: 'Accesso annullato.',
       sinConexion: 'Impossibile raggiungere centolos.org. Controlla la connessione.',
-      formato: 'Inserisci utente e password.'
+      cancelar: 'Annulla'
     }
   };
 
@@ -194,14 +182,20 @@
   const t = T[idioma];
   const $ = (id) => document.getElementById(id);
 
+  const api = window.electronAPI || {};
+  const auth = api.korforgeAuth || {
+    googleIniciar: async () => ({ ok: false, error: t.sinConexion })
+  };
+
+
   $('tTitulo').textContent = t.titulo;
   $('tSub').textContent = t.sub;
-  $('tUsuario').textContent = t.usuario;
-  $('tPass').textContent = t.pass;
-  $('btnEntrar').textContent = t.entrar;
-  $('tO').textContent = t.o;
-  $('btnGoogle').textContent = t.google;
-  $('tNoCuenta').textContent = t.noCuenta;
+  $('btnGoogle').querySelector('span').textContent = t.google;
+  $('tCuenta').textContent = t.cuenta;
+  $('tNuevas').textContent = t.nuevas;
+  $('telegram').title = t.telegram;
+  $('telegram').addEventListener('click', (e) => { e.preventDefault(); if (api.openExternal) api.openExternal('https://t.me/KoRRoSka'); });
+  $('btnCancelar').textContent = t.cancelar;
 
   const aviso = $('aviso');
   function ponerAviso(texto, tipo) {
@@ -209,68 +203,24 @@
     aviso.className = 'aviso' + (tipo ? ' ' + tipo : '');
   }
 
-  const api = window.electronAPI || {};
-  const auth = api.korforgeAuth || {
-    login: async () => ({ ok: false, error: t.sinConexion })
-  };
 
   $('btnMin').addEventListener('click', () => api.minimize && api.minimize());
   $('btnCerrar').addEventListener('click', () => (api.close ? api.close() : window.close()));
-  $('registro').addEventListener('click', (e) => {
-    e.preventDefault();
-    if (api.openExternal) api.openExternal('https://centolos.org');
-  });
+  $('tCuenta').addEventListener('click', () => {});
 
-  let esperandoGoogle = null;
   let pollGoogle = null;
 
   function pararSondeo() {
     if (pollGoogle) { clearInterval(pollGoogle); pollGoogle = null; }
-    if (esperandoGoogle) { esperandoGoogle.remove(); esperandoGoogle = null; }
-  }
-
-  async function entrarConPassword() {
-    const usuario = $('usuario').value.trim();
-    const pass = $('pass').value;
-    if (!usuario || !pass) { ponerAviso(t.formato, 'error'); return; }
-    const btn = $('btnEntrar');
-    btn.disabled = true;
-    ponerAviso(t.esperaEntrar, 'info');
-    try {
-      const r = await auth.login(usuario, pass);
-      if (r && r.ok) {
-        if (r.permitido) {
-          ponerAviso('', '');
-          /* La ventana principal se abre sola desde KoRForge */
-        } else {
-          ponerAviso(t.noAutorizada, 'error');
-        }
-      } else {
-        ponerAviso((r && r.error) || t.sinConexion, 'error');
-      }
-    } catch (_) {
-      ponerAviso(t.sinConexion, 'error');
-    } finally {
-      btn.disabled = false;
-    }
+    $('btnCancelar').style.display = 'none';
   }
 
   async function entrarConGoogle() {
     const btn = $('btnGoogle');
     btn.disabled = true;
     pararSondeo();
-    ponerAviso(t.esperaGoogle, 'info');
-    esperandoGoogle = document.createElement('button');
-    esperandoGoogle.className = 'boton-secundario';
-    esperandoGoogle.style.marginTop = '4px';
-    esperandoGoogle.textContent = '✕';
-    esperandoGoogle.title = t.googleCancelado;
-    esperandoGoogle.addEventListener('click', () => {
-      pararSondeo();
-      btn.disabled = false;
-      ponerAviso(t.googleCancelado, 'info');
-    });
-    $('btnGoogle').after(esperandoGoogle);
+    ponerAviso(t.espera, 'info');
+    $('btnCancelar').style.display = 'block';
     try {
       const r = await auth.googleIniciar();
       if (!r || !r.ok) {
@@ -284,7 +234,7 @@
         if (Date.now() - inicio > 180000) { /* 3 min máximo */
           pararSondeo();
           btn.disabled = false;
-          ponerAviso(t.googleCancelado, 'info');
+          ponerAviso(t.cancelado, 'info');
           return;
         }
         const p = await auth.googleSondeo(r.state);
@@ -292,7 +242,7 @@
           pararSondeo();
           btn.disabled = false;
           if (p.permitido) return; /* la app se abre sola */
-          ponerAviso(t.googleNoAutorizada, 'error');
+          ponerAviso(t.noAutorizada + ' ' + t.telegram, 'error');
         }
       }, 2000);
     } catch (_) {
@@ -302,12 +252,17 @@
     }
   }
 
-  $('btnEntrar').addEventListener('click', entrarConPassword);
   $('btnGoogle').addEventListener('click', entrarConGoogle);
-  $('pass').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') entrarConPassword();
+  $('btnCancelar').addEventListener('click', () => {
+    pararSondeo();
+    $('btnGoogle').disabled = false;
+    ponerAviso(t.cancelado, 'info');
   });
 })();
 </script>
 </body>
 </html>
+
+
+
+
