@@ -53,7 +53,8 @@
       "artifactName": "KoRForge-Setup-${version}.${ext}",
       "installerIcon": "korforge.ico",
       "uninstallerIcon": "korforge.ico",
-      "runAfterFinish": true
+      "runAfterFinish": true,
+      "include": "build/installer.nsh"
     },
     "linux": {
       "target": [
