@@ -2,7 +2,7 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.5 - La tarjeta de actualizacion sale siempre al reabrir
+# Titulo: KoRForge v1.3.6 - La tarjeta de carga ya cubre toda la instalacion
 
-- La app deja una marca antes de actualizarse y la lee al arrancar: la tarjeta con el logo sale siempre, la reabra quien la reabra.
-- Se acabaron las veces en que la app volvia sin enseñar nada. El instalador tambien pasa los dos avisos.
+- Al actualizar sale la tarjeta con el logo desde que pulsas hasta que la app vuelve, tambien durante los segundos que tarda en instalarse.
+- La pinta un proceso aparte y sin ninguna ventana de consola: no parpadea nada.
