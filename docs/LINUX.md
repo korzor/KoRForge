@@ -41,6 +41,30 @@ En Windows basta con lanzar el script de siempre desde PowerShell:
 wsl -d Ubuntu -- bash /mnt/c/Users/KoRZoR/AppData/Local/Temp/wsl-build.sh
 ```
 
+## Probar el AppImage dentro de WSL2 (sin sudo)
+
+WSL Ubuntu no trae las librerias de Electron (`libnss3`, `libasound2`, …) ni servidor X. El script
+`scripts/prueba-linux-wsl.sh` monta el entorno completo sin root:
+
+```bash
+wsl -d Ubuntu -- bash /mnt/c/Users/KoRZoR/Downloads/WoW4Ever/scripts/prueba-linux-wsl.sh \
+  /home/korzor/korforge/release/KoRForge-1.2.37-linux-x86_64.AppImage
+```
+
+Hace tres cosas:
+
+1. Se baja los `.deb` que faltan con `apt-get download` (y el `xvfb` directo del archivo de Ubuntu,
+   porque no está en los índices de esa WSL) y los descomprime en `~/kf-libs` con `dpkg -x`.
+2. Levanta un **Xvfb :99** propio. `Xvfb` necesita `/usr/bin/xkbcomp`, que no se puede escribir sin
+   root: se monta el extraído con `proot` (binario estático bajado de proot.gitlab.io).
+3. Arranca el AppImage con `DISPLAY=:99` y `APPIMAGE_EXTRACT_AND_RUN=1` (WSL no tiene FUSE) y comprueba
+   `/api/config` sin token (401) y con `x-korforge-token` (200), más que no sale el aviso de clave de
+   CurseForge.
+
+Con eso se puede probar también la actualización real: con la app viva, `POST` a
+`/api/app-updates/download` con la URL del asset y luego `/api/app-updates/apply`; el AppImage se
+sustituye a sí mismo y vuelve a arrancar.
+
 ## Publicacion en el release
 
 1. Copiar el AppImage a `C:\Users\KoRZoR\Downloads\WoW4Ever\release\`.
@@ -52,15 +76,20 @@ wsl -d Ubuntu -- bash /mnt/c/Users/KoRZoR/AppData/Local/Temp/wsl-build.sh
 El actualizador de Linux busca el asset `KoRForge-<version>-linux-x86_64.AppImage` y verifica su
 SHA-256 contra `SHA256SUMS.txt` igual que el .exe en Windows.
 
-## Pruebas hechas
+## Pruebas hechas (23-10-2026, WSL2 Ubuntu 26.04)
 
-- Arranque del AppImage en WSL2 con `--ozone-platform=headless` y comprobacion de `/api/session`
-  (401 sin token, 200 con token) por CDP.
-- Actualizacion real contra GitHub: publicar dos versiones seguidas y ver que la app descarga,
-  verifica, sustituye y relanza.
+- La app arranca (Xvfb :99), sirve la UI y el API responde 401 sin token y 200 con `x-korforge-token`.
+- El buscador funciona de verdad contra CurseForge (la clave viaja dentro de la build).
+- **Actualización real contra GitHub**: `/api/app-updates/download` del AppImage de la release, SHA-256
+  verificado, `/api/app-updates/apply` → el fichero cambia de hash, queda con fecha nueva y la app
+  vuelve a arrancar respondiendo en un puerto nuevo. OK.
+- Lo que **no** se ha probado: una máquina Linux real con FUSE y entorno de escritorio (WSL no tiene
+  FUSE, se usa `APPIMAGE_EXTRACT_AND_RUN=1`).
 
 ## Pendiente conocido
 
-- No hay firma de codigo en Linux (igual que en Windows, que tampoco esta firmado).
+- No hay firma de código en Linux (igual que en Windows, que tampoco está firmado).
 - El aviso de "primer arranque" de AppImage (marcar como ejecutable) lo resuelve el propio dueño
   con `chmod +x` o desde las propiedades del archivo en su escritorio.
+- `desktopName` sin declarar en `package.json`: electron-builder avisa de que la asociación
+  ventana ↔ lanzador puede fallar en algunos escritorios (`linux.syncDesktopName`). Cosmético.
