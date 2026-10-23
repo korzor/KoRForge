@@ -4,5 +4,5 @@
 
 # Titulo: Seguridad del actualizador y estabilidad general
 
-- Mejoras internas de seguridad en el actualizador y en la gestión de sesiones.
+- Mejoras internas de seguridad en el actualizador.
 - Comprobación de integridad de las descargas con SHA-256.

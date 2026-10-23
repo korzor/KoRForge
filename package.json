@@ -1,6 +1,6 @@
 {
   "name": "korforge",
-  "version": "1.2.20",
+  "version": "1.2.22",
   "description": "KoRForge - Standalone WoW Addon Manager",
   "main": "main.js",
   "scripts": {
@@ -15,7 +15,9 @@
     "release:web": "node scripts/publish-korforge-release.js",
     "i18n:check": "node scripts/verificar-i18n.js",
     "i18n:check:verbose": "node scripts/verificar-i18n.js --verbose",
-    "i18n:check:live": "node scripts/verificar-i18n-en-vivo.mjs"
+    "i18n:check:live": "node scripts/verificar-i18n-en-vivo.mjs",
+    "proteger": "node scripts/proteger-build.js",
+    "release:protegida": "node scripts/proteger-build.js && npx electron-builder --win nsis zip dir && node scripts/proteger-build.js --restaurar"
   },
   "keywords": [
     "wow",
@@ -51,7 +53,7 @@
       "installerIcon": "korforge.ico",
       "uninstallerIcon": "korforge.ico"
     },
-    "asar": false,
+    "asar": true,
     "files": [
       "main.js",
       "server.js",
@@ -59,8 +61,14 @@
       "config.example.json",
       "korforge.ico",
       "korforge.png",
+      "Launch-KoRForge.vbs",
       "modules/**/*",
       "public/**/*"
+    ],
+    "asarUnpack": [
+      "package.json",
+      "public/splash.png",
+      "Launch-KoRForge.vbs"
     ]
   },
   "dependencies": {
@@ -69,6 +77,7 @@
   },
   "devDependencies": {
     "electron": "^44.9.0",
-    "electron-builder": "^26.15.3"
+    "electron-builder": "^26.15.3",
+    "terser": "^5.51.2"
   }
 }

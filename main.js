@@ -1,8 +1,7 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, shell, nativeImage, screen, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, Tray, Menu, shell, nativeImage, screen } = require('electron');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
-const sesion = require('./modules/sesion');
 
 // Dedicated, clean userData folder to prevent cache conflicts & warnings
 const userDataPath = path.join(app.getPath('appData'), 'KoRForge');
@@ -92,11 +91,6 @@ if (!gotTheLock) {
 
 app.on('second-instance', () => {
   logBoot('second-instance triggered');
-  if (loginWin && !loginWin.isDestroyed()) {
-    loginWin.show();
-    loginWin.focus();
-    return;
-  }
   if (win && !win.isDestroyed()) {
     if (win.isMinimized()) win.restore();
     if (!win.isVisible()) win.show();
@@ -295,106 +289,6 @@ function createSplash() {
     logBoot('[KoRForge] No se pudo abrir el splash: ' + (err?.message || err));
     splash = null;
   }
-}
-
-// --- Cuenta de KoRForge (login contra centolos.org) ----------------------
-// Dueño, 23-10-2026: «la app va a llamar a la web y preguntarle si ese usuario está registrado;
-// si lo está, podrá usar la app; si no, se bloquea». Sin login válido + cuenta permitida no se
-// abre la ventana principal: solo la ventana de login. La sesión se revalida cada 10 minutos.
-let loginWin = null;
-let revalidacionId = null;
-
-function idiomaInterfaz() {
-  try {
-    return loadConfigSync().language || 'es';
-  } catch (_) {
-    return 'es';
-  }
-}
-
-function crearVentanaLogin() {
-  if (loginWin && !loginWin.isDestroyed()) {
-    loginWin.show();
-    loginWin.focus();
-    return;
-  }
-  loginWin = new BrowserWindow({
-    width: 360,
-    height: 500,
-    center: true,
-    frame: false,
-    transparent: true,
-    resizable: false,
-    minimizable: true,
-    maximizable: false,
-    backgroundColor: '#00000000',
-    icon: path.join(__dirname, 'korforge.ico'),
-    title: 'KoRForge - Cuenta',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
-    }
-  });
-  loginWin.setMenu(null);
-  const cargarLogin = () => {
-    if (!loginWin || loginWin.isDestroyed()) return;
-    loginWin.loadURL(`http://127.0.0.1:3847/login.html?lang=${idiomaInterfaz()}`).catch(() => {
-      setTimeout(cargarLogin, 800);
-    });
-  };
-  cargarLogin();
-  loginWin.webContents.on('did-fail-load', () => setTimeout(cargarLogin, 800));
-  loginWin.on('closed', () => {
-    loginWin = null;
-    if (!win) {
-      isQuitting = true;
-      app.quit();
-    }
-  });
-  /* El splash se cierra DESPUÉS de tener la ventana de login viva: si se destruye antes,
-     durante un instante no queda ninguna ventana y salta window-all-closed (app cerrada). */
-  cerrarSplash();
-}
-
-function abrirAplicacion() {
-  /* Primero la ventana principal y DESPUÉS se destruye la de login: al revés, durante un
-     instante no quedaría ninguna ventana y window-all-closed cerraría la app justo al entrar. */
-  if (!win || win.isDestroyed()) createWindow();
-  if (loginWin && !loginWin.isDestroyed()) {
-    loginWin.destroy();
-    loginWin = null;
-  }
-  vigilarSesion();
-}
-
-function pararRevalidacion() {
-  if (revalidacionId) {
-    clearInterval(revalidacionId);
-    revalidacionId = null;
-  }
-}
-
-function bloquearPorSesion() {
-  pararRevalidacion();
-  crearVentanaLogin(); /* la ventana de login primero: sin ventanas, la app se cerraría sola */
-  try {
-    if (win && !win.isDestroyed()) win.destroy();
-  } catch (_) {}
-  win = null;
-}
-
-/** Cada 10 minutos se pregunta a la web si la cuenta sigue autorizada. */
-function vigilarSesion() {
-  pararRevalidacion();
-  revalidacionId = setInterval(async () => {
-    const r = await sesion.validar();
-    if (r && r.revocado) {
-      logBoot('[sesion] cuenta revocada: se vuelve al login');
-      try { if (win && !win.isDestroyed()) win.webContents.send('korforge:sesion-cerrada'); } catch (_) {}
-      bloquearPorSesion();
-    }
-  }, 10 * 60 * 1000);
 }
 
 // --- Textos de la bandeja del sistema (interfaz nativa) -------------------
@@ -695,89 +589,23 @@ ipcMain.on('korforge:set-language', (e, lang) => {
   applyTrayLanguage(String(lang || 'en'));
 });
 
-// ── Cuenta: login contra centolos.org (la ventana de login habla por aquí) ──
-// Solo Google OAuth (dueño, 23-10-2026): no hay usuario/contraseña en la app.
-ipcMain.handle('korforge:auth:estado', () => sesion.estadoActual());
-
-ipcMain.handle('korforge:auth:google:iniciar', async () => {
-  const r = await sesion.iniciarGoogle();
-  if (r.ok && r.url) {
-    try { shell.openExternal(r.url); } catch (_) {}
-  }
-  return r;
-});
-
-ipcMain.handle('korforge:auth:google:sondeo', async (_e, state) => {
-  const r = await sesion.sondearGoogle(state);
-  if (r && r.ready && r.permitido) abrirAplicacion();
-  return r;
-});
-
-ipcMain.handle('korforge:auth:salir', async () => {
-  await sesion.salir();
-  bloquearPorSesion();
-  return { ok: true };
-});
-
 app.whenReady().then(async () => {
   logBoot('app.whenReady fired');
-
-  /* Guarda de plataforma (dueño, 23-10-2026): KoRForge solo se distribuye como instalador
-     oficial para Windows desde centolos.org/wow. Una copia convertida por un tercero (Linux,
-     Mac, o cualquier build no oficial) se cierra aquí en vez de funcionar sin autorización. */
-  if (process.platform !== 'win32') {
-    logBoot('[guarda] plataforma no soportada: ' + process.platform);
-    try {
-      dialog.showErrorBox(
-        'KoRForge',
-        'Esta copia de KoRForge no está autorizada.\n\n' +
-        'KoRForge solo se distribuye para Windows desde centolos.org/wow.\n' +
-        'Descarga la versión oficial allí; esta copia no puede usarse.'
-      );
-    } catch (_) {}
-    app.exit(1);
-    return;
-  }
-
   // Lo primero de todo: que se vea que está arrancando
   createSplash();
   logBoot('createSplash called');
   await ensureServer();
   logBoot('ensureServer resolved');
-
-  const est = await sesion.iniciar();
-  logBoot('[sesion] arranque: ' + JSON.stringify({ logeado: est.logeado, permitido: est.permitido, redOk: est.redOk }));
-
-  if (est.logeado && est.permitido) {
-    createWindow();
-    logBoot('createWindow called');
-    vigilarSesion();
-  } else {
-    crearVentanaLogin();
-    logBoot('crearVentanaLogin called');
-  }
+  createWindow();
+  logBoot('createWindow called');
 
   app.on('activate', () => {
     logBoot('app.activate fired');
-    if (win && !win.isDestroyed()) {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    else if (win) {
       win.show();
       win.focus();
-      return;
     }
-    if (loginWin && !loginWin.isDestroyed()) {
-      loginWin.show();
-      loginWin.focus();
-      return;
-    }
-    (async () => {
-      const e = sesion.estadoActual();
-      if (e.logeado && e.permitido) {
-        createWindow();
-        vigilarSesion();
-      } else {
-        crearVentanaLogin();
-      }
-    })();
   });
 });
 
@@ -801,10 +629,8 @@ app.on('will-quit', () => {
 
 app.on('window-all-closed', () => {
   logBoot('app window-all-closed event fired. isQuitting: ' + isQuitting);
-  if (process.platform === 'darwin') return;
-  /* Si la ventana de login sigue viva no se cierra nada: puede ser el paso de «splash fuera,
-     login dentro» y matar la app en ese instante era un fallo real al actualizar. */
-  if (loginWin && !loginWin.isDestroyed()) return;
-  isQuitting = true;
-  app.quit();
+  if (process.platform !== 'darwin') {
+    isQuitting = true;
+    app.quit();
+  }
 });

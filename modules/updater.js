@@ -199,7 +199,8 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
     `$pantallaAncho = ${num(pantalla && pantalla.width)}`,
     `$pantallaAlto = ${num(pantalla && pantalla.height)}`,
     `$escalaElectron = ${Number.isFinite(pantalla && pantalla.escala) && pantalla.escala > 0 ? String(pantalla.escala) : '$null'}`,
-    "$pkgRuta = Join-Path (Split-Path -Parent $appExe) 'resources\\app\\package.json'",
+    "$pkgRuta = Join-Path (Split-Path -Parent $appExe) 'resources\\app.asar.unpacked\\package.json'",
+    "if (-not (Test-Path -LiteralPath $pkgRuta)) { $pkgRuta = Join-Path (Split-Path -Parent $appExe) 'resources\\app\\package.json' }",
     'function VersionInstalada {',
     '  try {',
     '    $v = (Get-Content -LiteralPath $pkgRuta -Raw | ConvertFrom-Json).version',
@@ -568,11 +569,15 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
   // con ping 127.0.0.1 como temporizador y una ventana de cmd a la vista).
   const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
 
-  // Splash de la tarjeta: el mismo PNG de la app (en la instalación vive en resources/app/public).
+  // Splash de la tarjeta: el mismo PNG de la app. Con ASAR (builds nuevas) la copia real está
+  // en app.asar.unpacked; la tarjeta la pinta PowerShell, que NO puede leer dentro de app.asar.
   const rutaPublica = path.join(path.dirname(appExePath), 'resources', 'app', 'public', 'splash.png');
-  const splashPng = fs.existsSync(rutaPublica)
-    ? rutaPublica
-    : path.join(__dirname, '..', 'public', 'splash.png');
+  const rutaAser = path.join(path.dirname(appExePath), 'resources', 'app.asar.unpacked', 'public', 'splash.png');
+  const splashPng = fs.existsSync(rutaAser)
+    ? rutaAser
+    : (fs.existsSync(rutaPublica)
+      ? rutaPublica
+      : path.join(__dirname, '..', 'public', 'splash.png'));
 
   // Bandera: el runner la escribe cuando la tarjeta ya está en pantalla. La app NO se cierra
   // hasta verla (o hasta el límite), para que no haya ni un instante de escritorio vacío.

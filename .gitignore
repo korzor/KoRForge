@@ -39,3 +39,4 @@ $RECYCLE.BIN/
 *.suo
 *.ntvs*
 *.njsproj
+.build-src-backup
