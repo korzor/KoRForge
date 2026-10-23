@@ -12,6 +12,7 @@
     "package:zip": "electron-builder --win zip",
     "package:release": "electron-builder --win nsis zip",
     "release": "node scripts/release-github.js",
+    "release:github-api": "node scripts/subir-release-github.js",
     "release:web": "node scripts/publish-korforge-release.js",
     "i18n:check": "node scripts/verificar-i18n.js",
     "i18n:check:verbose": "node scripts/verificar-i18n.js --verbose",
