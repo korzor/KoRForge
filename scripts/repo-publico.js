@@ -61,7 +61,9 @@ process.env.GIT_INDEX_FILE = indice;
 try {
   git('read-tree --empty');
   for (const f of FICHEROS) {
-    const blob = git(`rev-parse HEAD:${f}`);
+    /* hash-object -w del FICHERO EN DISCO (no de HEAD): asi se publica lo que hay ahora mismo, aunque
+       aun no se haya commiteado. Antes se leia HEAD y el README nuevo no llegaba al publico. */
+    const blob = git(`hash-object -w -- "${f}"`);
     git(`update-index --add --cacheinfo 100644,${blob},${f}`);
   }
   const arbol = git('write-tree');
