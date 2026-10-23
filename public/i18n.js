@@ -34,8 +34,8 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Search Addons',
-      nav_favorites: 'Favorite Addons',
-      nav_installed: 'Installed Addons',
+      nav_favorites: 'Favorites',
+      nav_installed: 'Installed',
       nav_backups: 'WTF Vault',
       nav_settings: 'Settings',
       nav_update_to: 'Update to',
@@ -521,8 +521,8 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Buscar Addons',
-      nav_favorites: 'Addons Favoritos',
-      nav_installed: 'Addons Instalados',
+      nav_favorites: 'Favoritos',
+      nav_installed: 'Instalados',
       nav_backups: 'Bóveda WTF',
       nav_settings: 'Configuración',
       nav_update_to: 'Actualizar a',
@@ -1008,8 +1008,8 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Buscar Addons',
-      nav_favorites: 'Addons Favoritos',
-      nav_installed: 'Addons Instalados',
+      nav_favorites: 'Favoritos',
+      nav_installed: 'Instalados',
       nav_backups: 'Bóveda WTF',
       nav_settings: 'Axustes',
       nav_update_to: 'Actualizar a',
@@ -1495,8 +1495,8 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Rechercher des Addons',
-      nav_favorites: 'Addons Favoris',
-      nav_installed: 'Addons Installés',
+      nav_favorites: 'Favoris',
+      nav_installed: 'Installés',
       nav_backups: 'Coffre-fort WTF',
       nav_settings: 'Paramètres',
       nav_update_to: 'Mettre à jour vers',
@@ -1982,8 +1982,8 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Cerca Addon',
-      nav_favorites: 'Addon Preferiti',
-      nav_installed: 'Addon Installati',
+      nav_favorites: 'Preferiti',
+      nav_installed: 'Installati',
       nav_backups: 'Cassaforte WTF',
       nav_settings: 'Impostazioni',
       nav_update_to: 'Aggiorna a',
