@@ -33,6 +33,10 @@ ehthumbs.db
 Desktop.ini
 $RECYCLE.BIN/
 
+# K10: la clave de CurseForge no se versiona. El build la inyecta desde cf-key.local.txt.
+cf-key.local.txt
+modules/_cfkey.generated.js
+
 # Editores
 .vscode/
 .idea/

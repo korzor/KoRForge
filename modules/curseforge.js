@@ -1,4 +1,18 @@
-const CF_API_KEY = process.env.CF_API_KEY || '$2a$10$bL4bIL5pUWqfcO7KQtnMReakwtfHbNKh6v1uTpKlzhwoueEJQnPnm';
+/* K10 (auditoría 22-10-2026): la clave de CurseForge NO vive en el código fuente. Se toma, por
+ * orden: (1) modules/_cfkey.generated.js, que el build escribe desde cf-key.local.txt o CF_API_KEY
+ * (ninguno de los dos se versiona); (2) la variable de entorno; (3) cf-key.local.txt, solo para
+ * desarrollo. Si falta, el buscador avisa y las peticiones a CurseForge fallan con 403. */
+const fs = require('fs');
+const path = require('path');
+let CF_API_KEY = '';
+try { CF_API_KEY = require('./_cfkey.generated'); } catch (_) { /* sin clave inyectada por el build */ }
+if (!CF_API_KEY) {
+  try { CF_API_KEY = fs.readFileSync(path.join(__dirname, '..', 'cf-key.local.txt'), 'utf8').trim(); } catch (_) { /* desarrollo sin fichero local */ }
+}
+CF_API_KEY = String(CF_API_KEY || process.env.CF_API_KEY || '').trim();
+if (!CF_API_KEY) {
+  console.warn('[KoRForge] Sin clave de CurseForge: crea cf-key.local.txt en la raiz (no se versiona) para buscar addons.');
+}
 const BASE_URL = process.env.CF_BASE_URL || 'https://api.curseforge.com/v1';
 
 function extractSourceUrl(links) {

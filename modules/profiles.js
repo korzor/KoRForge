@@ -80,6 +80,10 @@ function perfilDesdeCompacto(compacto) {
   if (!compacto || typeof compacto !== 'object' || compacto.v !== 2 || !Array.isArray(compacto.a)) {
     throw new Error('Formato de código inválido o dañado. Asegúrate de copiar el código completo.');
   }
+  /* K9 (auditoría 22-10-2026): un pack no puede declarar miles de addons (ni un código enorme). */
+  if (compacto.a.length > 500) {
+    throw new Error('El pack de addons declara demasiados addons (tope: 500).');
+  }
 
   const addons = compacto.a
     .map((t) => {
@@ -115,10 +119,16 @@ function parseProfile(rawInput) {
 
   let text = rawInput.trim();
 
+  /* K9 (auditoría 22-10-2026): tope de tamaño del código pegado (2 MB) antes de descomprimir nada. */
+  if (text.length > 2 * 1024 * 1024) {
+    throw new Error('Código de perfil demasiado grande (tope: 2 MB).');
+  }
+
   if (text.startsWith(CODE_PREFIX)) {
     let jsonStr;
     try {
-      jsonStr = zlib.gunzipSync(fromBase64Url(text.slice(CODE_PREFIX.length).trim())).toString('utf-8');
+      /* `maxOutputLength`: un gzip malicioso (bomba) no puede inflarse a varios GB en memoria. */
+      jsonStr = zlib.gunzipSync(fromBase64Url(text.slice(CODE_PREFIX.length).trim()), { maxOutputLength: 512 * 1024 }).toString('utf-8');
     } catch (_) {
       throw new Error('Formato de código inválido o dañado. Asegúrate de copiar el código completo.');
     }

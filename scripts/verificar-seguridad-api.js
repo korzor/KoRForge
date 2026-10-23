@@ -253,6 +253,32 @@ async function main() {
     console.log('AVISO no se pudo resolver DNS (sin red?); no cuenta como fallo');
   }
 
+  /* --- K9: perfiles (anti zip-bomb y topes) -------------------------------- */
+  const profiles = require(path.join(RAIZ, 'modules', 'profiles.js'));
+  const zlib = require('zlib');
+  const bomba = 'KORP-' + zlib.gzipSync(Buffer.alloc(1024 * 1024, 97), { level: 9 })
+    .toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  let k9ok = false;
+  try { profiles.parseProfile(bomba); } catch (e) { k9ok = /inválido|danado|dañado|grande|500/i.test(e.message); }
+  comprobar('K9 código bomba rechazado sin reventar', k9ok);
+
+  /* --- K10: la clave de CurseForge no está en el código fuente ------------ */
+  const fuenteCurseforge = fs.readFileSync(path.join(RAIZ, 'modules', 'curseforge.js'), 'utf8');
+  comprobar('K10 sin clave de CurseForge hardcodeada', !fuenteCurseforge.includes('$2a$10$'));
+
+  /* --- K12: token de gh cacheado ------------------------------------------ */
+  const updater2 = require(path.join(RAIZ, 'modules', 'updater.js'));
+  updater2.getGitHubToken(); /* primera llamada (puede ejecutar gh) */
+  const t1 = Date.now();
+  updater2.getGitHubToken();
+  comprobar('K12 segunda llamada a getGitHubToken cacheada (<20 ms)', Date.now() - t1 < 20);
+
+  /* --- K15: autostart y kills sin globales -------------------------------- */
+  const fuenteServer = fs.readFileSync(path.join(RAIZ, 'server.js'), 'utf8');
+  const fuenteUpdater = fs.readFileSync(path.join(RAIZ, 'modules', 'updater.js'), 'utf8');
+  comprobar('K15 autostart apunta al ejecutable real (sin wscript/vbs)', !fuenteServer.includes("TargetPath = 'wscript.exe'") && !fuenteServer.includes('vbsPath'));
+  comprobar('K15 el runner no mata KoRForge/electron ajenos', !fuenteUpdater.includes("'KoRForge','electron'"));
+
   console.log('');
   if (fallos.length > 0) {
     console.error(fallos.length + ' comprobación(es) FALLIDA(S): ' + fallos.join(', '));

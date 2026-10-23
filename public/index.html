@@ -3,15 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- K8 (auditoría 22-10-2026): CSP del renderer. Todo es local; imágenes del catálogo por https,
+       fuentes de Google y el navegador interno por frame/webview. -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' https: data: blob:; connect-src 'self'; media-src 'self' https: blob:; frame-src https: http://127.0.0.1:*; worker-src 'self' blob:">
   <title data-i18n-doctitle="doc_title">KoRForge</title>
   <link rel="icon" type="image/png" href="favicon.png">
   <link rel="stylesheet" href="style.css">
   <!-- Las fuentes de Google NO bloquean el primer pintado: se cargan en segundo plano y,
        mientras llegan (o si no hay red), se usan las de sistema. Antes la hoja era bloqueante
-       y con la red lenta la ventana se quedaba en blanco (dueño, 20-10-2026). -->
+       y con la red lenta la ventana se quedaba en blanco (dueño, 20-10-2026).
+       K8: la activación de la hoja la hace app.js (data-activar-media); con CSP no hay onload inline. -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" media="print" data-activar-media>
   <noscript><link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"></noscript>
 </head>
 <body>

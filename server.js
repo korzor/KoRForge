@@ -19,9 +19,16 @@ const profiles = require('./modules/profiles');
 const nombresSeguros = require('./modules/nombresSeguros');
 
 const app = express();
-/* El puerto de siempre es 3847 (la ventana lo carga así). `KORFORGE_PORT` permite levantar una
-   segunda instancia para probar sin cerrar la que el usuario tiene abierta. */
-const PORT = Number(process.env.KORFORGE_PORT) || 3847;
+/* K11 (auditoría 22-10-2026): el backend escucha en un puerto EFÍMERO (lo elige el sistema) y la
+   ventana lo recibe por `esperarPuerto`. Así no hay puerto fijo que pueda ocupar otro proceso ni
+   «reutiliza servidor activo» sin handshake. `KORFORGE_PORT` lo fija solo para pruebas. */
+const PUERTO_PEDIDO = process.env.KORFORGE_PORT ? Number(process.env.KORFORGE_PORT) : 0;
+let puertoReal = 0;
+let resolverPuerto = null;
+const esperarPuerto = new Promise((resolver) => { resolverPuerto = resolver; });
+function puertoDeEscucha() {
+  return puertoReal || PUERTO_PEDIDO;
+}
 
 const USER_DATA_DIR = process.env.KORFORGE_USER_DATA || path.join(process.env.APPDATA || '', 'KoRForge');
 if (!fs.existsSync(USER_DATA_DIR)) {
@@ -53,10 +60,14 @@ function isAutoStartEnabled() {
 function setAutoStart(enable) {
   try {
     if (enable) {
-      const vbsPath = path.join(__dirname, 'Launch-KoRForge.vbs');
       const iconPath = path.join(__dirname, 'korforge.ico');
-      const psScript = `$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('${STARTUP_LNK.replace(/'/g, "''")}'); $Shortcut.TargetPath = 'wscript.exe'; $Shortcut.Arguments = '\"${vbsPath.replace(/'/g, "''")}\"'; $Shortcut.WorkingDirectory = '${__dirname.replace(/'/g, "''")}'; $Shortcut.IconLocation = '${iconPath.replace(/'/g, "''")}'; $Shortcut.Save()`;
-      exec(`powershell -NoProfile -Command "${psScript.replace(/"/g, '`"')}"`);
+      /* K15 (auditoría 22-10-2026): el acceso directo apunta al ejecutable REAL de la app. Antes
+         usaba Launch-KoRForge.vbs (que no se empaqueta y lanzaba node_modules/electron/dist/
+         electron.exe, inexistente en la instalada). En desarrollo se lanza electron.exe con `dev`. */
+      const targetPath = process.execPath;
+      const argumentos = process.defaultApp ? `"${__dirname}"` : '';
+      const psScript = `$WshShell = New-Object -ComObject WScript.Shell; $Shortcut = $WshShell.CreateShortcut('${STARTUP_LNK.replace(/'/g, "''")}'); $Shortcut.TargetPath = '${targetPath.replace(/'/g, "''")}'; $Shortcut.Arguments = '${argumentos.replace(/'/g, "''")}'; $Shortcut.WorkingDirectory = '${__dirname.replace(/'/g, "''")}'; $Shortcut.IconLocation = '${iconPath.replace(/'/g, "''")}'; $Shortcut.Save()`;
+      exec(`powershell -NoProfile -Command "${psScript.replace(/"/g, '\x60"')}"`);
     } else {
       if (fs.existsSync(STARTUP_LNK)) {
         fs.unlinkSync(STARTUP_LNK);
@@ -295,25 +306,26 @@ app.use((req, res, next) => {
 });
 
 const SESSION_TOKEN = crypto.randomBytes(24).toString('hex');
-const HOSTS_PERMITIDOS = new Set([
-  `127.0.0.1:${PORT}`,
-  `localhost:${PORT}`,
-  `[::1]:${PORT}`
-]);
-const ORIGENES_PERMITIDOS = new Set([
-  `http://127.0.0.1:${PORT}`,
-  `http://localhost:${PORT}`
-]);
+
+function hostPermitido(host) {
+  const puerto = puertoDeEscucha();
+  return host === `127.0.0.1:${puerto}` || host === `localhost:${puerto}` || host === `[::1]:${puerto}`;
+}
+
+function origenPermitido(origin) {
+  const puerto = puertoDeEscucha();
+  return origin === `http://127.0.0.1:${puerto}` || origin === `http://localhost:${puerto}`;
+}
 
 /** Comprueba Host, Origin y Sec-Fetch-Site. Si no pasa, responde 403 y devuelve false. */
 function origenDelServidor(req, res) {
   const host = String(req.get('host') || '').toLowerCase();
-  if (!HOSTS_PERMITIDOS.has(host)) {
+  if (!hostPermitido(host)) {
     res.status(403).json({ error: 'Host no permitido', code: 'err_bad_host' });
     return false;
   }
   const origin = String(req.get('origin') || '').toLowerCase();
-  if (origin && !ORIGENES_PERMITIDOS.has(origin)) {
+  if (origin && !origenPermitido(origin)) {
     res.status(403).json({ error: 'Origen no permitido', code: 'err_bad_origin' });
     return false;
   }
@@ -1260,25 +1272,26 @@ app.post('/api/profiles/install-missing', async (req, res) => {
 });
 
 
-const server = app.listen(PORT, '127.0.0.1', () => {
+const server = app.listen(PUERTO_PEDIDO, '127.0.0.1', () => {
+  puertoReal = server.address().port;
+  resolverPuerto(puertoReal);
   try {
-    fs.appendFileSync(path.join(USER_DATA_DIR, 'boot.log'), `[${new Date().toISOString()}] [SERVER] Listening on http://127.0.0.1:${PORT}\n`);
+    fs.appendFileSync(path.join(USER_DATA_DIR, 'boot.log'), `[${new Date().toISOString()}] [SERVER] Listening on http://127.0.0.1:${puertoReal}\n`);
   } catch(_) {}
-  console.log(`[KoRForge] Servidor activo en http://localhost:${PORT}`);
+  console.log(`[KoRForge] Servidor activo en http://localhost:${puertoReal}`);
 });
 
 server.on('error', (err) => {
   try {
     fs.appendFileSync(path.join(USER_DATA_DIR, 'boot.log'), `[${new Date().toISOString()}] [SERVER ERROR] ${err.stack || err}\n`);
   } catch(_) {}
-  if (err.code === 'EADDRINUSE') {
-    console.warn(`[KoRForge] Puerto ${PORT} ya ocupado, reutilizando servidor activo.`);
-  } else {
-    console.error('[KoRForge] Error en servidor Express:', err);
-  }
+  /* K11: con puerto efímero esto solo pasa si algo fija KORFORGE_PORT (pruebas). La ventana NO
+     reutiliza el puerto: espera al puerto real de ESTE servidor. */
+  console.error('[KoRForge] Error en servidor Express:', err);
+  if (resolverPuerto) resolverPuerto(0);
 });
 
 /* La ventana (main.js) necesita el token de sesión para cargar la UI con él y el puerto real. */
-module.exports = { PORT, SESSION_TOKEN };
+module.exports = { SESSION_TOKEN, esperarPuerto, puertoDeEscucha };
 
 

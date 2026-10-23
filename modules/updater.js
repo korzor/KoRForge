@@ -19,15 +19,23 @@ function getDownloadProgress() {
   return currentDownload;
 }
 
+/* K12 (auditoría 22-10-2026): el token de `gh` se pide UNA vez y se cachea media hora; antes se
+ * ejecutaba `gh auth token` en cada descarga. */
+let tokenGhCache = { valor: null, hasta: 0 };
+
 function getGitHubToken() {
-  if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
-  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
-  try {
-    const { execSync } = require('child_process');
-    const token = execSync('gh auth token', { stdio: 'pipe', encoding: 'utf-8' }).trim();
-    if (token) return token;
-  } catch (_) {}
-  return null;
+  const ahora = Date.now();
+  if (tokenGhCache.valor !== null && ahora < tokenGhCache.hasta) return tokenGhCache.valor;
+
+  let token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN || null;
+  if (!token) {
+    try {
+      const { execSync } = require('child_process');
+      token = execSync('gh auth token', { stdio: 'pipe', encoding: 'utf-8' }).trim() || null;
+    } catch (_) { token = null; }
+  }
+  tokenGhCache = { valor: token, hasta: ahora + 30 * 60 * 1000 };
+  return token;
 }
 
 /* K5 (auditoría 22-10-2026): el instalador se descarga SIEMPRE del release oficial de ESA versión,
@@ -531,9 +539,10 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
     '',
     '# 2. Cerrar KoRForge y esperar a que sus procesos desaparezcan de verdad',
     "  Log 'Paso 2: cerrando KoRForge'",
-    "  Get-Process -Name 'KoRForge','electron' -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue",
+    "  # K15: solo procesos de ESTA instalación (mismo ejecutable), nunca cualquier KoRForge/electron del usuario",
+    "  Get-Process -Name 'KoRForge' -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $appExe } | Stop-Process -Force -ErrorAction SilentlyContinue",
     '  $limite = (Get-Date).AddSeconds(10)',
-    '  while ((@(Get-Process -Name KoRForge,electron -ErrorAction SilentlyContinue)).Count -gt 0 -and (Get-Date) -lt $limite) {',
+    '  while ((@(Get-Process -Name KoRForge -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $appExe })).Count -gt 0 -and (Get-Date) -lt $limite) {',
     '    Esperar 150',
     '  }',
     "  Log 'Paso 2: KoRForge cerrado'",

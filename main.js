@@ -68,7 +68,15 @@ const isMainProcess = !process.argv.some(arg => arg.startsWith('--type='));
 if (isMainProcess && process.platform === 'win32') {
   try {
     const { execSync } = require('child_process');
-    execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+    /* K15 (auditoría 22-10-2026): cerrar solo instancias de ESTA instalación (mismo ejecutable),
+       no cualquier KoRForge.exe de la máquina. En la versión de trabajo el ejecutable es
+       electron.exe y no coincide: no se toca nada, como antes. */
+    try {
+      const cmd = `wmic process where "name='KoRForge.exe' and ExecutablePath='${process.execPath}' and ProcessId != ${process.pid}" delete`;
+      execSync(cmd, { shell: 'cmd.exe', stdio: 'ignore' });
+    } catch (_) {
+      execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+    }
   } catch (_) {}
 
   // Eliminar archivos de bloqueo huérfanos dejados por procesos colgados
@@ -434,18 +442,28 @@ function createWindow() {
     }
   });
 
-  const loadAppUrl = () => {
+  const loadAppUrl = async () => {
     if (!win || win.isDestroyed()) return;
-    /* K1 (auditoría 22-10-2026): la ventana carga la UI con el token de sesión del API local en la
-       URL. app.js lo lee y lo añade a cada petición. El token lo genera server.js al arrancar. */
-    let puerto = 3847;
+    /* K1 + K11 (auditoría 22-10-2026): la ventana carga la UI con el token de sesión del API local
+       y con el puerto REAL (el backend escucha en uno efímero: no hay «reutiliza servidor activo»
+       ni riesgo de cargar la UI de otro proceso). */
+    let puerto = 0;
     let token = '';
     try {
       const backend = require('./server.js');
-      puerto = backend.PORT || puerto;
+      puerto = await backend.esperarPuerto;
       token = backend.SESSION_TOKEN || '';
-    } catch (_) { /* sin backend: la UI no cargará y se reintenta igual */ }
+    } catch (err) {
+      console.log('[KoRForge] Esperando al backend...', err && err.message);
+      setTimeout(loadAppUrl, 800);
+      return;
+    }
+    if (!puerto) {
+      setTimeout(loadAppUrl, 800);
+      return;
+    }
     const url = `http://127.0.0.1:${puerto}${token ? '/?token=' + encodeURIComponent(token) : '/'}`;
+    console.log('[KoRForge] Cargando UI en', url.replace(/token=[0-9a-f]+/, 'token=<oculto>'));
     win.loadURL(url).catch((err) => {
       console.log('[KoRForge] Error al cargar URL local, reintentando...', err.message);
       setTimeout(loadAppUrl, 800);
@@ -465,9 +483,39 @@ function createWindow() {
     console.log(`[Renderer ${levelStr}] ${message} (${path.basename(sourceId || '')}:${line})`);
   });
 
-  // F12 toggle DevTools
+  /* K7 (auditoría 22-10-2026): la ventana principal solo navega a la UI local; lo externo se abre
+     en el navegador del sistema y la webview del navegador interno no lleva preload ni Node. */
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:/i.test(url)) {
+      try { shell.openExternal(url); } catch (_) {}
+    }
+    return { action: 'deny' };
+  });
+
+  win.webContents.on('will-navigate', (event, url) => {
+    let permitida = false;
+    try {
+      const u = new URL(url);
+      permitida = u.hostname === '127.0.0.1' || u.hostname === 'localhost' || u.hostname === '[::1]';
+    } catch (_) { permitida = false; }
+    if (!permitida) {
+      event.preventDefault();
+      if (/^https?:/i.test(url)) {
+        try { shell.openExternal(url); } catch (_) {}
+      }
+    }
+  });
+
+  win.webContents.on('will-attach-webview', (event, webPreferences) => {
+    delete webPreferences.preload;
+    webPreferences.nodeIntegration = false;
+    webPreferences.contextIsolation = true;
+    webPreferences.sandbox = true;
+  });
+
+  // F12: consola de desarrollo solo en la versión de trabajo (en la app instalada no se abre).
   win.webContents.on('before-input-event', (event, input) => {
-    if (input.key === 'F12' && input.type === 'keyDown') {
+    if (input.key === 'F12' && input.type === 'keyDown' && !app.isPackaged) {
       win.webContents.toggleDevTools();
       event.preventDefault();
     }

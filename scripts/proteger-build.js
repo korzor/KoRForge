@@ -19,6 +19,7 @@ const { minify } = require('terser');
 
 const raiz = path.resolve(__dirname, '..');
 const respaldo = path.join(raiz, '.build-src-backup');
+const claveGenerada = path.join(raiz, 'modules', '_cfkey.generated.js');
 
 const objetivos = [
   'main.js',
@@ -27,10 +28,27 @@ const objetivos = [
 ].concat(
   fs.existsSync(path.join(raiz, 'modules'))
     ? fs.readdirSync(path.join(raiz, 'modules'))
-      .filter((f) => f.endsWith('.js'))
+      .filter((f) => f.endsWith('.js') && f !== '_cfkey.generated.js')
       .map((f) => path.join('modules', f))
     : []
 );
+
+/* K10 (auditoría 22-10-2026): la clave de CurseForge no vive en el código fuente. Al empaquetar se
+ * inyecta en modules/_cfkey.generated.js leyéndola de cf-key.local.txt (raíz, gitignored) o de la
+ * variable CF_API_KEY. Al restaurar el fuente se borra. */
+function inyectarClaveSiHay() {
+  let clave = process.env.CF_API_KEY || '';
+  if (!clave) {
+    try { clave = fs.readFileSync(path.join(raiz, 'cf-key.local.txt'), 'utf8').trim(); } catch (_) { clave = ''; }
+  }
+  if (clave) {
+    fs.mkdirSync(path.dirname(claveGenerada), { recursive: true });
+    fs.writeFileSync(claveGenerada, `'use strict';\n// Generado por proteger-build.js desde cf-key.local.txt (no editar, no versionar).\nmodule.exports = ${JSON.stringify(clave)};\n`, 'utf8');
+    console.log('[proteger] clave de CurseForge inyectada en modules/_cfkey.generated.js');
+  } else {
+    console.warn('[proteger] AVISO: sin clave de CurseForge (ni cf-key.local.txt ni CF_API_KEY): el buscador de addons no funcionara en la build.');
+  }
+}
 
 function rutaRelativa(p) {
   return path.relative(raiz, p);
@@ -55,6 +73,7 @@ function asegurarRespaldoListo(paraRestaurar) {
 async function proteger() {
   asegurarRespaldoListo(false);
   fs.mkdirSync(respaldo, { recursive: true });
+  inyectarClaveSiHay();
 
   let totalAntes = 0;
   let totalDespues = 0;
@@ -106,6 +125,7 @@ function restaurar() {
     console.log(`[proteger] restaurado ${rutaRelativa(path.join(raiz, rel))}`);
   }
   fs.rmSync(respaldo, { recursive: true, force: true });
+  try { fs.rmSync(claveGenerada, { force: true }); } catch (_) { /* puede no existir */ }
   console.log('[proteger] Fuente restaurado y copia borrada.');
 }
 

@@ -28,6 +28,8 @@
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
+  // K8 (CSP): las hojas de fuentes que esperaban a onload se activan aquí (sin inline).
+  document.querySelectorAll('link[data-activar-media]').forEach((l) => { l.media = 'all'; });
   // --- Textos -----------------------------------------------------------
   // REGLA (docs/REGLAS-IDIOMAS.md): aquí no se escribe NI UN texto visible a mano.
   // Todo pasa por T('clave', {variables}) y vive en public/i18n.js, en los cinco idiomas.
@@ -37,6 +39,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const fmtDateTime = (value) => (window.I18N ? window.I18N.fmtDateTime(value) : '');
   const fmtNumber = (value) => (window.I18N ? window.I18N.fmtNumber(value) : String(value || 0));
   const relDate = (value) => (window.I18N ? window.I18N.relativeDate(value) : '');
+
+  // K8 (CSP): fallback de imágenes rotas sin handlers inline (script-src 'self' los bloquearía).
+  document.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!img || img.tagName !== 'IMG' || img.dataset.fallbackAplicado === '1') return;
+    img.dataset.fallbackAplicado = '1';
+    img.src = img.classList.contains('cf-logo') ? 'addon-default.svg' : 'favicon.png';
+  }, true);
 
   // Nombre legible del cliente activo (los nombres son marcas, no se traducen).
   const gameLabel = (gameId) => {
@@ -1074,7 +1084,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const prefixV = (dispAddonVer && !dispAddonVer.toLowerCase().startsWith('v') && /^\d/.test(dispAddonVer)) ? 'v' : '';
 
       card.innerHTML = `
-        <img class="cf-logo" src="${addonIcon}" alt="${addon.title}" onerror="this.src='addon-default.svg'">
+        <img class="cf-logo" src="${addonIcon}" alt="${addon.title}">
         <div class="cf-card-content">
           <div class="cf-card-main">
             <div class="cf-card-top">
@@ -1630,7 +1640,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const card = document.createElement('div');
       card.className = 'cf-card';
       card.innerHTML = `
-        <img class="cf-logo" src="${mod.iconUrl || 'addon-default.svg'}" alt="${mod.name}" onerror="this.src='addon-default.svg'">
+        <img class="cf-logo" src="${mod.iconUrl || 'addon-default.svg'}" alt="${mod.name}">
         <div class="cf-card-content">
           <div class="cf-card-main">
             <div class="cf-card-top">
@@ -1808,7 +1818,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isTranslated) {
       if (currentTranslatedDesc && currentTranslatedSummary) {
         isTranslated = true;
-        detailHtmlBody.innerHTML = currentTranslatedDesc;
+        detailHtmlBody.innerHTML = sanitizarHtmlCurseforge(currentTranslatedDesc);
         if (heroSummaryEl) heroSummaryEl.textContent = currentTranslatedSummary;
         updateTranslateButtonUI(false, true);
         showToast(T('toast_translated'));
@@ -1832,7 +1842,7 @@ document.addEventListener('DOMContentLoaded', () => {
           currentTranslatedDesc = data.html || currentOriginalDesc;
           currentTranslatedSummary = data.summary || currentOriginalSummary;
           isTranslated = true;
-          detailHtmlBody.innerHTML = currentTranslatedDesc;
+          detailHtmlBody.innerHTML = sanitizarHtmlCurseforge(currentTranslatedDesc);
           if (heroSummaryEl) heroSummaryEl.textContent = currentTranslatedSummary;
           updateTranslateButtonUI(false, true);
           showToast(T('toast_translated_ok'));
@@ -1845,12 +1855,53 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else {
       isTranslated = false;
-      detailHtmlBody.innerHTML = currentOriginalDesc;
+      detailHtmlBody.innerHTML = sanitizarHtmlCurseforge(currentOriginalDesc);
       if (heroSummaryEl) heroSummaryEl.textContent = currentOriginalSummary;
       updateTranslateButtonUI(false, false);
       showToast(T('toast_original'));
     }
   });
+
+  /* K8 (auditoría 22-10-2026): la descripción de CurseForge llega en HTML y antes se pintaba con
+     innerHTML tal cual (XSS con un addon malicioso). Aquí se deja solo un subconjunto seguro de
+     etiquetas y atributos: sin script/style/iframe, sin on*, sin style y sin URLs que no sean
+     https ni rutas relativas. Se conserva el HTML normal (párrafos, listas, tablas, imágenes). */
+  const ETIQUETAS_CURSEFORGE = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li',
+    'h1', 'h2', 'h3', 'h4', 'blockquote', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'td', 'th',
+    'hr', 'span', 'div', 'del', 's', 'img', 'a']);
+
+  function atributoCurseforgeSeguro(nombre, valor) {
+    const n = String(nombre || '').toLowerCase();
+    if (n.startsWith('on') || n === 'style') return false;
+    if (n === 'href' || n === 'src') {
+      const v = String(valor || '').trim();
+      return /^https:\/\//i.test(v) || /^\/(?!\/)/.test(v);
+    }
+    return ['alt', 'width', 'height', 'title', 'class', 'colspan', 'rowspan'].includes(n);
+  }
+
+  function sanitizarHtmlCurseforge(html) {
+    const texto = String(html || '')
+      .replace(/<\s*(script|style|iframe|object|embed|link|meta|form|svg|math)[\s\S]*?<\s*\/\s*\1\s*>/gi, '')
+      .replace(/<\s*\/?\s*(script|style|iframe|object|embed|link|meta|form|svg|math)[^>]*>/gi, '');
+    return texto.replace(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)([^>]*)>/g, (m, cierre, etiqueta, resto) => {
+      const t = etiqueta.toLowerCase();
+      if (!ETIQUETAS_CURSEFORGE.has(t)) return '';
+      if (cierre) return '</' + t + '>';
+      const atributos = [];
+      const re = /([a-zA-Z0-9-]+)(?:\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+      let mm;
+      while ((mm = re.exec(resto)) !== null) {
+        const nombre = mm[1];
+        const valor = mm[3] !== undefined ? mm[3] : (mm[4] !== undefined ? mm[4] : (mm[5] !== undefined ? mm[5] : ''));
+        if (!atributoCurseforgeSeguro(nombre, valor)) continue;
+        atributos.push(nombre + '="' + String(valor).replace(/"/g, '&quot;') + '"');
+      }
+      if (t === 'a') atributos.push('rel="noopener noreferrer"', 'target="_blank"');
+      return '<' + t + (atributos.length ? ' ' + atributos.join(' ') : '') + '>';
+    });
+  }
+  window.KORForgeSanitize = sanitizarHtmlCurseforge;
 
   function openAddonDetail(modId, modName = '') {
     pushNavState({ type: 'detail', modId, modName });
@@ -1916,12 +1967,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       renderDetailHero(mod, findInstalledAddon(mod));
 
-      // 2. Fetch Description
+      // 2. Fetch Description (K8: el HTML de CurseForge se sanea antes de pintarlo)
       fetch(`/api/mod/${modId}/description`)
         .then(r => r.json())
         .then(descData => {
           currentOriginalDesc = descData.html || `<p>${T('detail_no_desc')}</p>`;
-          detailHtmlBody.innerHTML = isTranslated && currentTranslatedDesc ? currentTranslatedDesc : currentOriginalDesc;
+          detailHtmlBody.innerHTML = sanitizarHtmlCurseforge(isTranslated && currentTranslatedDesc ? currentTranslatedDesc : currentOriginalDesc);
         })
         .catch(() => {
           detailHtmlBody.innerHTML = `<p>${T('detail_desc_error')}</p>`;
@@ -1969,7 +2020,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSummary = (isTranslated && currentTranslatedSummary) ? currentTranslatedSummary : (mod.summary || '');
 
     detailHeroCard.innerHTML = `
-      <img class="detail-hero-logo" src="${mod.iconUrl || 'favicon.png'}" alt="${mod.name}" onerror="this.src='favicon.png'">
+      <img class="detail-hero-logo" src="${mod.iconUrl || 'favicon.png'}" alt="${mod.name}">
       <div class="detail-hero-info">
         <div>
           <h2 class="detail-hero-title">${mod.name}</h2>
@@ -2043,7 +2094,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (window.electronAPI) {
         frame = document.createElement('webview');
         frame.setAttribute('src', url);
-        frame.setAttribute('allowpopups', 'true');
         frame.style.width = '100%';
         frame.style.height = '100%';
         frame.style.border = 'none';
@@ -3056,7 +3106,7 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDetailGallery(currentDetailMod);
       if (lastDetailFiles.length) renderDetailFiles(lastDetailFiles, lastDetailAddonName);
       if (detailHtmlBody) {
-        detailHtmlBody.innerHTML = (isTranslated && currentTranslatedDesc) ? currentTranslatedDesc : (currentOriginalDesc || `<p>${T('detail_loading_desc')}</p>`);
+        detailHtmlBody.innerHTML = sanitizarHtmlCurseforge((isTranslated && currentTranslatedDesc) ? currentTranslatedDesc : (currentOriginalDesc || `<p>${T('detail_loading_desc')}</p>`));
       }
       updateTranslateButtonUI(false, isTranslated);
       setAddressBar('📦', T('topbar_addon', { name: currentDetailMod.name }));
