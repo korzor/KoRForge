@@ -49,8 +49,20 @@ function esVersionValida(version) {
   return typeof version === 'string' && VERSION_VALIDA.test(version.trim());
 }
 
-function urlInstaladorOficial(version) {
-  return `${GITHUB_RELEASES_URL}/v${version}/KoRForge-Setup-${version}.exe`;
+/** Plataforma de la actualización: 'linux' (AppImage) o 'win32' (instalador NSIS). */
+function plataformaActual() {
+  return process.platform === 'linux' ? 'linux' : 'win32';
+}
+
+/** Nombre canónico del binario de ESTA versión en el release según la plataforma. */
+function nombreDelAsset(version, plataforma = plataformaActual()) {
+  return plataforma === 'linux'
+    ? `KoRForge-${version}-linux-x86_64.AppImage`
+    : `KoRForge-Setup-${version}.exe`;
+}
+
+function urlInstaladorOficial(version, plataforma = plataformaActual()) {
+  return `${GITHUB_RELEASES_URL}/v${version}/${nombreDelAsset(version, plataforma)}`;
 }
 
 function urlSha256Sums(version) {
@@ -93,7 +105,7 @@ async function sha256OficialDe(version) {
     throw new Error(`No se pudo leer SHA256SUMS.txt del release v${version} (HTTP ${res.status}): actualización cancelada.`);
   }
   const texto = await res.text();
-  const nombre = `KoRForge-Setup-${version}.exe`;
+  const nombre = nombreDelAsset(version);
   for (const linea of texto.split(/\r?\n/)) {
     const partes = linea.trim().split(/\s+/);
     if (partes.length === 2 && partes[1] === nombre && /^[0-9a-f]{64}$/i.test(partes[0])) {
@@ -118,7 +130,7 @@ async function startUpdateDownload(downloadUrl, version) {
 
   /* Nombre canónico y fichero dentro del temporal (K5b: ni la versión ni el nombre del cliente
      deciden dónde se escribe el instalador). */
-  const fileName = `KoRForge-Setup-${versionLimpia}.exe`;
+  const fileName = nombreDelAsset(versionLimpia);
   const targetPath = path.join(os.tmpdir(), fileName);
   if (!estaEnTemporal(targetPath)) {
     throw new Error('Ruta de descarga fuera del directorio temporal.');
@@ -656,28 +668,45 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
   ].join('\n');
 }
 
+/** F3 (Linux): aplica la actualización sustituyendo el AppImage en su sitio y relanzándolo. */
+function aplicarActualizacionLinux(installerPath) {
+  /* El runtime del AppImage expone su ruta en $APPIMAGE; si se ejecuta el AppRun extraído,
+     se usa process.execPath. El reemplazo es un rename en el mismo directorio (el inode viejo
+     sigue bloqueado por el proceso actual mientras arranca el nuevo). */
+  const destino = process.env.APPIMAGE || process.execPath;
+  const nuevo = `${destino}.new`;
+  fs.copyFileSync(installerPath, nuevo);
+  fs.chmodSync(nuevo, 0o755);
+  fs.renameSync(nuevo, destino);
+  const hijo = spawn(destino, [], { detached: true, stdio: 'ignore' });
+  hijo.unref();
+}
+
 function applyUpdateAndRestart(electronApp = null, lang = 'en') {
   if (currentDownload.status !== 'completed' || !currentDownload.filePath || !fs.existsSync(currentDownload.filePath)) {
     throw new Error('No hay ninguna actualización descargada lista para aplicar.');
   }
 
   let installerPath = currentDownload.filePath;
-  let isExe = installerPath.toLowerCase().endsWith('.exe');
+  const esLinux = process.platform === 'linux';
+  let esBinarioValido = esLinux
+    ? installerPath.endsWith('.AppImage')
+    : installerPath.toLowerCase().endsWith('.exe');
 
   // Si no tiene extensión .exe (p.ej. id numérico de asset de GitHub), comprobar y convertir a .exe
-  if (!isExe && fs.existsSync(installerPath)) {
+  if (!esLinux && !esBinarioValido && fs.existsSync(installerPath)) {
     try {
       const fixedPath = path.join(path.dirname(installerPath), `KoRForge-Setup-${currentDownload.version || 'update'}.exe`);
       fs.copyFileSync(installerPath, fixedPath);
       installerPath = fixedPath;
       currentDownload.filePath = fixedPath;
-      isExe = true;
+      esBinarioValido = true;
     } catch (e) {
       console.warn('[KoRForge Updater] Error al asegurar extensión .exe:', e.message);
     }
   }
 
-  if (!isExe || !fs.existsSync(installerPath)) {
+  if (!esBinarioValido || !fs.existsSync(installerPath)) {
     throw new Error(`Instalador no válido o inexistente: ${path.basename(installerPath)}`);
   }
 
@@ -692,6 +721,18 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     }
   }
 
+  /* F3 (Linux, 23-10-2026): no hay PowerShell ni NSIS: se sustituye el AppImage y se relanza. */
+  if (esLinux) {
+    aplicarActualizacionLinux(installerPath);
+    setTimeout(() => {
+      try {
+        if (global.quitAndApplyUpdate) global.quitAndApplyUpdate();
+        else if (electronApp && typeof electronApp.exit === 'function') electronApp.exit(0);
+      } catch (_) { /* si no puede cerrarse, la nueva ventana ya está abierta */ }
+    }, 600);
+    return { success: true, message: 'Actualización aplicada. Reabriendo KoRForge...' };
+  }
+
   // Detect installed executable path
   let appExePath = process.execPath;
   const standardInstalledExe = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'KoRForge', 'KoRForge.exe');
@@ -699,50 +740,11 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     appExePath = standardInstalledExe;
   }
 
-  // Runner OCULTO (PowerShell): pinta la tarjeta de carga, cierra KoRForge, instala en silencio y reabre.
-  // Se lanza con windowsHide + -WindowStyle Hidden: ni consola ni pings (antes era un .bat
-  // con ping 127.0.0.1 como temporizador y una ventana de cmd a la vista).
-  const runnerScript = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
-
-  // Splash de la tarjeta: el mismo PNG de la app. Con ASAR (builds nuevas) la copia real está
-  // en app.asar.unpacked; la tarjeta la pinta PowerShell, que NO puede leer dentro de app.asar.
-  const rutaPublica = path.join(path.dirname(appExePath), 'resources', 'app', 'public', 'splash.png');
-  const rutaAser = path.join(path.dirname(appExePath), 'resources', 'app.asar.unpacked', 'public', 'splash.png');
-  const splashPng = fs.existsSync(rutaAser)
-    ? rutaAser
-    : (fs.existsSync(rutaPublica)
-      ? rutaPublica
-      : path.join(__dirname, '..', 'public', 'splash.png'));
-
-  // Bandera: el runner la escribe cuando la tarjeta ya está en pantalla. La app NO se cierra
-  // hasta verla (o hasta el límite), para que no haya ni un instante de escritorio vacío.
-  const flagFile = path.join(os.tmpdir(), 'korforge_splash_listo');
-  try { fs.unlinkSync(flagFile); } catch (_) {}
-
-  const pantalla = typeof global.rectPantallaFisica === 'function' ? global.rectPantallaFisica() : null;
-
-  const script = buildApplyScript(installerPath, appExePath, currentDownload.version, {
-    lang,
-    splashPng,
-    flagFile,
-    pantalla
-  });
-
-  // Con BOM: el .ps1 lleva acentos (fr/it) y PowerShell 5.1 sin BOM los leería como ANSI.
-  fs.writeFileSync(runnerScript, '\ufeff' + script, 'utf-8');
-
-  // Lanzado oculto y desacoplado: no se abre ninguna consola.
-  // OJO (fallo de la 1.0.8/1.0.9/1.0.10): el spawn DIRECTO de powershell.exe desde la app
-  // empaquetada deja un proceso que sale al instante con código 0 y no ejecuta el script
-  // (verificado con sondas: proceso creado, exit=0, sin log ni instalación). A través de
-  // `shell: true` (cmd /c) sí se ejecuta. No quitar el shell.
-  const child = spawn('powershell.exe', [
-    '-NoProfile',
-    '-NonInteractive',
-    '-ExecutionPolicy', 'Bypass',
-    '-WindowStyle', 'Hidden',
-    '-File', runnerScript
-  ], {
+  /* A (23-10-2026, dueño): SIN PowerShell. La app lanza el instalador NSIS en silencio (/S) y se
+     cierra; el propio instalador espera a que el proceso desaparezca, reemplaza los archivos y
+     (runAfterFinish en package.json) reabre KoRForge. El binario ya está verificado con su SHA-256
+     antes de llegar aquí (K5). */
+  const child = spawn(installerPath, ['/S'], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,
@@ -764,20 +766,11 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     }
   };
 
-  // La respuesta HTTP sale ya; el cierre espera a que la tarjeta esté pintada (bandera).
-  // Límite de 4 s por si el runner no llega a pintarla (entonces se cierra como antes).
-  const inicio = Date.now();
-  const vigilante = setInterval(() => {
-    let lista = false;
-    try { lista = fs.existsSync(flagFile); } catch (_) {}
-    const agotado = Date.now() - inicio > 4000;
-    if (lista || agotado) {
-      clearInterval(vigilante);
-      setTimeout(cerrarApp, lista ? 120 : 0);
-    }
-  }, 80);
+  /* Medio segundo para que el instalador arranque; después se cierra la app para que NSIS pueda
+     reemplazar sus ficheros (si la app ya salió, el instalador simplemente sigue). */
+  setTimeout(cerrarApp, 700);
 
-  return { success: true, message: 'Actualizador lanzado. Cerrando KoRForge...' };
+  return { success: true, message: 'Instalador lanzado. Reiniciando KoRForge...' };
 }
 
 module.exports = {
@@ -788,6 +781,7 @@ module.exports = {
   buildApplyScript,
   getGitHubToken,
   esVersionValida,
+  nombreDelAsset,
   urlInstaladorOficial,
   urlSha256Sums,
   esUrlDeInstalador

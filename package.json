@@ -52,7 +52,8 @@
       "shortcutName": "KoRForge",
       "artifactName": "KoRForge-Setup-${version}.${ext}",
       "installerIcon": "korforge.ico",
-      "uninstallerIcon": "korforge.ico"
+      "uninstallerIcon": "korforge.ico",
+      "runAfterFinish": true
     },
     "linux": {
       "target": [
