@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const img = e.target;
     if (!img || img.tagName !== 'IMG' || img.dataset.fallbackAplicado === '1') return;
     img.dataset.fallbackAplicado = '1';
-    img.src = img.classList.contains('cf-logo') ? 'addon-default.svg' : 'favicon.png';
+    img.src = 'addon-default.svg';
   }, true);
 
   // Nombre legible del cliente activo (los nombres son marcas, no se traducen).
@@ -2086,7 +2086,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const heroSummary = (isTranslated && currentTranslatedSummary) ? currentTranslatedSummary : (mod.summary || '');
 
     detailHeroCard.innerHTML = `
-      <img class="detail-hero-logo" src="${mod.iconUrl || 'favicon.png'}" alt="${mod.name}">
+      <img class="detail-hero-logo" src="${mod.iconUrl || 'addon-default.svg'}" alt="${mod.name}">
       <div class="detail-hero-info">
         <div>
           <h2 class="detail-hero-title">${mod.name}</h2>
