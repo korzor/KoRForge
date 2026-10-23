@@ -621,22 +621,28 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
     '    if (Test-Path -LiteralPath $copia) {',
     '      $pic = New-Object System.Windows.Forms.PictureBox',
     '      $pic.SizeMode = \'StretchImage\'',
-    '      # Mismo color que el relleno de la tarjeta: el PNG del anvil trae margenes transparentes y',
-    '      # sin esto se verian como un rectangulo pegado dentro del reborde.',
+    '      # Mismo color que el relleno de la tarjeta: el PNG trae margenes transparentes y sin esto',
+    '      # se verian como un rectangulo pegado dentro del reborde.',
     '      $pic.BackColor = [System.Drawing.Color]::FromArgb(11, 16, 24)',
     '      # SEPARADO DEL REBORDE (dueno, 23-10-2026): el logo iba de borde a borde y tapaba el dorado',
-    '      # de los lados. Ahora deja 10 px por cada lado y mantiene la proporcion del PNG (2:1).',
-    '      $pic.Location = New-Object System.Drawing.Point((T 10), (T 16))',
-    '      $pic.Size = New-Object System.Drawing.Size((T 540), (T 270))',
-    '      # El logo se reescala con interpolacion buena para que no salga a cuadros en pantallas grandes',
+    '      # de los lados. Ahora deja 20 px por cada lado y el arte entra ENTERO sin deformarse',
+    '      # (`Zoom` = cabe dentro de la caja manteniendo la proporcion; el PNG tiene 1200x630).',
+    '      $pic.SizeMode = \'Zoom\'',
+    '      $pic.Location = New-Object System.Drawing.Point((T 20), (T 14))',
+    '      $pic.Size = New-Object System.Drawing.Size((T 520), (T 272))',
+    '      # El arte se reescala con interpolacion buena y con su proporcion (cabe entero, sin recortes)',
     '      try {',
     '        $origenLogo = [System.Drawing.Image]::FromFile($copia)',
     '        $logo = New-Object System.Drawing.Bitmap($pic.Width, $pic.Height)',
     '        $g = [System.Drawing.Graphics]::FromImage($logo)',
+    '        $g.Clear([System.Drawing.Color]::FromArgb(11, 16, 24))',
     '        $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic',
     '        $g.PixelOffsetMode = [System.Drawing.Drawing2D.PixelOffsetMode]::HighQuality',
     '        $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::HighQuality',
-    '        $g.DrawImage($origenLogo, 0, 0, $pic.Width, $pic.Height)',
+    '        $escalaArte = [math]::Min($pic.Width / $origenLogo.Width, $pic.Height / $origenLogo.Height)',
+    '        $anchoArte = [int][math]::Round($origenLogo.Width * $escalaArte)',
+    '        $altoArte = [int][math]::Round($origenLogo.Height * $escalaArte)',
+    '        $g.DrawImage($origenLogo, [int](($pic.Width - $anchoArte) / 2), [int](($pic.Height - $altoArte) / 2), $anchoArte, $altoArte)',
     '        $g.Dispose()',
     '        $origenLogo.Dispose()',
     '        $pic.Image = $logo',
@@ -908,7 +914,10 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
   const lanzarTarjetaEInstalador = () => {
     try {
       const pantalla = typeof global.rectPantallaFisica === 'function' ? global.rectPantallaFisica() : null;
-      const splashPng = path.join(__dirname, '..', 'public', 'splash.png');
+      /* LA IMAGEN DE LA TARJETA (dueno, 23-10-2026: *"yo te hablaba del updater"*): la ventana que
+         sale mientras se aplica la actualizacion lleva el arte de la marca
+         (`public/actualizando.png`, el mismo de la ficha del repo), no el yunque del splash. */
+      const splashPng = path.join(__dirname, '..', 'public', 'actualizando.png');
       const ps1 = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
       fs.writeFileSync(ps1, buildApplyScript(installerPath, appExePath, currentDownload.version, { lang, splashPng, pantalla }), 'utf8');
 
