@@ -11,6 +11,7 @@ const translator = require('./modules/translator');
 const updater = require('./modules/updater');
 const registry = require('./modules/installedRegistry');
 const profiles = require('./modules/profiles');
+const sesion = require('./modules/sesion');
 
 const app = express();
 /* El puerto de siempre es 3847 (la ventana lo carga así). `KORFORGE_PORT` permite levantar una
@@ -277,6 +278,63 @@ function respuestaSinRuta(res, gameId) {
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+// ── Cuenta de KoRForge (dueño, 23-10-2026) ────────────────────────────────
+// La app pregunta a centolos.org si esta cuenta está registrada en la whitelist. Las rutas de
+// /api/auth NO llevan guardia (son las que abren la puerta); el resto de la API sí.
+app.get('/api/auth/status', (req, res) => {
+  res.json({ ok: true, ...sesion.estadoActual() });
+});
+
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const r = await sesion.loginPassword(req.body && req.body.name, req.body && req.body.password);
+    if (!r.ok) return res.status(401).json({ ok: false, error: r.error || 'No se pudo entrar.' });
+    return res.json({ ok: true, permitido: r.permitido, usuario: r.usuario });
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/google/start', async (req, res) => {
+  try {
+    const r = await sesion.iniciarGoogle();
+    if (!r.ok) return res.status(502).json(r);
+    return res.json(r);
+  } catch (err) {
+    return res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.get('/api/auth/google/pending', async (req, res) => {
+  try {
+    const r = await sesion.sondearGoogle(String(req.query.state || ''));
+    return res.json(r);
+  } catch (err) {
+    return res.status(500).json({ ok: false, ready: false, error: err.message });
+  }
+});
+
+app.post('/api/auth/logout', async (req, res) => {
+  await sesion.salir();
+  return res.json({ ok: true });
+});
+
+// Guardia: sin sesión autorizada, cualquier /api/ (salvo auth y ping) queda cerrada.
+app.use((req, res, next) => {
+  const p = String(req.path || '');
+  if (!p.startsWith('/api/')) return next();
+  if (p.startsWith('/api/auth/') || p === '/api/ping') return next();
+  const est = sesion.estadoActual();
+  if (est.logeado && est.permitido) return next();
+  return res.status(401).json({
+    ok: false,
+    code: 'AUTH_REQUIRED',
+    error: est.logeado
+      ? 'Tu cuenta no está autorizada para KoRForge.'
+      : 'Inicia sesión con tu cuenta de centolos.org para usar KoRForge.'
+  });
+});
 
 // API: Health check ping
 app.get('/api/ping', (req, res) => {
@@ -962,6 +1020,52 @@ function compareVersions(v1, v2) {
   return 0;
 }
 
+/**
+ * Comprueba si hay versión nueva en la web (centolos.org), que es el canal oficial de
+ * actualizaciones desde la 1.2.18 (dueño, 23-10-2026: «las actualizaciones salen de la web»).
+ * La web devuelve el hash SHA-256 del instalador: si el binario no coincide, no se instala.
+ */
+async function checkWebRelease() {
+  const token = sesion.token();
+  if (!token) return null;
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    const res = await fetch(`${sesion.WEB_URL}/api/korforge/updates`, {
+      signal: controller.signal,
+      headers: {
+        'User-Agent': `KoRForge-Desktop/${APP_VERSION}`,
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    clearTimeout(timeoutId);
+    if (!res.ok) return null;
+    const data = await res.json().catch(() => null);
+    if (!data || !data.ok || !data.version) return null;
+    const remoteVersion = String(data.version).replace(/^v/i, '').trim();
+    const updateAvailable = compareVersions(remoteVersion, APP_VERSION) > 0;
+    const notas = Array.isArray(data.cambios) && data.cambios.length
+      ? data.cambios.join('\n')
+      : (data.notas || '');
+    return {
+      source: 'web',
+      checked: true,
+      updateAvailable,
+      currentVersion: APP_VERSION,
+      remoteVersion,
+      downloadUrl: data.url ? `${sesion.WEB_URL}${data.url.startsWith('/') ? '' : '/'}${data.url}` : '',
+      sha256: data.sha256 || '',
+      size: data.tamano || '',
+      releaseNotes: notas,
+      date: data.fecha || ''
+    };
+  } catch (err) {
+    console.warn('[KoRForge Updates] Error consultando la web:', err.message);
+    return null;
+  }
+}
+
+/** Respaldo de transición: GitHub (público) mientras el repo no sea privado. */
 async function checkGitHubRelease() {
   try {
     const token = updater.getGitHubToken();
@@ -1011,17 +1115,24 @@ async function checkGitHubRelease() {
 }
 
 app.get('/api/app-updates/check', async (req, res) => {
-  const result = await checkGitHubRelease();
-  if (result && result.checked) {
-    return res.json(result);
+  /* Canal oficial: la web (con la sesión de la app). Respaldo: GitHub (solo mientras siga
+     público; en cuanto el repo sea privado, el respaldo devuelve null sin romper nada). */
+  const web = await checkWebRelease();
+  if (web && web.checked) {
+    return res.json(web);
+  }
+
+  const gh = await checkGitHubRelease();
+  if (gh && gh.checked) {
+    return res.json(gh);
   }
 
   return res.json({
-    source: 'github',
+    source: web ? 'web' : 'github',
     checked: false,
     updateAvailable: false,
     currentVersion: APP_VERSION,
-    error: 'No se pudo consultar GitHub Releases. Comprueba tu conexión a internet e inténtalo de nuevo.',
+    error: 'No se pudo consultar el canal de actualizaciones. Comprueba tu conexión e inténtalo de nuevo.',
     code: 'err_github_unreachable'
   });
 });
@@ -1029,9 +1140,11 @@ app.get('/api/app-updates/check', async (req, res) => {
 // API: Start In-App Update Download
 app.post('/api/app-updates/download', async (req, res) => {
   try {
-    const { downloadUrl, version } = req.body;
+    const { downloadUrl, version, sha256 } = req.body;
     if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida', code: 'err_download_url_required' });
-    updater.startUpdateDownload(downloadUrl, version).catch(err => {
+    /* El token solo va a la web de KoRForge (GitHub ya lleva el suyo). */
+    const token = String(downloadUrl).includes('centolos.org') ? sesion.token() : '';
+    updater.startUpdateDownload(downloadUrl, version, { sha256, token }).catch(err => {
       console.error('[KoRForge Update] Error en descarga de fondo:', err.message);
     });
     res.json({ success: true, message: 'Descarga en segundo plano iniciada' });
