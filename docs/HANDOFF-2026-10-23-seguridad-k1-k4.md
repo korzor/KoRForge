@@ -62,6 +62,19 @@ Flujo del 23-10-2026, repetible: `proteger-build` → `electron-builder --win ns
 `node scripts/publish-korforge-release.js --no-build` → tarjeta estática de la web + registro al NAS
 (`deploy-to-nas.ps1` excluye `data/`).
 
+Datos de esta publicación (23-10-2026):
+
+- Release: `korzor/KoRForge` → **v1.2.23** (https://github.com/korzor/KoRForge/releases/tag/v1.2.23),
+  assets: instalador **112,2 MB** (SHA-256 `cd1213181b08d086cebcf753eb87077468000881ce5e42066295bc49c9b1e0ec`),
+  ZIP portable **152,2 MB** (SHA-256 `da9fe87044481bca50d1b026ea29c9f8cfe48594d341fcaf2e589fd00b4d364d`)
+  y `SHA256SUMS.txt`.
+- El aterrizaje por API REST está en **`scripts/subir-release-github.js`** (`npm run release:github-api`);
+  sustituye al `gh release upload`, que con tres assets seguidos se atasca.
+- Commits: `fca314b` (código K1–K4), `8a0c206` (release 1.2.23), `1d3ee1c` (publicador API REST).
+- Web: binarios en `public/wow/releases/` de Centolos (solo la 1.2.23), registro
+  `data/korforge-releases.json` con una sola entrada y tarjeta estática de `public/wow/index.html`
+  actualizada a mano (tamaños 112,2 y 152,2 MB).
+
 ## Pendiente (siguiente tanda de la auditoría)
 
 - **K5** (actualizador: URL fija del release, regex de versión, verificar SHA-256), **K6** (allowlist
