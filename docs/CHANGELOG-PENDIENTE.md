@@ -7,9 +7,9 @@ Este documento centraliza las **mejoras de calado** (nuevas funcionalidades, mot
 
 ## Estado Actual: v1.1.0 publicada (20-10-2026)
 
-La **v1.1.0** está publicada en GitHub (`korzor/KoRForge`) y en la web (`wow.centolos.org`,
-`public/wow/releases/`), con la app instalada del dueño ya actualizada a esa versión por su propio
-actualizador. El bloque de abajo es el registro de lo que lleva dentro.
+La **v1.1.0** está publicada en GitHub (`korzor/KoRForge`) y en la web (`public/wow/releases/`),
+con la app instalada del dueño ya actualizada a esa versión por su propio actualizador. El bloque de
+abajo es el registro de lo que lleva dentro.
 
 **No hay versión siguiente en preparación:** lo que se implemente a partir de ahora se apunta aquí
 como pendiente de la próxima etiqueta, cuando el dueño decida cuál es.

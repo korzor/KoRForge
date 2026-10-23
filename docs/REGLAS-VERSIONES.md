@@ -4,16 +4,16 @@
 
 ## 1. La web enseña SOLO la última versión
 
-- `wow.centolos.org` (pestaña **KoRForge**) muestra **una sola tarjeta**: la última versión
-  publicada. Nada de histórico.
+- La web (pestaña **KoRForge**) muestra **una sola tarjeta**: la última versión publicada. Nada de
+  histórico.
 - En `public/wow/releases/` (PC y NAS) solo están los binarios de esa última versión
   (`KoRForge-Setup-<versión>.exe` y `KoRForge-v<versión>-win-x64.zip`). Los de versiones
   anteriores se **borran** al publicar (el historial completo vive en GitHub Releases).
 - El registro es `data/korforge-releases.json` con **una única entrada** (`esUltima: true`).
 - **Ojo con el deploy:** `deploy-to-nas.ps1` excluye `data/`, así que ese JSON se copia **a mano**
-  al NAS (`\\NAS\docker\centolos\data\korforge-releases.json`).
-- `centolos/scripts/publish-korforge-release.js` aplica todo esto solo: copia los binarios, deja el
-  JSON con la última versión y borra los binarios viejos de la web.
+  al `data/` de la web en el NAS.
+- `scripts/publish-korforge-release.js` aplica todo esto solo: copia los binarios, deja el JSON con
+  la última versión y borra los binarios viejos de la web.
 - **Hashes (21-10-2026):** cada release publica `SHA256SUMS.txt` junto a los binarios y cada
   descarga del registro lleva su campo `sha256`. En GitHub, el mismo hash va en el cuerpo de la
   release y como asset. Es integridad y prueba de autoría (`docs/PROTECCION-DERECHOS.md`).
@@ -24,9 +24,9 @@
 - **Las notas de GitHub salen del mismo fichero** (`scripts/notas-release.js`). Hasta el 21-10-2026
   estaban escritas a mano en `release-github.js` y se quedaron congeladas: la 1.1.6 y la 1.1.7 se
   publicaron en GitHub con el texto de la 1.1.5. No volver a escribirlas a mano.
-- **La tarjeta estática no la toca el script:** hay que actualizar a mano
-  `centolos/public/wow/index.html` (versión, fecha, descripción, lista y enlaces) porque es lo que
-  se ve antes de que el JS cargue el registro.
+- **La tarjeta estática no la toca el script:** hay que actualizar a mano la tarjeta de la web
+  (versión, fecha, descripción, lista y enlaces) porque es lo que se ve antes de que el JS cargue el
+  registro.
 
 ## 2. GitHub conserva las 5 últimas releases
 
@@ -47,7 +47,7 @@ gh release delete v<version-vieja> --yes --cleanup-tag
 solo la release de GitHub: quiere **las dos cosas publicadas a la vez**:
 
 1. La release en `korzor/KoRForge` (instalador + ZIP, notas, etiqueta `v<versión>`).
-2. La versión nueva en `wow.centolos.org`: binarios en `public/wow/releases/`, el registro
+2. La versión nueva en la web: binarios en `public/wow/releases/`, el registro
    `data/korforge-releases.json` con **una sola entrada** y la tarjeta estática de
    `public/wow/index.html` actualizada.
 
@@ -70,9 +70,9 @@ node scripts/publish-korforge-release.js   # o a mano, ver más abajo
 ```
 
 **Cuidado:** `publish-korforge-release.js` estaba pensado para correr **dentro de este repo**
-(`projectDir = ..` respecto a `scripts/`). La copia que vive en `centolos/scripts/` NO vale tal cual:
-allí `projectDir` sería `centolos` y construiría el proyecto equivocado. Además elegía el ZIP con
-`allZips[0]`, que puede ser el de una versión vieja; ya está corregido en este repo.
+(`projectDir = ..` respecto a `scripts/`). La copia antigua que circula fuera de este repo NO vale
+tal cual: allí `projectDir` apuntaría al proyecto equivocado. Además elegía el ZIP con `allZips[0]`,
+que puede ser el de una versión vieja; ya está corregido en este repo.
 
 ## Por qué
 

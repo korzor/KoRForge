@@ -36,8 +36,8 @@ for (const f of ficheros) {
 "
 ```
 
-> Ojo: `wow.js` y `routes/wow.js` de Centolos sí tienen `/[\u2014\u2013]/g` en un `replace`: es código que
-> **limpia** guiones largos que llegan de los foros, no un texto a mostrar. Eso se queda.
+> Ojo: la web de noticias (`wow.js` y `routes/wow.js`) sí tiene `/[\u2014\u2013]/g` en un `replace`:
+> es código que **limpia** guiones largos que llegan de los foros, no un texto a mostrar. Eso se queda.
 
 ## Avisos: toast, no cartel (dueño, 21-10-2026)
 

@@ -1,10 +1,10 @@
 /**
- * Publica la version actual de KoRForge en la web (wow.centolos.org).
+ * Publica la version actual de KoRForge en la web.
  *
- * POR QUE ESTE FICHERO ESTA AQUI (y no solo en centolos/scripts):
+ * POR QUE ESTE FICHERO ESTA AQUI (y no solo en la carpeta de scripts de la web):
  * el script necesita `projectDir` = la raiz de KoRForge para leer su package.json y empaquetar.
- * La copia que vivia suelta en `centolos/scripts/` calculaba `projectDir` como centolos, asi que
- * habria compilado el proyecto equivocado (dueño, 20-10-2026).
+ * La copia antigua que vivia fuera de este repo calculaba `projectDir` mal, asi que habria
+ * compilado el proyecto equivocado (dueño, 20-10-2026).
  *
  * ADEMAS: la version anterior elegia el ZIP con `allZips[0]`, que es el primero por orden
  * alfabetico y por tanto puede ser el de una version VIEJA. Aqui se busca el que corresponde
@@ -160,8 +160,8 @@ fs.writeFileSync(registroPath, JSON.stringify(registro, null, 2), 'utf8');
 console.log(`[3/4] Registro actualizado: ${registroPath} (solo v${version})`);
 
 console.log('[4/4] Falta el despliegue y el JSON del NAS:');
-console.log('  1) powershell -File centolos/scripts/deploy-to-nas.ps1   (copia public/wow/releases)');
-console.log('  2) copiar data/korforge-releases.json a \\\\NAS\\docker\\centolos\\data\\');
+console.log('  1) powershell -File scripts/deploy-to-nas.ps1   (copia public/wow/releases)');
+console.log('  2) copiar data/korforge-releases.json al data/ de la web en el NAS');
 console.log('     (el deploy EXCLUYE data/, ojo)');
-console.log('  3) revisar la tarjeta estatica de centolos/public/wow/index.html');
+console.log('  3) revisar la tarjeta estatica de la web');
 console.log(`Hecho: v${version} lista en la web (pendiente de desplegar).`);
