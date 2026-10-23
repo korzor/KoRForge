@@ -740,17 +740,28 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     appExePath = standardInstalledExe;
   }
 
-  /* A (23-10-2026, dueño): SIN PowerShell. La app lanza el instalador NSIS en silencio (/S a
-     --updated: así el instalador relanza la app al terminar) y se cierra; el instalador espera a
-     que el proceso desaparezca y reemplaza los archivos. El binario ya está verificado con su
-     SHA-256 antes de llegar aquí (K5). */
-  const child = spawn(installerPath, ['/S', '--updated'], {
+  /* A (23-10-2026, dueño): SIN PowerShell. La app lanza el instalador NSIS en silencio (/S) y se
+     cierra; un `cmd.exe` OCULTO espera a que la instalación termine y reabre la app. El binario ya
+     está verificado con su SHA-256 antes de llegar aquí (K5). */
+  const child = spawn(installerPath, ['/S'], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,
     shell: true
   });
   child.unref();
+
+  /* Relanzador invisible: cmd con ventana oculta (windowsHide), espera 20 s (la instalación tarda
+     ~13-15 s) y abre la app nueva. No depende de que el instalador relance ni de PowerShell. */
+  try {
+    const relanzador = `timeout /t 20 /nobreak >nul & start "" "${appExePath}"`;
+    const espera = spawn('cmd.exe', ['/c', relanzador], {
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true
+    });
+    espera.unref();
+  } catch (_) { /* si falla, el usuario abre la app a mano */ }
 
   const cerrarApp = () => {
     try {
