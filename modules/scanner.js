@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const registry = require('./installedRegistry');
+const nombresSeguros = require('./nombresSeguros');
 
 // Cleans WoW formatting codes, color codes (|cff... and |r), texture tags (|T...|t) and signature/donation links
 function cleanWoWFormatting(str, isNotes = false) {
@@ -329,7 +330,13 @@ function scanAddons(addonsDir, gameId = 'forever') {
 }
 
 function toggleAddon(addonsDir, folderName) {
+  if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
+    throw new Error(`El nombre de carpeta "${folderName}" no es válido.`);
+  }
   const currentPath = path.join(addonsDir, folderName);
+  if (!nombresSeguros.estaDentroDe(addonsDir, currentPath)) {
+    throw new Error(`La ruta de la carpeta "${folderName}" se sale del directorio de addons.`);
+  }
   if (!fs.existsSync(currentPath)) {
     throw new Error(`La carpeta del addon ${folderName} no existe.`);
   }
@@ -411,6 +418,9 @@ function describeUninstall(addonsDir, scannedAddons, folderName, gameId = 'forev
 function deleteAddon(addonsDir, folderName, gameId = 'forever') {
   /* Antes se borraba solo la carpeta pulsada, asi que quedaba el resto del pack en disco y el
      addon seguia contando como instalado en Favoritos (dueño, 21-10-2026). */
+  if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
+    throw new Error(`El nombre de carpeta "${folderName}" no es válido.`);
+  }
   const { base, nombres, existentes } = carpetasDelAddon(addonsDir, folderName, gameId);
 
   if (existentes.length === 0) {
@@ -418,7 +428,14 @@ function deleteAddon(addonsDir, folderName, gameId = 'forever') {
   }
 
   for (const candidato of existentes) {
-    fs.rmSync(path.join(addonsDir, candidato), { recursive: true, force: true });
+    if (!nombresSeguros.esNombreDeCarpetaValido(candidato)) {
+      throw new Error(`La carpeta "${candidato}" del registro no es un nombre válido: no se borra nada.`);
+    }
+    const ruta = path.join(addonsDir, candidato);
+    if (!nombresSeguros.estaDentroDe(addonsDir, ruta)) {
+      throw new Error(`La ruta de la carpeta "${candidato}" se sale del directorio de addons: no se borra nada.`);
+    }
+    fs.rmSync(ruta, { recursive: true, force: true });
   }
 
   for (const nombre of new Set([...nombres, base])) {

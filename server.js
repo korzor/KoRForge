@@ -5,7 +5,8 @@
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
-const { exec } = require('child_process');
+const crypto = require('crypto');
+const { exec, execFile } = require('child_process');
 
 const scanner = require('./modules/scanner');
 const installer = require('./modules/installer');
@@ -15,6 +16,7 @@ const translator = require('./modules/translator');
 const updater = require('./modules/updater');
 const registry = require('./modules/installedRegistry');
 const profiles = require('./modules/profiles');
+const nombresSeguros = require('./modules/nombresSeguros');
 
 const app = express();
 /* El puerto de siempre es 3847 (la ventana lo carga así). `KORFORGE_PORT` permite levantar una
@@ -281,6 +283,69 @@ function respuestaSinRuta(res, gameId) {
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
+
+/* --- Perímetro del API local (auditoría 22-10-2026, K1) ----------------------
+ * El servidor escucha solo en 127.0.0.1, pero un servidor local sin autenticación se alcanza
+ * desde cualquier web abierta en el navegador (DNS-rebinding). Aquí: token aleatorio por sesión
+ * + solo hosts y orígenes del propio servidor + cabeceras básicas de seguridad.
+ * El token va en la URL con la que main.js carga la ventana y lo añade app.js a cada fetch. */
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  next();
+});
+
+const SESSION_TOKEN = crypto.randomBytes(24).toString('hex');
+const HOSTS_PERMITIDOS = new Set([
+  `127.0.0.1:${PORT}`,
+  `localhost:${PORT}`,
+  `[::1]:${PORT}`
+]);
+const ORIGENES_PERMITIDOS = new Set([
+  `http://127.0.0.1:${PORT}`,
+  `http://localhost:${PORT}`
+]);
+
+/** Comprueba Host, Origin y Sec-Fetch-Site. Si no pasa, responde 403 y devuelve false. */
+function origenDelServidor(req, res) {
+  const host = String(req.get('host') || '').toLowerCase();
+  if (!HOSTS_PERMITIDOS.has(host)) {
+    res.status(403).json({ error: 'Host no permitido', code: 'err_bad_host' });
+    return false;
+  }
+  const origin = String(req.get('origin') || '').toLowerCase();
+  if (origin && !ORIGENES_PERMITIDOS.has(origin)) {
+    res.status(403).json({ error: 'Origen no permitido', code: 'err_bad_origin' });
+    return false;
+  }
+  const site = String(req.get('sec-fetch-site') || '').toLowerCase();
+  if (site && site !== 'same-origin' && site !== 'none') {
+    res.status(403).json({ error: 'Origen no permitido', code: 'err_bad_origin' });
+    return false;
+  }
+  return true;
+}
+
+function tokenDeSesionValido(req) {
+  const recibido = Buffer.from(String(req.get('x-korforge-token') || req.query.token || ''));
+  const esperado = Buffer.from(SESSION_TOKEN);
+  return recibido.length === esperado.length && crypto.timingSafeEqual(recibido, esperado);
+}
+
+/* La ventana pide aquí su token (sin él todavía): solo desde el propio servidor y sin caché. */
+app.get('/api/session', (req, res) => {
+  if (!origenDelServidor(req, res)) return;
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({ ok: true, token: SESSION_TOKEN });
+});
+
+/* A partir de aquí, TODO /api exige host/origen de confianza y el token de sesión. */
+app.use('/api', (req, res, next) => {
+  if (!origenDelServidor(req, res)) return;
+  if (!tokenDeSesionValido(req)) {
+    return res.status(401).json({ error: 'Token de sesión no válido', code: 'err_bad_token' });
+  }
+  next();
+});
 
 // API: Health check ping
 app.get('/api/ping', (req, res) => {
@@ -609,6 +674,9 @@ app.post('/api/addons/toggle', (req, res) => {
   try {
     const { folderName, gameId } = req.body;
     if (!folderName) return res.status(400).json({ error: 'folderName requerido', code: 'err_folder_required' });
+    if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
+      return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
+    }
     const dir = getAddonsDir(gameId);
     if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
     const result = scanner.toggleAddon(dir, folderName);
@@ -635,6 +703,9 @@ app.get('/api/addons/uninstall-preview', (req, res) => {
 app.delete('/api/addons/:folderName', (req, res) => {
   try {
     const { folderName } = req.params;
+    if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
+      return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
+    }
     const gameId = req.query.gameId || config.activeGame || 'forever';
     const dir = getAddonsDir(gameId);
     if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
@@ -658,6 +729,9 @@ app.delete('/api/addons/:folderName', (req, res) => {
 
 app.post('/api/addons/open-folder', (req, res) => {
   const { gameId, folderName } = req.body || {};
+  if (folderName && !nombresSeguros.esNombreDeCarpetaValido(folderName)) {
+    return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
+  }
   const gKey = gameId || config.activeGame || 'forever';
   const targetPath = rutaDeJuego(gKey);
   if (!targetPath) return respuestaSinRuta(res, gKey);
@@ -665,6 +739,9 @@ app.post('/api/addons/open-folder', (req, res) => {
   let dirToOpen = addonsPath;
   if (folderName) {
     const specific = path.join(addonsPath, folderName);
+    if (!nombresSeguros.estaDentroDe(addonsPath, specific)) {
+      return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
+    }
     if (fs.existsSync(specific)) {
       dirToOpen = specific;
     }
@@ -672,7 +749,10 @@ app.post('/api/addons/open-folder', (req, res) => {
   if (!fs.existsSync(dirToOpen)) {
     fs.mkdirSync(dirToOpen, { recursive: true });
   }
-  exec(`explorer.exe "${dirToOpen}"`);
+  /* K3 (auditoría 22-10-2026): execFile con argumentos, sin pasar el nombre por el shell. */
+  execFile('explorer.exe', [dirToOpen], (err) => {
+    if (err) console.error('[KoRForge] No se pudo abrir el explorador:', err.message);
+  });
   res.json({ success: true, opened: dirToOpen });
 });
 
@@ -929,6 +1009,9 @@ app.post('/api/backups/restore', (req, res) => {
   try {
     const { fileName, gameId } = req.body;
     if (!fileName) return res.status(400).json({ error: 'fileName requerido', code: 'err_filename_required' });
+    if (!nombresSeguros.esNombreDeBackupValido(fileName)) {
+      return res.status(400).json({ error: 'Nombre de backup no válido', code: 'err_invalid_name' });
+    }
     const targetGame = gameId || config.activeGame || 'forever';
     const wtfDir = getWtfDir(targetGame);
     if (!wtfDir) {
@@ -944,6 +1027,9 @@ app.post('/api/backups/restore', (req, res) => {
 app.delete('/api/backups/:fileName', (req, res) => {
   try {
     const { fileName } = req.params;
+    if (!nombresSeguros.esNombreDeBackupValido(fileName)) {
+      return res.status(400).json({ error: 'Nombre de backup no válido', code: 'err_invalid_name' });
+    }
     const gameId = req.query.gameId || config.activeGame || 'forever';
     const result = backup.deleteBackup(fileName, gameId);
     res.json(result);
@@ -1169,4 +1255,8 @@ server.on('error', (err) => {
     console.error('[KoRForge] Error en servidor Express:', err);
   }
 });
+
+/* La ventana (main.js) necesita el token de sesión para cargar la UI con él y el puerto real. */
+module.exports = { PORT, SESSION_TOKEN };
+
 

@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const AdmZip = require('adm-zip');
+const nombresSeguros = require('./nombresSeguros');
 
 const USER_DATA_DIR = process.env.KORFORGE_USER_DATA || path.join(process.env.APPDATA || '', 'KoRForge');
 const BACKUPS_DIR = path.join(USER_DATA_DIR, 'backups');
@@ -110,7 +111,13 @@ function createBackup(wtfPath, gameId = 'forever') {
 
 function restoreBackup(backupFileName, wtfPath, gameId = 'forever') {
   const dir = ensureBackupsDir(gameId);
+  if (!nombresSeguros.esNombreDeBackupValido(backupFileName)) {
+    throw new Error(`El nombre de backup "${backupFileName}" no es válido.`);
+  }
   const backupFilePath = path.join(dir, backupFileName);
+  if (!nombresSeguros.estaDentroDe(dir, backupFilePath)) {
+    throw new Error(`El nombre de backup "${backupFileName}" se sale del directorio de backups.`);
+  }
   if (!fs.existsSync(backupFilePath)) {
     throw new Error(`El archivo de backup ${backupFileName} no existe.`);
   }
@@ -128,7 +135,13 @@ function restoreBackup(backupFileName, wtfPath, gameId = 'forever') {
 
 function deleteBackup(backupFileName, gameId = 'forever') {
   const dir = ensureBackupsDir(gameId);
+  if (!nombresSeguros.esNombreDeBackupValido(backupFileName)) {
+    throw new Error(`El nombre de backup "${backupFileName}" no es válido.`);
+  }
   const backupFilePath = path.join(dir, backupFileName);
+  if (!nombresSeguros.estaDentroDe(dir, backupFilePath)) {
+    throw new Error(`El nombre de backup "${backupFileName}" se sale del directorio de backups.`);
+  }
   if (!fs.existsSync(backupFilePath)) {
     throw new Error(`El backup ${backupFileName} no existe.`);
   }

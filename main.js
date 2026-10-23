@@ -436,7 +436,17 @@ function createWindow() {
 
   const loadAppUrl = () => {
     if (!win || win.isDestroyed()) return;
-    win.loadURL('http://127.0.0.1:3847').catch((err) => {
+    /* K1 (auditoría 22-10-2026): la ventana carga la UI con el token de sesión del API local en la
+       URL. app.js lo lee y lo añade a cada petición. El token lo genera server.js al arrancar. */
+    let puerto = 3847;
+    let token = '';
+    try {
+      const backend = require('./server.js');
+      puerto = backend.PORT || puerto;
+      token = backend.SESSION_TOKEN || '';
+    } catch (_) { /* sin backend: la UI no cargará y se reintenta igual */ }
+    const url = `http://127.0.0.1:${puerto}${token ? '/?token=' + encodeURIComponent(token) : '/'}`;
+    win.loadURL(url).catch((err) => {
       console.log('[KoRForge] Error al cargar URL local, reintentando...', err.message);
       setTimeout(loadAppUrl, 800);
     });

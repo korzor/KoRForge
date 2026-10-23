@@ -1,4 +1,32 @@
 // KoRForge Client Application Logic
+
+/*
+ * K1 (auditoría 22-10-2026): el API local exige el token de sesión. main.js carga la ventana con
+ * `?token=...`; aquí se lee UNA vez (la SPA puede cambiar la URL después) y se añade como cabecera
+ * `X-KoRForge-Token` a toda petición a /api. Sin token, las rutas protegidas responden 401.
+ */
+(function () {
+  'use strict';
+  try {
+    const token = new URLSearchParams(window.location.search || '').get('token') || '';
+    if (!token) return;
+    window.__KORFORGE_TOKEN__ = token;
+    const fetchOriginal = window.fetch;
+    window.fetch = function (input, init) {
+      init = init ? Object.assign({}, init) : {};
+      const url = typeof input === 'string' ? input : String((input && input.url) || '');
+      const esDelServidor = !url || url.startsWith('/') ||
+        /^https?:\/\/(127\.0\.0\.1|localhost)(:\d+)?\b/i.test(url);
+      if (esDelServidor) {
+        const headers = new Headers(init.headers || {});
+        if (!headers.has('X-KoRForge-Token')) headers.set('X-KoRForge-Token', token);
+        init.headers = headers;
+      }
+      return fetchOriginal.call(window, input, init);
+    };
+  } catch (_) { /* sin token: la UI avisará con los 401 */ }
+})();
+
 document.addEventListener('DOMContentLoaded', () => {
   // --- Textos -----------------------------------------------------------
   // REGLA (docs/REGLAS-IDIOMAS.md): aquí no se escribe NI UN texto visible a mano.
@@ -34,7 +62,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (params.otros) msg += ' ' + T('err_game_path_missing_otros', { otros: params.otros });
       return msg;
     }
-    return T('err_' + data.code, params);
+    /* Los códigos del servidor YA llevan el prefijo err_ (K-C2 de la auditoría: antes se pedía
+       'err_' + código y salía una clave imposible del tipo err_err_...). */
+    return T(data.code.startsWith('err_') ? data.code : 'err_' + data.code, params);
   }
 
   /**
