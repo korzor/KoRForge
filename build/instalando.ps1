@@ -1,4 +1,4 @@
-﻿# Ventana del instalador de KoRForge: TODO el proceso pasa aqui.
+# Ventana del instalador de KoRForge: TODO el proceso pasa aqui.
 #
 # POR QUE EXISTE (dueno, 24-10-2026): *"el instalador no te permite elegir ruta de instalacion...
 # me parece mal"* y *"ya que tenemos la ventana hecha del progreso, no podriamos hacer que todo el
@@ -72,7 +72,11 @@ $script:rutaInicial = [string]$env:KORFORGE_INSTDIR
 if (-not $script:rutaInicial) { $script:rutaInicial = Join-Path $env:LOCALAPPDATA 'Programs\KoRForge' }
 $script:rutaFinal = $script:rutaInicial
 $script:proceso = $null
-$artePng = Join-Path $PSScriptRoot 'kf-instalando.png'
+$artePng = $null
+foreach ($nombreArte in 'kf-instalando.png', 'instalando.png') {
+  $rutaArte = Join-Path $PSScriptRoot $nombreArte
+  if (Test-Path -LiteralPath $rutaArte) { $artePng = $rutaArte; break }
+}
 
 # --- Geometria (referencia 660x480 en 1920x1080) ------------------------------------------------
 $pantalla = $null

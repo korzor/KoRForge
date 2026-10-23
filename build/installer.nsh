@@ -28,8 +28,11 @@
   ${IfNot} ${Silent}
     CreateDirectory "$TEMP\korforge-instalador"
     SetOutPath "$TEMP\korforge-instalador"
+    ; OJO CON EL NOMBRE: `instalando.ps1` busca `kf-instalando.png` a su lado. Si aquí se suelta con
+    ; el nombre del repositorio (`instalando.png`), la ventana abre sin imagen: queda el hueco y nada
+    ; dentro (dueno, 24-10-2026: *"no sale el logo... esta el hueco pero no hay imagen"*).
     File "${BUILD_RESOURCES_DIR}\instalando.ps1"
-    File "${BUILD_RESOURCES_DIR}\instalando.png"
+    File /oname=kf-instalando.png "${BUILD_RESOURCES_DIR}\instalando.png"
     SetOutPath "$TEMP"
     ; Lo que la ventana necesita saber: con que ejecutable instala, donde esta (o deberia estar)
     ; KoRForge hoy y en que idioma hablar.
