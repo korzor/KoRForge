@@ -172,6 +172,51 @@ async function main() {
   const sinZip = await peticion('POST', '/api/backups/restore', { token, body: { fileName: 'algo.txt' } });
   comprobar('K4 restore backup que no es .zip -> 400 err_invalid_name', sinZip.status === 400 && sinZip.json && sinZip.json.code === 'err_invalid_name');
 
+  /* --- K5: actualizador (versión/URL canónicas y SHA-256 del release) ------ */
+  const updater = require(path.join(RAIZ, 'modules', 'updater.js'));
+  comprobar('K5 versión "1.2.23" válida', updater.esVersionValida('1.2.23') === true);
+  comprobar('K5 versión "..\\..\\AppData" no válida', updater.esVersionValida('..\\..\\AppData') === false);
+  comprobar('K5 URL canónica aceptada', updater.esUrlDeInstalador(updater.urlInstaladorOficial('1.2.23'), '1.2.23') === true);
+  comprobar('K5 URL ajena rechazada', updater.esUrlDeInstalador('https://evil.example/x.exe', '1.2.23') === false);
+  comprobar('K5 URL de OTRA versión rechazada', updater.esUrlDeInstalador(updater.urlInstaladorOficial('1.2.22'), '1.2.23') === false);
+  comprobar('K5 asset API ajeno rechazado', updater.esUrlDeInstalador('https://api.github.com/repos/otro/Repo/releases/assets/1', '1.2.23') === false);
+
+  const dlVersion = await peticion('POST', '/api/app-updates/download', {
+    token, body: { downloadUrl: 'https://evil.example/x.exe', version: '..\\..\\x' }
+  });
+  comprobar('K5 /api/app-updates/download con versión basura -> 400 err_invalid_version',
+    dlVersion.status === 400 && dlVersion.json && dlVersion.json.code === 'err_invalid_version');
+
+  const dlUrl = await peticion('POST', '/api/app-updates/download', {
+    token, body: { downloadUrl: 'https://evil.example/x.exe', version: '1.2.23' }
+  });
+  comprobar('K5 /api/app-updates/download con URL ajena -> 400 err_invalid_url',
+    dlUrl.status === 400 && dlUrl.json && dlUrl.json.code === 'err_invalid_url');
+
+  /* Contrato del release real: SHA256SUMS.txt publicado incluye el hash del instalador de ESTA
+     versión y coincide con el binario local de release/ (si lo hay). Necesita red; si no hay,
+     se avisa y no cuenta como fallo. */
+  const versionActual = require(path.join(RAIZ, 'package.json')).version;
+  try {
+    const rSums = await fetch(updater.urlSha256Sums(versionActual), {
+      headers: { 'User-Agent': 'KoRForge-security-probe/1.0' }
+    });
+    const texto = rSums.ok ? await rSums.text() : '';
+    const nombreExe = `KoRForge-Setup-${versionActual}.exe`;
+    const linea = texto.split(/\r?\n/).map((l) => l.trim()).find((l) => l.endsWith('  ' + nombreExe));
+    comprobar('K5 el release publica SHA256SUMS del instalador', !!(linea && /^[0-9a-f]{64}\s/.test(linea)), 'sin línea para ' + nombreExe);
+    if (linea) {
+      const hashSums = linea.split(/\s+/)[0].toLowerCase();
+      const instaladorLocal = path.join(RAIZ, 'release', nombreExe);
+      if (fs.existsSync(instaladorLocal)) {
+        const { sha256DeArchivo } = require(path.join(RAIZ, 'scripts', 'sha256-release.js'));
+        comprobar('K5 SHA-256 del release = binario local', sha256DeArchivo(instaladorLocal) === hashSums, 'no coincide');
+      }
+    }
+  } catch (_) {
+    console.log('AVISO no se pudo comprobar SHA256SUMS del release (sin red?); no cuenta como fallo');
+  }
+
   console.log('');
   if (fallos.length > 0) {
     console.error(fallos.length + ' comprobación(es) FALLIDA(S): ' + fallos.join(', '));

@@ -1079,15 +1079,17 @@ async function checkGitHubRelease() {
     const release = await ghRes.json();
     if (!release || !release.tag_name) return null;
 
-    const remoteVersion = release.tag_name.replace(/^v/i, '').trim();
+    const remoteVersion = String(release.tag_name || '').replace(/^v/i, '').trim();
+    /* K5 (auditoría 22-10-2026): solo se ofrece una versión con formato x.y.z y la descarga se
+       construye SIEMPRE desde el release oficial de esa versión (no se usa la URL de un asset
+       cualquiera ni la que mande el cliente). */
+    if (!/^\d+\.\d+\.\d+$/.test(remoteVersion)) {
+      console.warn('[KoRForge Updates] El release no tiene una version valida:', release.tag_name);
+      return null;
+    }
     const updateAvailable = compareVersions(remoteVersion, APP_VERSION) > 0;
 
-    let downloadUrl = '';
-    const exeAsset = release.assets && release.assets.find(a => a.name.toLowerCase().endsWith('.exe'));
-    if (exeAsset) {
-      // In private repos or authenticated mode, use asset.url for stream download via API
-      downloadUrl = token ? exeAsset.url : exeAsset.browser_download_url;
-    }
+    const downloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/v${remoteVersion}/KoRForge-Setup-${remoteVersion}.exe`;
 
     return {
       source: 'github',
@@ -1095,7 +1097,7 @@ async function checkGitHubRelease() {
       updateAvailable,
       currentVersion: APP_VERSION,
       remoteVersion,
-      downloadUrl: downloadUrl || `https://github.com/${GITHUB_REPO}/releases/latest`,
+      downloadUrl,
       releaseNotes: release.body || `KoRForge ${release.tag_name} disponible en GitHub.`,
       date: release.published_at ? release.published_at.substring(0, 10) : ''
     };
@@ -1126,6 +1128,14 @@ app.post('/api/app-updates/download', async (req, res) => {
   try {
     const { downloadUrl, version } = req.body;
     if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida', code: 'err_download_url_required' });
+    /* K5: versión y URL se validan aquí también; el updater las vuelve a validar y reconstruye el
+       fichero canónico. */
+    if (!updater.esVersionValida(version)) {
+      return res.status(400).json({ error: 'Versión de actualización no válida', code: 'err_invalid_version' });
+    }
+    if (!updater.esUrlDeInstalador(downloadUrl, version)) {
+      return res.status(400).json({ error: 'URL de actualización no válida', code: 'err_invalid_url' });
+    }
     updater.startUpdateDownload(downloadUrl, version).catch(err => {
       console.error('[KoRForge Update] Error en descarga de fondo:', err.message);
     });

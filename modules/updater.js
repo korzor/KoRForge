@@ -30,18 +30,91 @@ function getGitHubToken() {
   return null;
 }
 
+/* K5 (auditoría 22-10-2026): el instalador se descarga SIEMPRE del release oficial de ESA versión,
+ * con el nombre canónico, y su SHA-256 se compara con el SHA256SUMS.txt publicado en el mismo
+ * release antes de aplicarlo. La URL, la versión y el nombre de fichero que manda el cliente no se
+ * usan tal cual: se reconstruyen aquí. */
+const GITHUB_RELEASES_URL = 'https://github.com/korzor/KoRForge/releases/download';
+const VERSION_VALIDA = /^\d+\.\d+\.\d+$/;
+
+function esVersionValida(version) {
+  return typeof version === 'string' && VERSION_VALIDA.test(version.trim());
+}
+
+function urlInstaladorOficial(version) {
+  return `${GITHUB_RELEASES_URL}/v${version}/KoRForge-Setup-${version}.exe`;
+}
+
+function urlSha256Sums(version) {
+  return `${GITHUB_RELEASES_URL}/v${version}/SHA256SUMS.txt`;
+}
+
+/** URL de asset de la API de GitHub (modo con token): solo del repo del proyecto. */
+function esUrlDeAssetPermitida(url) {
+  return /^https:\/\/api\.github\.com\/repos\/korzor\/KoRForge\/releases\/assets\/\d+$/.test(String(url || ''));
+}
+
+/** La URL de descarga aceptada: la canónica del release para ESA versión, o un asset de la API. */
+function esUrlDeInstalador(url, version) {
+  if (!esVersionValida(version)) return false;
+  return url === urlInstaladorOficial(version.trim()) || esUrlDeAssetPermitida(url);
+}
+
+/** ¿El fichero vive directamente en el directorio temporal (sin escaparse)? */
+function estaEnTemporal(ruta) {
+  return path.resolve(path.dirname(ruta)) === path.resolve(os.tmpdir());
+}
+
+/** SHA-256 de un archivo, leyéndolo por trozos. */
+async function sha256DeArchivo(ruta) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    const lector = fs.createReadStream(ruta);
+    lector.on('data', (trozo) => hash.update(trozo));
+    lector.on('error', reject);
+    lector.on('end', () => resolve(hash.digest('hex')));
+  });
+}
+
+/** SHA-256 del instalador oficial según el SHA256SUMS.txt del release de esa versión. */
+async function sha256OficialDe(version) {
+  const res = await fetch(urlSha256Sums(version), {
+    headers: { 'User-Agent': 'KoRForge-InAppUpdater/1.0 (Windows NT 10.0; Win64; x64)' }
+  });
+  if (!res.ok) {
+    throw new Error(`No se pudo leer SHA256SUMS.txt del release v${version} (HTTP ${res.status}): actualización cancelada.`);
+  }
+  const texto = await res.text();
+  const nombre = `KoRForge-Setup-${version}.exe`;
+  for (const linea of texto.split(/\r?\n/)) {
+    const partes = linea.trim().split(/\s+/);
+    if (partes.length === 2 && partes[1] === nombre && /^[0-9a-f]{64}$/i.test(partes[0])) {
+      return partes[0].toLowerCase();
+    }
+  }
+  throw new Error(`SHA256SUMS.txt del release v${version} no incluye ${nombre}: actualización cancelada.`);
+}
+
 async function startUpdateDownload(downloadUrl, version) {
   if (currentDownload.status === 'downloading') {
     return { status: 'already_running', progress: currentDownload };
   }
 
-  // Si la URL es un endpoint de API (ej. /releases/assets/656295835), forzar nombre KoRForge-Setup-[ver].exe
-  let fileName = `KoRForge-Setup-${version || 'update'}.exe`;
-  const urlBase = path.basename(downloadUrl.split('?')[0]);
-  if (urlBase && urlBase.toLowerCase().endsWith('.exe')) {
-    fileName = urlBase;
+  const versionLimpia = String(version || '').trim();
+  if (!esVersionValida(versionLimpia)) {
+    throw new Error('Versión de actualización no válida.');
   }
+  if (!esUrlDeInstalador(downloadUrl, versionLimpia)) {
+    throw new Error('URL de actualización no válida: debe ser la del release oficial de KoRForge.');
+  }
+
+  /* Nombre canónico y fichero dentro del temporal (K5b: ni la versión ni el nombre del cliente
+     deciden dónde se escribe el instalador). */
+  const fileName = `KoRForge-Setup-${versionLimpia}.exe`;
   const targetPath = path.join(os.tmpdir(), fileName);
+  if (!estaEnTemporal(targetPath)) {
+    throw new Error('Ruta de descarga fuera del directorio temporal.');
+  }
 
   currentDownload = {
     status: 'downloading',
@@ -51,7 +124,8 @@ async function startUpdateDownload(downloadUrl, version) {
     speedMb: '0.0',
     error: null,
     filePath: targetPath,
-    version: version || 'nueva'
+    version: versionLimpia,
+    sha256: null
   };
 
   try {
@@ -125,7 +199,19 @@ async function startUpdateDownload(downloadUrl, version) {
 
     currentDownload.status = 'completed';
     currentDownload.percent = 100;
-    return { success: true, filePath: targetPath };
+
+    /* K5: el fichero descargado tiene que ser EXACTAMENTE el publicado en el release. */
+    const esperado = await sha256OficialDe(versionLimpia);
+    const obtenido = await sha256DeArchivo(targetPath);
+    if (obtenido !== esperado) {
+      currentDownload.status = 'error';
+      currentDownload.error = 'El SHA-256 del instalador no coincide con el publicado en el release: actualización cancelada.';
+      try { fs.rmSync(targetPath, { force: true }); } catch (_) {}
+      throw new Error(currentDownload.error);
+    }
+    currentDownload.sha256 = esperado;
+
+    return { success: true, filePath: targetPath, sha256: esperado };
   } catch (err) {
     currentDownload.status = 'error';
     currentDownload.error = err.message;
@@ -557,6 +643,17 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     throw new Error(`Instalador no válido o inexistente: ${path.basename(installerPath)}`);
   }
 
+  /* K5: el fichero tiene que seguir siendo el que se verificó al descargar, y estar en el temporal. */
+  if (!estaEnTemporal(installerPath)) {
+    throw new Error('El instalador no está en el directorio temporal: no se aplica.');
+  }
+  if (currentDownload.sha256) {
+    const ahora = crypto.createHash('sha256').update(fs.readFileSync(installerPath)).digest('hex');
+    if (ahora !== currentDownload.sha256) {
+      throw new Error('El instalador ha cambiado o está dañado: vuelve a descargar la actualización.');
+    }
+  }
+
   // Detect installed executable path
   let appExePath = process.execPath;
   const standardInstalledExe = path.join(process.env.LOCALAPPDATA || '', 'Programs', 'KoRForge', 'KoRForge.exe');
@@ -650,5 +747,9 @@ module.exports = {
   startUpdateDownload,
   applyUpdateAndRestart,
   buildApplyScript,
-  getGitHubToken
+  getGitHubToken,
+  esVersionValida,
+  urlInstaladorOficial,
+  urlSha256Sums,
+  esUrlDeInstalador
 };
