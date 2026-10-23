@@ -1,7 +1,8 @@
 {
   "name": "korforge",
-  "version": "1.2.37",
+  "version": "1.2.38",
   "description": "KoRForge - Standalone WoW Addon Manager",
+  "desktopName": "korforge.desktop",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
@@ -63,7 +64,11 @@
       "category": "Utility",
       "icon": "korforge.png",
       "artifactName": "KoRForge-${version}-linux-x86_64.${ext}",
-      "executableName": "korforge"
+      "executableName": "korforge",
+      "syncDesktopName": true
+    },
+    "toolsets": {
+      "appimage": "1.0.3"
     },
     "asar": true,
     "files": [
