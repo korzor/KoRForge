@@ -2,7 +2,7 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.2.39 - Version para probar el actualizador (Windows y Linux)
+# Titulo: KoRForge v1.2.40 - En Linux la app se reabre sola despues de actualizarse
 
-- Version preparada para probar el actualizador: al actualizar se baja la nueva, se instala sola y la app se reabre.
-- En Linux el AppImage se sustituye a si mismo y vuelve a arrancar sin pedir nada.
+- En Linux, al actualizar la app ya se reabre sola: antes se cerraba y no volvia.
+- Windows sigue igual: se instala sin ventanas y vuelve a abrirse sola.

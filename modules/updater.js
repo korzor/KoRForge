@@ -678,7 +678,15 @@ function aplicarActualizacionLinux(installerPath) {
   fs.copyFileSync(installerPath, nuevo);
   fs.chmodSync(nuevo, 0o755);
   fs.renameSync(nuevo, destino);
-  const hijo = spawn(destino, [], { detached: true, stdio: 'ignore' });
+
+  /* 23-10-2026 (prueba real en Linux): lanzar el AppImage nuevo de inmediato NO sirve. La app usa
+     app.requestSingleInstanceLock(), y el proceso viejo todavía lo tiene mientras se cierra: la
+     instancia nueva no lo consigue, se cierra sola y el usuario ve que "la app desaparece".
+     Solución: un lanzador detached que espera a que ESTE proceso muera y entonces hace exec del
+     AppImage. Determinista, sin depender de tiempos. */
+  const rutaSegura = `'${String(destino).replace(/'/g, `'\\''`)}'`;
+  const comando = `while kill -0 ${process.pid} 2>/dev/null; do sleep 0.2; done; exec ${rutaSegura}`;
+  const hijo = spawn('/bin/sh', ['-c', comando], { detached: true, stdio: 'ignore' });
   hijo.unref();
 }
 
