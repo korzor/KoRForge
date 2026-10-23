@@ -1,6 +1,6 @@
 {
   "name": "korforge",
-  "version": "1.2.42",
+  "version": "1.2.43",
   "description": "KoRForge - Standalone WoW Addon Manager",
   "desktopName": "korforge.desktop",
   "main": "main.js",
@@ -51,7 +51,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "KoRForge",
-      "artifactName": "KoRForge-Setup-${version}.${ext}",
+      "artifactName": "KoRForge-${version}-Windows.${ext}",
       "installerIcon": "korforge.ico",
       "uninstallerIcon": "korforge.ico",
       "runAfterFinish": true,
@@ -63,7 +63,7 @@
       ],
       "category": "Utility",
       "icon": "korforge.png",
-      "artifactName": "KoRForge-${version}-linux-x86_64.${ext}",
+      "artifactName": "KoRForge-${version}-Linux.${ext}",
       "executableName": "korforge",
       "syncDesktopName": true
     },

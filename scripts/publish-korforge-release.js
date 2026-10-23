@@ -37,8 +37,8 @@ const registroPath = path.join(centolosDir, 'data', 'korforge-releases.json');
 
 console.log(`[KoRForge web] Publicando v${version} en ${releasesDir}`);
 
-const installerName = `KoRForge-Setup-${version}.exe`;
-const appImageName = `KoRForge-${version}-linux-x86_64.AppImage`;
+const installerName = `KoRForge-${version}-Windows.exe`;
+const appImageName = `KoRForge-${version}-Linux.AppImage`;
 
 /* 1. Empaquetar (salvo --no-build) ---------------------------------------- */
 if (!sinBuild) {
@@ -79,7 +79,9 @@ console.log(`[2/4] Copiados: ${installerName}${hayAppImage ? ' y ' + appImageNam
 
 for (const f of fs.readdirSync(releasesDir)) {
   if (f === installerName || f === appImageName || f === '.gitkeep') continue;
-  if (!/^KoRForge(-Setup-.*\.exe|-v.*\.zip|-\d.*-win\.zip|-\d.*-linux-x86_64\.AppImage)$/i.test(f)) continue;
+  /* Limpia versiones anteriores y tambien los nombres antiguos (KoRForge-Setup-*.exe y
+     KoRForge-*-linux-x86_64.AppImage), que ya no se publican. */
+  if (!/^KoRForge-.*\.(exe|zip|AppImage)$/i.test(f)) continue;
   fs.unlinkSync(path.join(releasesDir, f));
   console.log(`  fuera de la web (version anterior o retirada): ${f}`);
 }
@@ -115,7 +117,7 @@ const registro = [{
   descargas: [
     {
       tipo: 'instalador',
-      nombre: `KoRForge v${version} (Instalador Oficial .exe)`,
+      nombre: `KoRForge ${version} · Windows`,
       archivo: installerName,
       tamano: mb(installerName),
       sha256: hashPorArchivo[installerName] || '',
@@ -125,7 +127,7 @@ const registro = [{
     },
     ...(hayAppImage ? [{
       tipo: 'appimage',
-      nombre: `KoRForge v${version} (Linux .AppImage)`,
+      nombre: `KoRForge ${version} · Linux`,
       archivo: appImageName,
       tamano: mb(appImageName),
       sha256: hashPorArchivo[appImageName] || '',

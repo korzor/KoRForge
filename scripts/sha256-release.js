@@ -66,8 +66,8 @@ function escribirSha256Sums(destino, entradas) {
 function binariosDeVersion(version) {
   const releaseDir = path.join(projectDir, 'release');
   const candidatos = [
-    path.join(releaseDir, `KoRForge-Setup-${version}.exe`),
-    path.join(releaseDir, `KoRForge-${version}-linux-x86_64.AppImage`),
+    path.join(releaseDir, `KoRForge-${version}-Windows.exe`),
+    path.join(releaseDir, `KoRForge-${version}-Linux.AppImage`),
   ];
   return candidatos.filter((ruta) => fs.existsSync(ruta));
 }

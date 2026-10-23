@@ -2,8 +2,6 @@
 
 <img src="korforge-banner.png" alt="KoRForge" width="420" />
 
-# ⚔️ KoRForge
-
 **The World of Warcraft addon manager: fast, tiny and ad-free.**
 **El gestor de addons para World of Warcraft: rápido, ultraligero y sin publicidad.**
 

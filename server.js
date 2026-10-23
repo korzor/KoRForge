@@ -1154,7 +1154,10 @@ async function checkGitHubRelease() {
     const updateAvailable = compareVersions(remoteVersion, APP_VERSION) > 0;
 
     const plataforma = process.platform === 'linux' ? 'linux' : 'win32';
-    const downloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/v${remoteVersion}/${updater.nombreDelAsset(remoteVersion, plataforma)}`;
+    /* 23-10-2026: la URL se busca entre los assets REALES del release (nombre nuevo, nombres
+       antiguos o, en ultimo caso, el unico binario de esa version). Asi el renombrado de ficheros
+       no rompe la actualizacion de nadie. */
+    const downloadUrl = updater.urlDelAssetEnRelease(release, remoteVersion, plataforma);
 
     return {
       source: 'github',

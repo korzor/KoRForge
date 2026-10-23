@@ -54,15 +54,43 @@ function plataformaActual() {
   return process.platform === 'linux' ? 'linux' : 'win32';
 }
 
-/** Nombre canónico del binario de ESTA versión en el release según la plataforma. */
+/** Nombre canónico del binario de ESTA versión en el release según la plataforma.
+ *  23-10-2026 (dueño): nombres más amigables. Antes eran `KoRForge-Setup-<v>.exe` y
+ *  `KoRForge-<v>-linux-x86_64.AppImage`; ahora `KoRForge-<v>-Windows.exe` y `KoRForge-<v>-Linux.AppImage`.
+ *  Ojo: en la web y en la release se leen como «KoRForge 1.2.43 · Windows» / «· Linux», con espacios,
+ *  pero el FICHERO va con guiones (un espacio en una URL acaba en %20 y complica todo). */
 function nombreDelAsset(version, plataforma = plataformaActual()) {
   return plataforma === 'linux'
-    ? `KoRForge-${version}-linux-x86_64.AppImage`
-    : `KoRForge-Setup-${version}.exe`;
+    ? `KoRForge-${version}-Linux.AppImage`
+    : `KoRForge-${version}-Windows.exe`;
+}
+
+/** Nombres antiguos del binario (para poder actualizar desde versiones anteriores al cambio). */
+function nombresDeAssetAntiguos(version, plataforma = plataformaActual()) {
+  return plataforma === 'linux'
+    ? [`KoRForge-${version}-linux-x86_64.AppImage`]
+    : [`KoRForge-Setup-${version}.exe`];
 }
 
 function urlInstaladorOficial(version, plataforma = plataformaActual()) {
   return `${GITHUB_RELEASES_URL}/v${version}/${nombreDelAsset(version, plataforma)}`;
+}
+
+/** URL del binario mirando los assets REALES del release: primero el nombre nuevo, luego los
+ *  antiguos y, si no aparece ninguno, cualquier asset que sea el binario de esa versión. Así el
+ *  cambio de nombres (o un futuro renombrado) no deja a nadie sin actualización. */
+function urlDelAssetEnRelease(release, version, plataforma = plataformaActual()) {
+  const assets = Array.isArray(release && release.assets) ? release.assets : [];
+  const nombres = [nombreDelAsset(version, plataforma), ...nombresDeAssetAntiguos(version, plataforma)];
+  for (const nombre of nombres) {
+    const encontrado = assets.find((a) => a && a.name === nombre);
+    if (encontrado && encontrado.browser_download_url) return encontrado.browser_download_url;
+  }
+  const extension = plataforma === 'linux' ? /\.AppImage$/i : /\.exe$/i;
+  const suelto = assets.find((a) => a && extension.test(a.name || '')
+    && String(a.name).includes(version) && !/SHA256SUMS/i.test(a.name || ''));
+  if (suelto && suelto.browser_download_url) return suelto.browser_download_url;
+  return urlInstaladorOficial(version, plataforma);
 }
 
 function urlSha256Sums(version) {
@@ -74,10 +102,20 @@ function esUrlDeAssetPermitida(url) {
   return /^https:\/\/api\.github\.com\/repos\/korzor\/KoRForge\/releases\/assets\/\d+$/.test(String(url || ''));
 }
 
-/** La URL de descarga aceptada: la canónica del release para ESA versión, o un asset de la API. */
+/** La URL de descarga aceptada: un binario (.exe / .AppImage) de la release oficial de ESA versión,
+ *  con cualquier nombre (asi el renombrado de ficheros no bloquea la actualizacion), o un asset de
+ *  la API de GitHub. Sigue sin valer cualquier URL de fuera: repo y version van fijados. */
 function esUrlDeInstalador(url, version) {
   if (!esVersionValida(version)) return false;
-  return url === urlInstaladorOficial(version.trim()) || esUrlDeAssetPermitida(url);
+  const recibida = String(url || '');
+  const decodificada = (() => { try { return decodeURI(recibida); } catch (_) { return recibida; } })();
+  const base = `${GITHUB_RELEASES_URL}/v${version.trim()}/`;
+  for (const candidata of [recibida, decodificada]) {
+    if (!candidata.startsWith(base)) continue;
+    const nombre = candidata.slice(base.length);
+    if (/^[^/\\?#]+\.(exe|AppImage)$/i.test(nombre)) return true;
+  }
+  return esUrlDeAssetPermitida(recibida);
 }
 
 /** ¿El fichero vive directamente en el directorio temporal (sin escaparse)? */
@@ -704,7 +742,7 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
   // Si no tiene extensión .exe (p.ej. id numérico de asset de GitHub), comprobar y convertir a .exe
   if (!esLinux && !esBinarioValido && fs.existsSync(installerPath)) {
     try {
-      const fixedPath = path.join(path.dirname(installerPath), `KoRForge-Setup-${currentDownload.version || 'update'}.exe`);
+      const fixedPath = path.join(path.dirname(installerPath), nombreDelAsset(currentDownload.version || 'update', 'win32'));
       fs.copyFileSync(installerPath, fixedPath);
       installerPath = fixedPath;
       currentDownload.filePath = fixedPath;
@@ -790,6 +828,8 @@ module.exports = {
   getGitHubToken,
   esVersionValida,
   nombreDelAsset,
+  nombresDeAssetAntiguos,
+  urlDelAssetEnRelease,
   urlInstaladorOficial,
   urlSha256Sums,
   esUrlDeInstalador

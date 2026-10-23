@@ -2,7 +2,7 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.2.42 - El aviso legal ya aparece en Ajustes, en letra pequeña
+# Titulo: KoRForge v1.2.43 - Instaladores con nombres claros: Windows y Linux
 
-- En Ajustes, la ficha de KoRForge lleva ahora el aviso legal de propiedad en letra pequeña.
-- En Linux y Windows sigue igual: la app se actualiza sola y se reabre.
+- Los ficheros se llaman ya KoRForge 1.2.43 Windows y KoRForge 1.2.43 Linux, sin numeros raros ni sufijos tecnicos.
+- El actualizador reconoce tanto los nombres nuevos como los antiguos, asi que nadie se queda sin actualizar.

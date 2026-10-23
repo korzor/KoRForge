@@ -45,7 +45,7 @@ console.log(`\n[1/3] Empaquetando KoRForge v${version} con electron-builder...`)
 execSync('npx electron-builder --win nsis dir', { cwd: projectDir, stdio: 'inherit' });
 
 const releaseDir = path.join(projectDir, 'release');
-const installerName = `KoRForge-Setup-${version}.exe`;
+const installerName = `KoRForge-${version}-Windows.exe`;
 const installerSrc = path.join(releaseDir, installerName);
 
 if (!fs.existsSync(installerSrc)) {
@@ -57,7 +57,7 @@ const tamano = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
 
 console.log('\n[2/3] Archivos generados:');
 console.log(`  - Instalador: ${installerName} (${tamano(fs.statSync(installerSrc).size)})`);
-const appImageName = `KoRForge-${version}-linux-x86_64.AppImage`;
+const appImageName = `KoRForge-${version}-Linux.AppImage`;
 const appImageSrc = path.join(releaseDir, appImageName);
 if (fs.existsSync(appImageSrc)) {
   console.log(`  - Linux:      ${appImageName} (${tamano(fs.statSync(appImageSrc).size)})`);
