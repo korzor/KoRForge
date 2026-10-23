@@ -33,9 +33,9 @@ const REPO_PUBLICO = 'origin';
 const version = JSON.parse(fs.readFileSync(path.join(raiz, 'package.json'), 'utf8')).version;
 const tagVersion = `v${version}`;
 
-/* Lo unico que se publica: presentacion, aviso legal para IAs, licencia y nota de la version.
-   AGENTS.md va incluido porque el README y la descripcion del repo lo citan. Nada de codigo. */
-const FICHEROS = ['README.md', 'AGENTS.md', 'LICENSE', 'docs/CAMBIOS-ULTIMA.md'];
+/* Lo unico que se publica: presentacion, aviso legal para IAs, licencia, nota de la version y el
+   banner que pinta el README (sin el, GitHub enseña el enlace roto). Nada de codigo. */
+const FICHEROS = ['README.md', 'AGENTS.md', 'LICENSE', 'docs/CAMBIOS-ULTIMA.md', 'korforge-banner.png'];
 
 /** Ejecuta git y devuelve la salida sin espacios sobrantes. */
 function git(args, opciones = {}) {
