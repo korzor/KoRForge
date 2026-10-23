@@ -564,6 +564,13 @@ document.addEventListener('DOMContentLoaded', () => {
   brandLogoBtn?.addEventListener('click', () => {
     switchTab('search');
   });
+  /* K-D6: el logo es un div con role="button"; Enter y Espacio deben abrirlo como un botón. */
+  brandLogoBtn?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      switchTab('search');
+    }
+  });
 
   // Topbar Game Version Tabs Click Event
   document.querySelectorAll('.game-version-pill').forEach(pill => {

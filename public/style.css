@@ -269,7 +269,7 @@ body.is-maximized .win-btn.win-max .icon-restore {
   font-weight: 800;
   letter-spacing: 3px;
   text-transform: uppercase;
-  background: linear-gradient(180deg, var(--c-fff)fff 0%, #fef3c7 25%, var(--accent-gold) 70%, #d97706 100%);
+  background: linear-gradient(180deg, #ffffff 0%, #fef3c7 25%, var(--accent-gold) 70%, #d97706 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.95));
@@ -2830,7 +2830,7 @@ input:checked + .slider:before {
   font-size: 0.8rem;
   font-weight: 700;
   background: rgba(16, 185, 129, 0.35);
-  color: var(--c-fff)fff;
+  color: #ffffff;
   padding: 1px 6px;
   border-radius: 6px;
   border: 1px solid rgba(52, 211, 153, 0.4);
@@ -3428,18 +3428,8 @@ input:checked + .slider:before {
   outline-offset: 2px;
 }
 
-/* K-D6: el logo pasa a button; sin el estilo de boton del sistema. */
-button.brand {
-  background: transparent;
-  border: none;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-}
-
-/* El botón del logo es zona de arrastre de la ventana: el texto y la imagen no (para que el
-   clic llegue al botón y abra el explorador). */
-.app-brand-title { -webkit-app-region: no-drag; }
+/* K-D6: el brand es ahora un div con role="button"; se le da foco visible como a cualquier botón. */
+.brand:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 2px; }
 
 /* K-D11: estilos que estaban inline en index.html. */
 .settings-select {
