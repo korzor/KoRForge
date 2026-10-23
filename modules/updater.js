@@ -793,9 +793,10 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
      arranque diga que se ha actualizado. El binario ya está verificado con su SHA-256 antes de
      llegar aquí (K5).
 
-     23-10-2026 (más tarde, pedido del dueño): ANTES de lanzar el instalador se pinta la tarjeta de
-     carga («Instalando la actualización a X…»). Antes la pintaba un script de PowerShell; ahora la
-     pinta la propia app y el usuario ve el logo durante la actualización. */
+     23-10-2026 (dueño, corrección): la tarjeta de carga NO se pinta aquí. Pintada «antes», la app se
+     cierra para dejar reemplazar sus ficheros y el usuario se queda sin verla. La tarjeta sale al
+     ARRANCAR la app ya actualizada (ver createSplash en main.js), que es cuando puede quedarse en
+     pantalla el tiempo necesario. Por eso aquí solo se lanza el instalador y se cierra enseguida. */
   const cerrarApp = () => {
     try {
       if (global.quitAndApplyUpdate) {
@@ -823,19 +824,13 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
       console.warn('[KoRForge Updater] No se pudo lanzar el instalador:', err.message);
       return false;
     }
-    /* La tarjeta se queda ~2,2 s mientras NSIS descomprime. Si el instalador mata antes el
-       proceso (lo normal para poder reemplazar ficheros), da igual: el instalador la relanza. */
-    setTimeout(cerrarApp, 2200);
+    /* Medio segundo para que el instalador arranque; después se cierra la app para que NSIS pueda
+       reemplazar sus ficheros. La tarjeta la pinta la app nueva al arrancar. */
+    setTimeout(cerrarApp, 700);
     return true;
   };
 
-  if (typeof global.mostrarTarjetaActualizacion === 'function') {
-    Promise.resolve(global.mostrarTarjetaActualizacion(currentDownload.version, lang))
-      .then(lanzarInstalador)
-      .catch(lanzarInstalador);
-  } else {
-    lanzarInstalador();
-  }
+  lanzarInstalador();
 
   return { success: true, message: 'Instalador lanzado. Reiniciando KoRForge...' };
 }
