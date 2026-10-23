@@ -223,5 +223,5 @@ afiliado, patrocinado ni respaldado por Blizzard Entertainment ni por CurseForge
 ---
 
 <div align="center">
-<sub>Made with care for the WoW Forever community · Hecho con cariño para la comunidad de WoW Forever</sub>
+<sub>Made with care for the World of Warcraft community · Hecho con cariño para la comunidad de World of Warcraft</sub>
 </div>
