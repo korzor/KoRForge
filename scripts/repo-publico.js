@@ -74,7 +74,16 @@ try {
     '',
     `Version: ${version}`,
   ].join('\n');
-  const commit = git(`commit-tree ${arbol} -m ${JSON.stringify(mensaje)}`);
+  const commit = (() => {
+    /* El mensaje va por fichero (-F): con -m y JSON.stringify los \n quedan literales. */
+    const mensajeFichero = path.join(process.env.TEMP || '/tmp', `mensaje-publico-${Date.now()}.txt`);
+    fs.writeFileSync(mensajeFichero, mensaje, 'utf8');
+    try {
+      return git(`commit-tree ${arbol} -F "${mensajeFichero}"`);
+    } finally {
+      try { fs.unlinkSync(mensajeFichero); } catch (_) {}
+    }
+  })();
 
   git(`update-ref refs/heads/publico ${commit}`);
   git(`tag -f ${tagVersion} ${commit}`);
