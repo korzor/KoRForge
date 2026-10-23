@@ -27,13 +27,27 @@ function loadRegistry() {
   return {};
 }
 
+/* K-C8 (auditoría 22-10-2026): el registro se reescribe entero en cada operación; ahora va con
+ * escritura ATÓMICA (tmp + rename) y en COLA, para que dos operaciones seguidas no se pisen ni
+ * dejen el JSON a medias. */
+let colaEscritura = Promise.resolve();
+
 function saveRegistry(data) {
   ensureRegistryFile();
-  try {
-    fs.writeFileSync(REGISTRY_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (err) {
-    console.error('[Registry] Error guardando registro de addons:', err.message);
-  }
+  const contenido = JSON.stringify(data, null, 2);
+  const temporal = REGISTRY_FILE + '.tmp-' + process.pid;
+  colaEscritura = colaEscritura.then(() => new Promise((resolver) => {
+    try {
+      fs.writeFileSync(temporal, contenido, 'utf-8');
+      fs.renameSync(temporal, REGISTRY_FILE);
+    } catch (err) {
+      console.error('[Registry] Error guardando registro de addons:', err.message);
+    } finally {
+      try { if (fs.existsSync(temporal)) fs.unlinkSync(temporal); } catch (_) {}
+      resolver();
+    }
+  }));
+  return colaEscritura;
 }
 
 function getGameRegistry(gameId = 'forever') {

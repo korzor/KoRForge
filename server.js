@@ -377,7 +377,7 @@ app.get('/api/config', (req, res) => {
 
   res.json({
     app: 'KoRForge',
-    version: '1.0.0',
+    version: require('./package.json').version,
     activeGame,
     rootWoWDir: config.rootWoWDir || '',
     games: gamesStatus,
@@ -547,7 +547,7 @@ app.get('/api/addons', (req, res) => {
     const addons = scanner.scanAddons(dir, gameId);
     res.json({ addons, count: addons.length, gameId });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -632,7 +632,7 @@ app.get('/api/addons/check-updates', async (req, res) => {
     });
   } catch (err) {
     console.error('[KoRForge] Error comprobando actualizaciones de addons:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -674,7 +674,7 @@ app.post('/api/addons/update-all', async (req, res) => {
       results
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -694,7 +694,7 @@ app.post('/api/addons/toggle', (req, res) => {
     const result = scanner.toggleAddon(dir, folderName);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -708,7 +708,7 @@ app.get('/api/addons/uninstall-preview', (req, res) => {
     const info = scanner.describeUninstall(dir, scanned, req.query.folder, gameId);
     res.json({ success: true, ...info });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -735,7 +735,7 @@ app.delete('/api/addons/:folderName', (req, res) => {
 
     res.json({ ...result, savedVariablesDeleted });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -801,7 +801,7 @@ app.get('/api/search', async (req, res) => {
     res.json({ results });
   } catch (err) {
     console.error('[KoRForge API] Error en /api/search:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -812,7 +812,7 @@ app.get('/api/mod/:modId', async (req, res) => {
     const details = await curseforge.getModDetails(modId);
     res.json({ mod: details });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -822,7 +822,7 @@ app.get('/api/mod/:modId/description', async (req, res) => {
     const html = await curseforge.getModDescription(modId);
     res.json({ html });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -832,7 +832,7 @@ app.get('/api/mod/:modId/files', async (req, res) => {
     const files = await curseforge.getModFiles(modId, 25);
     res.json({ files });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -850,7 +850,7 @@ app.post('/api/translate-mod', async (req, res) => {
     res.json({ success: true, ...result });
   } catch (err) {
     console.error(`[KoRForge API] Error traduciendo mod ${req.body?.modId}:`, err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -860,7 +860,7 @@ app.get('/api/mod/:modId/translation', async (req, res) => {
     const translation = await translator.getTranslation(modId);
     res.json({ translation });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -931,7 +931,7 @@ app.post('/api/install-curseforge', async (req, res) => {
     });
   } catch (err) {
     console.error('[KoRForge] Error al instalar desde CurseForge:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -973,7 +973,7 @@ app.post('/api/install-file', async (req, res) => {
     });
   } catch (err) {
     console.error('[KoRForge] Error al instalar archivo:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1000,7 +1000,7 @@ app.post('/api/install-url', async (req, res) => {
     res.json({ ...result, gameId: targetGame });
   } catch (err) {
     console.error('[KoRForge] Error al instalar URL:', err.message);
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1011,7 +1011,7 @@ app.get('/api/backups', (req, res) => {
     const backups = backup.listBackups(gameId);
     res.json({ backups, gameId });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1025,7 +1025,7 @@ app.post('/api/backups/create', (req, res) => {
     const result = backup.createBackup(wtfDir, gameId);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1044,7 +1044,7 @@ app.post('/api/backups/restore', (req, res) => {
     const result = backup.restoreBackup(fileName, wtfDir, targetGame);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1058,7 +1058,7 @@ app.delete('/api/backups/:fileName', (req, res) => {
     const result = backup.deleteBackup(fileName, gameId);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1165,7 +1165,7 @@ app.post('/api/app-updates/download', async (req, res) => {
     });
     res.json({ success: true, message: 'Descarga en segundo plano iniciada' });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1179,7 +1179,7 @@ app.post('/api/app-updates/cancel', (req, res) => {
   try {
     res.json(updater.cancelUpdateDownload());
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1191,7 +1191,7 @@ app.post('/api/app-updates/apply', (req, res) => {
     const result = updater.applyUpdateAndRestart(null, lang);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1209,7 +1209,7 @@ app.get('/api/profiles/export', (req, res) => {
     const result = profiles.exportProfile(scanned, gameId, gameInfo.name, customTitle);
     res.json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
@@ -1276,7 +1276,7 @@ app.post('/api/profiles/install-missing', async (req, res) => {
       results
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 

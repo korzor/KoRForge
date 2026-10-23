@@ -279,6 +279,26 @@ async function main() {
   comprobar('K15 autostart apunta al ejecutable real (sin wscript/vbs)', !fuenteServer.includes("TargetPath = 'wscript.exe'") && !fuenteServer.includes('vbsPath'));
   comprobar('K15 el runner no mata KoRForge/electron ajenos', !fuenteUpdater.includes("'KoRForge','electron'"));
 
+  /* --- K-C3/K-C4/K-C8/K14 (cierre de la auditoría) ------------------------- */
+  const pkgVersion = require(path.join(RAIZ, 'package.json')).version;
+  const configExport = await peticion('GET', '/api/config', { token });
+  comprobar('K-C3 /api/config devuelve la versión real', configExport.status === 200 && configExport.json && configExport.json.version === pkgVersion, `esperado ${pkgVersion}, recibido ${configExport.json && configExport.json.version}`);
+  comprobar('K-C4 sin respuestas 500 con err.message', !fuenteServer.includes('res.status(500).json({ error: err.message })'));
+
+  const dirRegistro = fs.mkdtempSync(path.join(os.tmpdir(), 'korforge-reg-'));
+  process.env.KORFORGE_USER_DATA = dirRegistro;
+  const registro = require(path.join(RAIZ, 'modules', 'installedRegistry.js'));
+  registro.recordInstallation('forever', { modId: 123, name: 'Prueba', version: '1.0.0', folders: ['Prueba'] });
+  await registro.recordInstallation || null;
+  const ficheroRegistro = path.join(dirRegistro, 'installed-registry.json');
+  let registroValido = false;
+  try { registroValido = !!JSON.parse(fs.readFileSync(ficheroRegistro, 'utf8'))['forever']; } catch (_) {}
+  const sinTemporales = fs.readdirSync(dirRegistro).every((n) => !n.includes('.tmp-'));
+  comprobar('K-C8 registro escrito de forma atómica (JSON válido, sin .tmp)', registroValido && sinTemporales);
+
+  const fuenteInstaller = fs.readFileSync(path.join(RAIZ, 'modules', 'installer.js'), 'utf8');
+  comprobar('K14 topes anti zip-bomb en installer.js', fuenteInstaller.includes('TAMANO_MAX_DESCOMPRIMIDO') && fuenteInstaller.includes('TAMANO_MAX_DESCARGA'));
+
   console.log('');
   if (fallos.length > 0) {
     console.error(fallos.length + ' comprobación(es) FALLIDA(S): ' + fallos.join(', '));

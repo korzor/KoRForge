@@ -108,6 +108,9 @@ async function descargarConValidacion(url) {
 
 // Downloads a file from a URL to a target local path
 async function downloadFile(url, targetPath, onProgress) {
+  /* K14 (auditoría 22-10-2026): tope de descarga por addon (300 MB) para que un paquete gigante
+     no llene el disco antes de la comprobación del zip. */
+  const TAMANO_MAX_DESCARGA = 300 * 1024 * 1024;
   const res = await descargarConValidacion(url);
 
   if (!res.ok) {
@@ -116,11 +119,19 @@ async function downloadFile(url, targetPath, onProgress) {
 
   const fileStream = fs.createWriteStream(targetPath);
   const reader = res.body.getReader();
+  let recibidos = 0;
 
   while (true) {
     const { done, value } = await reader.read();
     if (done) break;
-    fileStream.write(Buffer.from(value));
+    const trozo = Buffer.from(value);
+    recibidos += trozo.length;
+    if (recibidos > TAMANO_MAX_DESCARGA) {
+      fileStream.end();
+      try { fs.rmSync(targetPath, { force: true }); } catch (_) {}
+      throw new Error('El paquete supera el tope de descarga (300 MB).');
+    }
+    fileStream.write(trozo);
   }
 
   await new Promise((resolve, reject) => {
@@ -172,6 +183,18 @@ async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon') {
 
   try {
     const zip = new AdmZip(zipPath);
+    /* K14 (auditoría 22-10-2026): tope anti zip-bomb: el paquete no puede declarar más de 400 MB
+       descomprimidos (adm-zip ya sanea los nombres de entrada). */
+    const TAMANO_MAX_DESCOMPRIMIDO = 400 * 1024 * 1024;
+    try {
+      const total = (zip.getEntries() || []).reduce((suma, e) => suma + (Number(e.header && e.header.size) || 0), 0);
+      if (total > TAMANO_MAX_DESCOMPRIMIDO) {
+        throw new Error(`El paquete descomprimido pesa ${Math.round(total / (1024 * 1024))} MB (tope: 400 MB).`);
+      }
+    } catch (err) {
+      if (/tope/.test(String(err.message))) throw err;
+      /* zip corrupto: lo dirá extractAllTo */
+    }
     zip.extractAllTo(tempExtractDir, true);
 
     // Recursively locate all directories that contain a .toc file
