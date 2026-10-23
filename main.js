@@ -64,18 +64,71 @@ global.quitAndApplyUpdate = function() {
 
 // Terminar cualquier proceso previo o zombie antes de comprobar la instancia única
 const isMainProcess = !process.argv.some(arg => arg.startsWith('--type='));
+/* `--cerrar` lo usa el instalador/actualizador para pedir un cierre ordenado (y este proceso no puede
+   ponerse a cerrar a los demás, o se llamaría a sí mismo en bucle). */
+const esPeticionDeCierre = process.argv.some((arg) => String(arg) === '--cerrar');
 
-if (isMainProcess && process.platform === 'win32') {
+if (isMainProcess && process.platform === 'win32' && !esPeticionDeCierre) {
   try {
     const { execSync } = require('child_process');
     /* K15 (auditoría 22-10-2026): cerrar solo instancias de ESTA instalación (mismo ejecutable),
        no cualquier KoRForge.exe de la máquina. En la versión de trabajo el ejecutable es
-       electron.exe y no coincide: no se toca nada, como antes. */
-    try {
-      const cmd = `wmic process where "name='KoRForge.exe' and ExecutablePath='${process.execPath}' and ProcessId != ${process.pid}" delete`;
-      execSync(cmd, { shell: 'cmd.exe', stdio: 'ignore' });
-    } catch (_) {
-      execSync(`taskkill /F /FI "PID ne ${process.pid}" /IM KoRForge.exe /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' });
+       electron.exe y no coincide: no se toca nada, como antes.
+
+       ICONOS FANTASMA (dueño, 24-10-2026: *«se generan unos cuantos iconos fantasmas… que pasas el
+       ratón por encima y desaparecen»*). El culpable era matar la instancia anterior a la fuerza
+       (`wmic … delete`, `taskkill /F`): cuando un proceso muere así, Windows NO retira su icono de la
+       bandeja y queda pegado hasta que el ratón pasa por encima. Ahora se le pide que se cierre ÉL
+       (`--cerrar`, que además pasa por su will-quit) y solo se mata lo que no se haya ido en 5 s. */
+    const pidsDeEstaInstalacion = () => {
+      try {
+        const salida = execSync(
+          `wmic process where "name='KoRForge.exe'" get ProcessId,ExecutablePath /format:csv`,
+          { stdio: 'pipe' }
+        ).toString();
+        return salida.split(/\r?\n/)
+          .filter((linea) => linea.includes(process.execPath))
+          .map((linea) => linea.trim().split(',').pop())
+          .filter((pid) => /^\d+$/.test(String(pid)))
+          .map(Number)
+          .filter((pid) => pid !== process.pid);
+      } catch (_) {
+        return [];
+      }
+    };
+    const cerrarEducado = () => {
+      /* La via buena: pedirle a la instancia que hay en marcha que se cierre ELLA (`--cerrar`). Asi
+         pasa por su will-quit y retira su icono de la bandeja; un `taskkill /F` lo dejaria pegado. */
+      try {
+        execSync(`"${process.execPath}" --cerrar`, { stdio: 'ignore', timeout: 8000 });
+      } catch (_) {}
+      /* Respaldo por si esa instancia esta colgada y no atiende: cerrar la ventana (WM_CLOSE). */
+      for (const pid of pidsDeEstaInstalacion()) {
+        try { execSync(`taskkill /PID ${pid} 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' }); } catch (_) {}
+      }
+    };
+    const matar = (pids) => {
+      for (const pid of pids) {
+        try { execSync(`taskkill /F /PID ${pid} /T 2>nul || exit 0`, { shell: 'cmd.exe', stdio: 'ignore' }); } catch (_) {}
+      }
+    };
+
+    let otras = pidsDeEstaInstalacion();
+    if (otras.length) {
+      logBoot(`[arranque] ${otras.length} instancia(s) anterior(es): se pide cierre ordenado`);
+      cerrarEducado();
+      const limite = Date.now() + 5000;
+      while (Date.now() < limite) {
+        otras = pidsDeEstaInstalacion();
+        if (!otras.length) break;
+        /* espera corta: la instancia vieja tiene que llegar a su will-quit */
+        const fin = Date.now() + 150;
+        while (Date.now() < fin) { /* espera activa minima, sin dependencias */ }
+      }
+      if (otras.length) {
+        logBoot(`[arranque] ${otras.length} instancia(s) que no se cerraron solas: se matan (su icono de bandeja se quedara colgado)`);
+        matar(otras);
+      }
     }
   } catch (_) {}
 
@@ -101,8 +154,25 @@ if (!gotTheLock) {
   return;
 }
 
-app.on('second-instance', () => {
-  logBoot('second-instance triggered');
+/* `--cerrar` con KoRForge ya cerrado: solo se quería pedir el cierre, así que no hay nada que abrir.
+   Sin esto, el instalador o el actualizador abrirían la app justo antes de instalarla. */
+if (esPeticionDeCierre) {
+  logBoot('--cerrar sin otra instancia en marcha: se sale');
+  app.quit();
+  return;
+}
+
+app.on('second-instance', (_evento, argv) => {
+  logBoot('second-instance triggered: ' + JSON.stringify(argv || []));
+  /* `--cerrar`: otra instancia (el instalador o el actualizador) pide que KoRForge se cierre. Se
+     cierra ORDENADAMENTE para que su icono de la bandeja se retire como debe y no quede fantasma en
+     la barra de Windows (dueño, 24-10-2026). */
+  if ((argv || []).some((a) => String(a) === '--cerrar')) {
+    logBoot('second-instance: peticion de cierre ordenado');
+    isQuitting = true;
+    app.quit();
+    return;
+  }
   if (win && !win.isDestroyed()) {
     if (win.isMinimized()) win.restore();
     if (!win.isVisible()) win.show();

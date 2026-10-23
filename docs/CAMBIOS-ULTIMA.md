@@ -2,9 +2,9 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.9 - El instalador entero en una sola ventana, y con carpeta a elegir
+# Titulo: KoRForge v1.3.10 - El instalador en una ventana (con el logo) y adios a los iconos fantasma
 
-- El instalador ya no es un asistente de cinco paginas: todo pasa en la ventana de KoRForge, con el arte de la marca y su reborde dorado.
-- Por fin se puede elegir la carpeta de instalacion (antes, al actualizar, esa pagina se saltaba sola).
-- La ventana instala, avisa al terminar y abre KoRForge desde su boton; el desinstalador y los accesos directos siguen siendo los de siempre.
-- La ventana de actualizar tambien lleva el arte de KoRForge, sin recortes y con las tildes bien.
+- El instalador ya enseña el arte de KoRForge en su ventana: antes quedaba el hueco vacio porque la imagen se soltaba con otro nombre.
+- Toda la instalacion pasa en esa ventana, con la carpeta a elegir, la barra, y los botones para abrir KoRForge o cerrar.
+- Se acabaron los iconos fantasma en la barra de Windows: KoRForge se cierra ordenadamente (avisa a la instancia que hay en marcha) en vez de matarla a la fuerza.
+- La ventana de actualizar y el propio arranque usan el mismo cierre ordenado, y las tildes ya salen bien en todos los idiomas.

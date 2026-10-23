@@ -342,6 +342,25 @@ $btnInstalar.Add_Click({
     $script:lblEstado.Text = $script:textos.error
     return
   }
+  # Si KoRForge esta abierto se le pide que se cierre EL (`--cerrar`): cerrarlo a la fuerza deja su
+  # icono de la bandeja pegado en la barra de Windows hasta que pasas el raton (dueno, 24-10-2026:
+  # *"se generan unos cuantos iconos fantasmas"*).
+  try {
+    $vivas = @(Get-Process -Name KoRForge -ErrorAction SilentlyContinue)
+    if ($vivas.Count -gt 0) {
+      $exeApp = $vivas[0].Path
+      if ($exeApp -and (Test-Path -LiteralPath $exeApp)) {
+        # La primera instancia cierra la que hay en marcha; las demas son lanzamientos que se van solos.
+        try { Start-Process -FilePath $exeApp -ArgumentList '--cerrar' -Wait -WindowStyle Hidden | Out-Null } catch { }
+      }
+      foreach ($otro in $vivas) { try { [void]$otro.CloseMainWindow() } catch { } }
+      $limiteCierre = (Get-Date).AddSeconds(5)
+      while ((Get-Date) -lt $limiteCierre -and @(Get-Process -Name KoRForge -ErrorAction SilentlyContinue).Count -gt 0) {
+        Start-Sleep -Milliseconds 150
+      }
+      Get-Process -Name KoRForge -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
+    }
+  } catch { }
   try {
     # La app la abre esta ventana (boton "Abrir"), no el instalador silencioso.
     $env:KORFORGE_SIN_ABRIR = '1'
