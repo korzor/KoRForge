@@ -965,7 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filtered.length === 0) {
       favoritesTabGrid.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
-          <span class="empty-icon">⭐</span>
+          <img class="empty-icon empty-icon-img" src="icon-favorites.png" alt="" aria-hidden="true">
           <h3 class="empty-title">${favoriteMods.length === 0
             ? T('favorites_empty_title', { game: gameLabel(currentActiveGame) })
             : T('favorites_empty_filter_title')}</h3>
@@ -1089,7 +1089,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filtered.length === 0) {
       addonsGrid.innerHTML = `
         <div class="empty-state">
-          <span class="empty-icon">🛡️</span>
+          <img class="empty-icon empty-icon-img" src="icon-installed.png" alt="" aria-hidden="true">
           <h3 class="empty-title">${installedAddons.length === 0
             ? T('addons_empty_title', { game: gameLabel(currentActiveGame) })
             : T('addons_empty_filter_title')}</h3>
@@ -1542,7 +1542,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (filtered.length === 0) {
       cfResultsGrid.innerHTML = `
         <div class="empty-state">
-          <span class="empty-icon">⭐</span>
+          <img class="empty-icon empty-icon-img" src="icon-favorites.png" alt="" aria-hidden="true">
           <h3 class="empty-title">${T('favorites_empty_title', { game: gameLabel(currentActiveGame) })}</h3>
           <p class="empty-desc">${T('favorites_empty_desc')}</p>
         </div>
@@ -2414,7 +2414,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (backups.length === 0) {
         backupsList.innerHTML = `
           <div class="empty-state">
-            <span class="empty-icon">💾</span>
+            <img class="empty-icon empty-icon-img" src="icon-wtf-vault.png" alt="" aria-hidden="true">
             <h3 class="empty-title">${T('vault_empty_title', { game: gameLabel(g) })}</h3>
             <p class="empty-desc">${T('vault_empty_desc')}</p>
           </div>

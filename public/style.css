@@ -795,6 +795,15 @@ body.is-maximized .app-sidebar {
   line-height: 1;
 }
 
+/* Los estados vacíos de Favoritos / Instalados / Bóveda usan los iconos del menú lateral
+   (mismo PNG que la pestaña) en vez de un emoji. */
+.empty-state .empty-icon-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  margin-bottom: 4px;
+}
+
 .empty-state .empty-title {
   font-size: 1.15rem;
   font-weight: 700;
