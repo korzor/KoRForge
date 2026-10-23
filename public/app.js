@@ -113,8 +113,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!toastContainer) return;
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    const icon = type === 'error' ? '⚠️' : type === 'success' ? '✓' : type === 'warning' ? '⚡' : 'ℹ️';
-    toast.innerHTML = `<span class="toast-icon">${icon}</span><span class="toast-message">${message}</span>`;
+    /* K-D4 (auditoría 22-10-2026): textContent (nunca innerHTML con datos) y el contenedor lleva
+       role="status" + aria-live para que el lector de pantalla lo anuncie. */
+    const icon = document.createElement('span');
+    icon.className = 'toast-icon';
+    icon.setAttribute('aria-hidden', 'true');
+    icon.textContent = type === 'error' ? '⚠️' : type === 'success' ? '✓' : type === 'warning' ? '⚡' : 'ℹ️';
+    const texto = document.createElement('span');
+    texto.className = 'toast-message';
+    texto.textContent = String(message === undefined || message === null ? '' : message);
+    toast.appendChild(icon);
+    toast.appendChild(texto);
     toastContainer.appendChild(toast);
     setTimeout(() => {
       toast.classList.add('fade-out');
@@ -122,6 +131,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try { toast.remove(); } catch (_) {}
       }, 300);
     }, 3500);
+  }
+
+  /* K-D3 (auditoría 22-10-2026): contrato común de los modales (update, exportar, importar y
+     masiva): foco al abrir, Esc para cerrar y devolución del foco al cerrar. El role="dialog" y
+     aria-modal viven en el HTML. */
+  let focoAntesDelModal = null;
+
+  function abrirModalDialogo(modal) {
+    if (!modal) return;
+    focoAntesDelModal = document.activeElement;
+    modal.style.display = 'flex';
+    const enfocable = modal.querySelector('button:not([disabled]):not([style*="display: none"]), [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+    if (enfocable) {
+      try { enfocable.focus(); } catch (_) {}
+    }
+    if (!modal.dataset.escListener) {
+      modal.dataset.escListener = '1';
+      modal.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          cerrarModalDialogo(modal);
+        }
+      });
+    }
+  }
+
+  function cerrarModalDialogo(modal) {
+    if (!modal) return;
+    modal.style.display = 'none';
+    if (focoAntesDelModal && typeof focoAntesDelModal.focus === 'function') {
+      try { focoAntesDelModal.focus(); } catch (_) {}
+    }
+    focoAntesDelModal = null;
   }
 
   /**
@@ -153,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnCancel.textContent = cancelLabel || T('modal_cancel');
 
       let hecho = false;
+      const focoPrevio = document.activeElement;
       const alTeclear = (e) => {
         if (e.key === 'Escape') { e.preventDefault(); cerrar(false); }
         if (e.key === 'Enter') { e.preventDefault(); cerrar(true); }
@@ -170,6 +213,10 @@ document.addEventListener('DOMContentLoaded', () => {
         btnOk.removeEventListener('click', alAceptar);
         btnCancel.removeEventListener('click', alCerrar);
         if (btnClose) btnClose.removeEventListener('click', alCerrar);
+        /* K-D3: devolver el foco a donde estaba antes de abrir. */
+        if (focoPrevio && typeof focoPrevio.focus === 'function') {
+          try { focoPrevio.focus(); } catch (_) {}
+        }
         resolve(valor);
       }
 
@@ -2583,7 +2630,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnApplyUpdateRestart) btnApplyUpdateRestart.style.display = 'none';
     if (btnRecheckUpdate) btnRecheckUpdate.style.display = hayNueva ? 'none' : 'inline-flex';
     if (btnDismissUpdate) btnDismissUpdate.textContent = hayNueva ? T('upd_btn_later') : T('upd_btn_close');
-    updateModal.style.display = 'flex';
+    abrirModalDialogo(updateModal);
   }
 
   function formatInlineMd(str) {
@@ -2636,7 +2683,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function closeUpdateModal() {
-    if (updateModal) updateModal.style.display = 'none';
+    if (updateModal) cerrarModalDialogo(updateModal);
   }
 
   const updateProgressWrap = document.getElementById('updateProgressWrap');
@@ -2811,7 +2858,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btnUpdateAllAddons?.addEventListener('click', async () => {
     if (availableAddonUpdates.length === 0) return;
 
-    if (bulkUpdateModal) bulkUpdateModal.style.display = 'flex';
+    if (bulkUpdateModal) abrirModalDialogo(bulkUpdateModal);
     if (bulkProgressFill) bulkProgressFill.style.width = '0%';
     if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_progress', { done: 0, total: availableAddonUpdates.length });
     if (bulkUpdateResultsList) bulkUpdateResultsList.innerHTML = '';
@@ -2854,7 +2901,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  const closeBulkModal = () => { if (bulkUpdateModal) bulkUpdateModal.style.display = 'none'; };
+  const closeBulkModal = () => { cerrarModalDialogo(bulkUpdateModal); };
   btnCloseBulkModal?.addEventListener('click', closeBulkModal);
   btnCloseBulkModalX?.addEventListener('click', closeBulkModal);
 
@@ -2930,7 +2977,7 @@ document.addEventListener('DOMContentLoaded', () => {
         lastExportProfile = data.profile;
         exportProfileCode.value = data.code;
         if (exportProfileTitle) exportProfileTitle.value = data.profile.title;
-        if (exportProfileModal) exportProfileModal.style.display = 'flex';
+    if (exportProfileModal) abrirModalDialogo(exportProfileModal);
       }
     } catch (err) {
       showToast(T('toast_pack_error', { message: err.message }), 'error');
@@ -2939,7 +2986,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnExportProfile?.addEventListener('click', exportProfile);
 
-  const closeExportModal = () => { if (exportProfileModal) exportProfileModal.style.display = 'none'; };
+  const closeExportModal = () => { cerrarModalDialogo(exportProfileModal); };
   btnCloseExportModal?.addEventListener('click', closeExportModal);
   btnDismissExport?.addEventListener('click', closeExportModal);
   btnCopyProfileCode?.addEventListener('click', () => {
@@ -2956,10 +3003,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'none';
     if (importProgressWrap) importProgressWrap.style.display = 'none';
     currentAnalyzedProfile = null;
-    if (importProfileModal) importProfileModal.style.display = 'flex';
+    if (importProfileModal) abrirModalDialogo(importProfileModal);
   });
 
-  const closeImportModal = () => { if (importProfileModal) importProfileModal.style.display = 'none'; };
+  const closeImportModal = () => { cerrarModalDialogo(importProfileModal); };
   btnCloseImportModal?.addEventListener('click', closeImportModal);
   btnDismissImport?.addEventListener('click', closeImportModal);
 

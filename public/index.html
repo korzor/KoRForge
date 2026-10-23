@@ -24,26 +24,26 @@
     <!-- Topbar -->
     <header class="app-topbar">
       <div class="topbar-left">
-        <div class="brand" id="brandLogoBtn" data-i18n-title="brand_home">
-          <img src="korforge.png" alt="KoRForge" class="app-brand-icon">
+        <button class="brand" id="brandLogoBtn" type="button" data-i18n-title="brand_home" data-i18n-aria-label="brand_home">
+          <img src="korforge.png" alt="" class="app-brand-icon" aria-hidden="true">
           <span class="app-brand-title">ORFORGE</span>
-        </div>
+        </button>
       </div>
 
       <!-- Filtros de versión del juego en la barra de título -->
       <div class="topbar-game-tabs" id="topbarGameTabs">
         <!-- Sin etiqueta de versión: el logo ya identifica el juego y así los pills ocupan menos
              (dueño, 20-10-2026). La versión sigue en el title (tooltip). -->
-        <button class="game-version-pill active highlight-forever" data-game-id="forever" data-flavor="88568" data-i18n-title="pill_forever">
+        <button class="game-version-pill active highlight-forever" data-game-id="forever" data-flavor="88568" data-i18n-title="pill_forever" data-i18n-aria-label="pill_forever">
           <img class="pill-logo" src="logos/wow-forever.png" data-i18n-alt="pill_forever" width="320" height="271" decoding="async">
         </button>
-        <button class="game-version-pill" data-game-id="retail" data-flavor="517" data-i18n-title="pill_retail">
+        <button class="game-version-pill" data-game-id="retail" data-flavor="517" data-i18n-title="pill_retail" data-i18n-aria-label="pill_retail">
           <img class="pill-logo" src="logos/wow-retail.png" data-i18n-alt="pill_retail" width="320" height="255" decoding="async">
         </button>
-        <button class="game-version-pill" data-game-id="classic_era" data-flavor="67408" data-i18n-title="pill_classic_era">
+        <button class="game-version-pill" data-game-id="classic_era" data-flavor="67408" data-i18n-title="pill_classic_era" data-i18n-aria-label="pill_classic_era">
           <img class="pill-logo" src="logos/wow-classic.png" data-i18n-alt="pill_classic_era" width="320" height="137" decoding="async">
         </button>
-        <button class="game-version-pill" data-game-id="classic" data-flavor="79434,77522,73713,81212" data-i18n-title="pill_classic">
+        <button class="game-version-pill" data-game-id="classic" data-flavor="79434,77522,73713,81212" data-i18n-title="pill_classic" data-i18n-aria-label="pill_classic">
           <img class="pill-logo" src="logos/wow-prog.png" data-i18n-alt="pill_classic" width="320" height="144" decoding="async">
         </button>
       </div>
@@ -161,7 +161,7 @@
           <div class="toolbar">
             <div class="search-box">
               <span class="search-icon">🔍</span>
-              <input type="text" id="searchInput" data-i18n-placeholder="addons_filter_placeholder">
+              <input type="text" id="searchInput" data-i18n-placeholder="addons_filter_placeholder" data-i18n-aria-label="aria_search">
             </div>
             <div class="filter-pills">
               <button class="pill active" data-filter="all" data-i18n="filter_all">All</button>
@@ -180,7 +180,7 @@
         <section class="tab-pane" id="pane-favorites">
           <div class="content-header">
             <div>
-              <h1 class="page-title" data-i18n="favorites_title">Favorite Addons</h1>
+              <h2 class="page-title" data-i18n="favorites_title">Favorite Addons</h2>
               <p class="page-subtitle" data-i18n="favorites_subtitle">Your saved addon collection, always at hand and up to date.</p>
             </div>
             <div class="header-actions">
@@ -193,7 +193,7 @@
           <div class="toolbar">
             <div class="search-box">
               <span class="search-icon">🔍</span>
-              <input type="text" id="favSearchInput" data-i18n-placeholder="favorites_search_placeholder">
+              <input type="text" id="favSearchInput" data-i18n-placeholder="favorites_search_placeholder" data-i18n-aria-label="aria_search">
             </div>
           </div>
 
@@ -223,7 +223,7 @@
             </div>
             <div class="cf-search-input-wrap">
               <span class="cf-search-icon">🔍</span>
-              <input type="text" id="cfSearchInput" data-i18n-placeholder="catalog_search_placeholder">
+              <input type="text" id="cfSearchInput" data-i18n-placeholder="catalog_search_placeholder" data-i18n-aria-label="aria_search">
               <button class="cf-clear-search-btn" id="btnClearSearchText" data-i18n-title="clear_search_hint" style="display:none;">✕</button>
             </div>
 
@@ -490,7 +490,7 @@
         <section class="tab-pane" id="pane-backups">
           <div class="content-header">
             <div>
-              <h1 class="page-title" data-i18n="vault_title">Configuration Vault (WTF)</h1>
+              <h2 class="page-title" data-i18n="vault_title">Configuration Vault (WTF)</h2>
               <p class="page-subtitle" id="vaultSubtitle" data-i18n-skip>Clean snapshots of your macros, bars and interface profiles.</p>
             </div>
             <button class="btn btn-gold" id="btnCreateBackup" data-i18n="vault_create">
@@ -507,7 +507,7 @@
         <section class="tab-pane" id="pane-settings">
           <div class="content-header">
             <div>
-              <h1 class="page-title" data-i18n="settings_title">KoRForge Settings</h1>
+              <h2 class="page-title" data-i18n="settings_title">KoRForge Settings</h2>
               <p class="page-subtitle" data-i18n="settings_subtitle">System preferences, window behaviour and World of Warcraft directories.</p>
             </div>
           </div>
@@ -529,7 +529,7 @@
                     <span class="option-title" data-i18n="settings_lang_title">Application Language</span>
                     <span class="option-desc" data-i18n="settings_lang_desc">Choose the interface language for KoRForge.</span>
                   </div>
-                  <select id="settingAppLanguage" class="settings-select" style="background: var(--bg-card); border: 1px solid var(--border-subtle); color: #fff; padding: 6px 12px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; outline: none;">
+                  <select id="settingAppLanguage" class="settings-select">
                     <!-- Nombres nativos de cada idioma: no se traducen -->
                     <option value="en">English (Default)</option>
                     <option value="es">Español</option>
@@ -543,7 +543,7 @@
                     <span class="option-title" data-i18n="settings_autostart_title">Launch on Windows startup</span>
                     <span class="option-desc" data-i18n="settings_autostart_desc">Start KoRForge automatically in the background when the PC boots.</span>
                   </div>
-                  <label class="switch">
+                  <label class="switch" data-i18n-aria-label="settings_autostart_title">
                     <input type="checkbox" id="settingAutoStart">
                     <span class="slider"></span>
                   </label>
@@ -555,7 +555,7 @@
                     <span class="option-title" data-i18n="settings_minimized_title">Start minimized in the background</span>
                     <span class="option-desc" data-i18n="settings_minimized_desc">Do not bring the window to the front on launch until you open it.</span>
                   </div>
-                  <label class="switch">
+                  <label class="switch" data-i18n-aria-label="settings_minimized_title">
                     <input type="checkbox" id="settingStartMinimized">
                     <span class="slider"></span>
                   </label>
@@ -567,7 +567,7 @@
                     <span class="option-title" data-i18n="settings_closetotray_title">Minimize to tray on Close</span>
                     <span class="option-desc" data-i18n="settings_closetotray_desc">When you click Close, the app stays active in the system tray next to the clock.</span>
                   </div>
-                  <label class="switch">
+                  <label class="switch" data-i18n-aria-label="settings_closetotray_title">
                     <input type="checkbox" id="settingCloseToTray">
                     <span class="slider"></span>
                   </label>
@@ -591,7 +591,7 @@
                 </div>
                 <p class="autodetect-desc" data-i18n-html="settings_autodetect_desc">Enter the main World of Warcraft folder.</p>
                 <div class="input-group">
-                  <input type="text" id="rootWoWPath" placeholder="C:\Program Files (x86)\World of Warcraft">
+                  <input type="text" id="rootWoWPath" placeholder="C:\Program Files (x86)\World of Warcraft" aria-label="Ruta raíz de World of Warcraft" data-i18n-aria-label="aria_game_path">
                   <button class="btn btn-primary" id="btnAutoDetectGames" data-i18n="settings_autodetect_btn">🔍 Auto-detect Clients</button>
                 </div>
               </div>
@@ -610,7 +610,7 @@
               </div>
 
               <div class="input-group">
-                <input type="text" id="installUrlInput" data-i18n-placeholder="settings_manual_placeholder">
+                <input type="text" id="installUrlInput" data-i18n-placeholder="settings_manual_placeholder" data-i18n-aria-label="aria_install_url">
                 <button class="btn btn-primary" id="btnInstallUrl" data-i18n="settings_manual_btn">Download and Install</button>
               </div>
 
@@ -635,11 +635,11 @@
                 </div>
                 <div class="about-item">
                   <span class="about-label" data-i18n="about_telemetry">Telemetry</span>
-                  <span class="about-val" style="color:var(--status-green);" data-i18n="about_no_telemetry">0% (none)</span>
+                  <span class="about-val about-val-green" data-i18n="about_no_telemetry">0% (none)</span>
                 </div>
                 <div class="about-item">
                   <span class="about-label" data-i18n="about_ads">Advertising</span>
-                  <span class="about-val" style="color:var(--status-green);" data-i18n="about_no_ads">0% (clean and light)</span>
+                  <span class="about-val about-val-green" data-i18n="about_no_ads">0% (clean and light)</span>
                 </div>
                 <div class="about-item">
                   <span class="about-label" data-i18n="about_translation">Translation</span>
@@ -675,7 +675,7 @@
 
   <!-- Modal: Actualización de la Aplicación -->
   <div class="app-modal-backdrop" id="updateModal" style="display: none;">
-    <div class="app-modal-dialog">
+    <div class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="app-modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon" id="modalIcon">
@@ -731,25 +731,25 @@
 
   <!-- Modal: Exportar Pack de Addons -->
   <div class="app-modal-backdrop" id="exportProfileModal" style="display: none;">
-    <div class="app-modal-dialog">
+    <div class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="exportModalTitle">
       <div class="app-modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon">📤</span>
           <div>
-            <h3 data-i18n="pack_export_title">Share Addon Pack</h3>
+            <h3 id="exportModalTitle" data-i18n="pack_export_title">Share Addon Pack</h3>
             <span class="modal-sub" data-i18n="pack_export_sub">Export your active setup so any friend can install it in 1 click</span>
           </div>
         </div>
         <button class="btn-modal-close" id="btnCloseExportModal" data-i18n-title="pack_close">✕</button>
       </div>
       <div class="app-modal-body">
-        <div style="margin-bottom: 14px;">
-          <label style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 6px; display: block;" data-i18n="pack_title_label">Pack Title:</label>
-          <input type="text" id="exportProfileTitle" style="width: 100%; padding: 8px 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem;" data-i18n-placeholder="pack_title_placeholder">
+        <div class="modal-field">
+          <label class="modal-label" data-i18n="pack_title_label">Pack Title:</label>
+          <input type="text" id="exportProfileTitle" class="modal-input" data-i18n-placeholder="pack_title_placeholder">
         </div>
         <div class="update-notes-box">
           <h4 data-i18n="pack_code_label">Pack Code (copy and share via chat or Discord):</h4>
-          <textarea id="exportProfileCode" readonly style="width: 100%; height: 110px; background: #0c0d12; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #f59e0b; font-family: monospace; font-size: 0.8rem; padding: 10px; resize: none;"></textarea>
+          <textarea id="exportProfileCode" readonly class="modal-textarea modal-textarea-code"></textarea>
         </div>
       </div>
       <div class="app-modal-footer">
@@ -761,12 +761,12 @@
 
   <!-- Modal: Importar Pack de Addons -->
   <div class="app-modal-backdrop" id="importProfileModal" style="display: none;">
-    <div class="app-modal-dialog" style="max-width: 620px;">
+    <div class="app-modal-dialog modal-dialog-wide" role="dialog" aria-modal="true" aria-labelledby="importModalTitle">
       <div class="app-modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon">📥</span>
           <div>
-            <h3 data-i18n="pack_import_title">Load Addon Pack</h3>
+            <h3 id="importModalTitle" data-i18n="pack_import_title">Load Addon Pack</h3>
             <span class="modal-sub" data-i18n="pack_import_sub">Paste the pack code a friend shared with you</span>
           </div>
         </div>
@@ -774,16 +774,16 @@
       </div>
       <div class="app-modal-body">
         <div id="importInputPhase">
-          <label style="font-size: 0.85rem; color: #a1a1aa; margin-bottom: 6px; display: block;" data-i18n="pack_input_label">Paste the pack code here (KORP-...):</label>
-          <textarea id="importProfileInput" style="width: 100%; height: 95px; background: #0c0d12; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-family: monospace; font-size: 0.82rem; padding: 10px; resize: none;" data-i18n-placeholder="pack_input_placeholder"></textarea>
-          <button class="btn btn-primary" id="btnAnalyzeProfile" style="margin-top: 10px; width: 100%;" data-i18n="pack_analyze">🔍 Analyze Pack</button>
+          <label class="modal-label" data-i18n="pack_input_label">Paste the pack code here (KORP-...):</label>
+          <textarea id="importProfileInput" class="modal-textarea modal-textarea-short" data-i18n-placeholder="pack_input_placeholder"></textarea>
+          <button class="btn btn-primary btn-full" id="btnAnalyzeProfile" data-i18n="pack_analyze">🔍 Analyze Pack</button>
         </div>
 
-        <div id="importAnalysisPhase" style="display: none; margin-top: 15px;">
-          <div id="profileAnalysisSummary" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 0.88rem; color: #fef3c7;"></div>
-          <div style="max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px; background: rgba(0,0,0,0.3);" id="profileMissingList"></div>
+        <div id="importAnalysisPhase" class="import-analysis" style="display: none;">
+          <div id="profileAnalysisSummary" class="import-summary"></div>
+          <div class="import-list" id="profileMissingList"></div>
 
-          <div class="update-progress-wrap" id="importProgressWrap" style="display: none; margin-top: 12px;">
+          <div class="update-progress-wrap import-progress" id="importProgressWrap" style="display: none;">
             <div class="update-progress-bar">
               <div class="update-progress-fill" id="importProgressFill" style="width: 0%;"></div>
             </div>
@@ -800,25 +800,25 @@
 
   <!-- Modal: Progreso de Actualización Masiva de Addons (El Botón Mágico) -->
   <div class="app-modal-backdrop" id="bulkUpdateModal" style="display: none;">
-    <div class="app-modal-dialog">
+    <div class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bulkModalTitle">
       <div class="app-modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon">⚡</span>
           <div>
-            <h3 data-i18n="bulk_title">Bulk Addon Update</h3>
+            <h3 id="bulkModalTitle" data-i18n="bulk_title">Bulk Addon Update</h3>
             <span class="modal-sub" id="bulkModalSub" data-i18n="bulk_sub">Updating your addons to the latest version...</span>
           </div>
         </div>
         <button class="btn-modal-close" id="btnCloseBulkModalX" data-i18n-title="upd_btn_close" style="display: none;">✕</button>
       </div>
       <div class="app-modal-body">
-        <div class="update-progress-wrap" style="margin-bottom: 15px;">
+        <div class="update-progress-wrap update-progress-wrap--mb">
           <div class="update-progress-bar">
             <div class="update-progress-fill" id="bulkProgressFill" style="width: 0%;"></div>
           </div>
           <div class="update-progress-info" id="bulkProgressInfo" data-i18n="bulk_starting">Starting the batch update...</div>
         </div>
-        <div id="bulkUpdateResultsList" style="max-height: 200px; overflow-y: auto; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 10px; background: rgba(0,0,0,0.3);"></div>
+        <div id="bulkUpdateResultsList" class="bulk-results"></div>
       </div>
       <div class="app-modal-footer">
         <button class="btn btn-primary" id="btnCloseBulkModal" style="display: none;" data-i18n="bulk_btn_done">✓ Done</button>
@@ -850,7 +850,7 @@
   </div>
 
   <!-- Notification Toast Container -->
-  <div id="toastContainer" class="toast-container"></div>
+  <div id="toastContainer" class="toast-container" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <script src="i18n.js"></script>
   <script src="app.js"></script>

@@ -483,6 +483,9 @@
       err_invalid_version: 'The update version is not valid',
       err_invalid_url: 'The update download URL is not valid',
       err_bad_url: 'The download URL is not valid',
+      aria_search: 'Search addons',
+      aria_install_url: 'Install from URL or GitHub',
+      aria_game_path: 'World of Warcraft root folder',
       err_path_unavailable: 'The path is not configured or is not accessible for this game',
       err_no_compatible_file: 'No file compatible with the active WoW client was found (Forever / Classic). To avoid LUA errors, Retail-only versions are not installed.',
       err_download_url_required: 'A download URL is required',
@@ -962,6 +965,9 @@
       err_invalid_version: 'La versión de la actualización no es válida',
       err_invalid_url: 'La URL de descarga de la actualización no es válida',
       err_bad_url: 'La URL de descarga no es válida',
+      aria_search: 'Buscar addons',
+      aria_install_url: 'Instalar desde URL o GitHub',
+      aria_game_path: 'Carpeta raíz de World of Warcraft',
       err_path_unavailable: 'La ruta no está configurada o no es accesible para este juego',
       err_no_compatible_file: 'No se encontró un archivo compatible con el cliente de WoW activo (Forever / Classic). Para evitar errores LUA no se instalan versiones exclusivas de Retail.',
       err_download_url_required: 'Falta la URL de descarga',
@@ -1441,6 +1447,9 @@
       err_invalid_version: 'A versión da actualización non é válida',
       err_invalid_url: 'A URL de descarga da actualización non é válida',
       err_bad_url: 'A URL de descarga non é válida',
+      aria_search: 'Buscar addons',
+      aria_install_url: 'Instalar desde URL ou GitHub',
+      aria_game_path: 'Cartafol raíz de World of Warcraft',
       err_path_unavailable: 'A ruta non está configurada ou non é accesible para este xogo',
       err_no_compatible_file: 'Non se atopou un ficheiro compatible co cliente de WoW activo (Forever / Classic). Para evitar erros LUA non se instalan versións exclusivas de Retail.',
       err_download_url_required: 'Falta a URL de descarga',
@@ -1920,6 +1929,9 @@
       err_invalid_version: "La version de la mise à jour n'est pas valide",
       err_invalid_url: "L'URL de téléchargement de la mise à jour n'est pas valide",
       err_bad_url: "L'URL de téléchargement n'est pas valide",
+      aria_search: 'Rechercher des addons',
+      aria_install_url: 'Installer depuis une URL ou GitHub',
+      aria_game_path: 'Dossier racine de World of Warcraft',
       err_path_unavailable: 'Le chemin n’est pas configuré ou n’est pas accessible pour ce jeu',
       err_no_compatible_file: 'Aucun fichier compatible avec le client WoW actif n’a été trouvé (Forever / Classic). Pour éviter les erreurs LUA, les versions exclusives à Retail ne sont pas installées.',
       err_download_url_required: 'L’URL de téléchargement est requise',
@@ -2399,6 +2411,9 @@
       err_invalid_version: "La versione dell'aggiornamento non è valida",
       err_invalid_url: "L'URL di download dell'aggiornamento non è valido",
       err_bad_url: "L'URL di download non è valido",
+      aria_search: 'Cerca addon',
+      aria_install_url: "Installa da URL o GitHub",
+      aria_game_path: 'Cartella principale di World of Warcraft',
       err_path_unavailable: 'Il percorso non è configurato o non è accessibile per questo gioco',
       err_no_compatible_file: 'Nessun file compatibile con il client WoW attivo trovato (Forever / Classic). Per evitare errori LUA non si installano versioni esclusive di Retail.',
       err_download_url_required: 'Manca l’URL di download',
@@ -2532,6 +2547,12 @@
     document.querySelectorAll('[data-i18n-alt]').forEach((el) => {
       const key = el.getAttribute('data-i18n-alt');
       if (key) el.setAttribute('alt', t(key));
+    });
+
+    /* K-D5 (auditoría 22-10-2026): nombre accesible para lectores de pantalla. */
+    document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => {
+      const key = el.getAttribute('data-i18n-aria-label');
+      if (key) el.setAttribute('aria-label', t(key));
     });
 
     const titleEl = document.querySelector('[data-i18n-doctitle]');

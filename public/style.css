@@ -842,7 +842,6 @@ body.is-maximized .app-sidebar {
   color: #fff;
   font-size: 0.85rem;
   width: 100%;
-  outline: none;
 }
 
 .filter-pills {
@@ -1120,7 +1119,6 @@ input:checked + .slider:before {
   color: #fff;
   font-family: var(--font-mono);
   font-size: 0.85rem;
-  outline: none;
 }
 
 .input-group input:focus {
@@ -1382,7 +1380,6 @@ input:checked + .slider:before {
   font-size: 0.8rem;
   color: #fff;
   font-family: var(--font-mono);
-  outline: none;
 }
 
 .game-path-input:focus {
@@ -1709,7 +1706,6 @@ input:checked + .slider:before {
   border: none;
   color: #fff;
   font-size: 0.88rem;
-  outline: none;
 }
 
 .cf-clear-search-btn {
@@ -1758,7 +1754,6 @@ input:checked + .slider:before {
   color: #fff;
   font-size: 0.84rem;
   font-weight: 600;
-  outline: none;
   cursor: pointer;
   padding-right: 4px;
 }
@@ -3409,3 +3404,52 @@ input:checked + .slider:before {
 .btn-vault-delete:hover .vault-btn-icon {
   transform: scale(1.12);
 }
+
+/* ===== K-D2/K-D5/K-D6/K-D11 (auditoria 22-10-2026, version 1.2.27) ================= */
+
+/* K-D2: anillo de foco visible al navegar con teclado (dorado de la casa). */
+:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+/* K-D6: el logo pasa a button; sin el estilo de boton del sistema. */
+button.brand {
+  background: transparent;
+  border: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+}
+
+/* El botón del logo es zona de arrastre de la ventana: el texto y la imagen no (para que el
+   clic llegue al botón y abra el explorador). */
+.app-brand-title { -webkit-app-region: no-drag; }
+
+/* K-D11: estilos que estaban inline en index.html. */
+.settings-select {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.about-val-green { color: var(--status-green); }
+.modal-field { margin-bottom: 14px; }
+.modal-label { font-size: 0.85rem; color: #a1a1aa; margin-bottom: 6px; display: block; }
+.modal-input,
+.modal-textarea { width: 100%; padding: 8px 12px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 0.9rem; }
+.modal-textarea { font-family: var(--font-mono); font-size: 0.8rem; padding: 10px; resize: none; }
+.modal-textarea-code { height: 110px; background: #0c0d12; border-color: rgba(255,255,255,0.1); color: var(--accent-gold); }
+.modal-textarea-short { height: 95px; font-size: 0.82rem; border-color: rgba(255,255,255,0.15); }
+.modal-dialog-wide { max-width: 620px; }
+.btn-full { margin-top: 10px; width: 100%; }
+.import-analysis { margin-top: 15px; }
+.import-summary { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; font-size: 0.88rem; color: #fef3c7; }
+.import-list { max-height: 200px; overflow-y: auto; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 8px; background: rgba(0,0,0,0.3); }
+.bulk-results { max-height: 200px; overflow-y: auto; font-size: 0.85rem; border: 1px solid rgba(255,255,255,0.08); border-radius: 6px; padding: 10px; background: rgba(0,0,0,0.3); }
+.update-progress-wrap--mb { margin-bottom: 15px; }
+.import-progress { margin-top: 12px; }
