@@ -9,3 +9,4 @@
 - La ficha del addon enseña un esqueleto mientras carga.
 - Si el catalogo falla se puede reintentar sin recargar la app.
 - La descarga de la actualizacion se puede cancelar y enseña el SHA-256 verificado antes de reiniciar.
+- Los estados vacios de Favoritos, Instalados y Boveda usan el icono de su pestana (sin emoji).
