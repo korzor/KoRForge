@@ -2,8 +2,8 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: Actualizador con verificacion SHA-256 y ajustes en el menu
+# Titulo: Descargas de addons solo desde CurseForge y GitHub
 
-- El actualizador comprueba el SHA-256 del instalador contra el publicado en el release antes de aplicarlo.
-- La actualizacion usa siempre el release oficial y rechaza versiones o URLs de descarga manipuladas.
-- El boton de Ajustes queda por encima del boton de version en el menu lateral.
+- Las descargas de addons solo salen hacia CurseForge y GitHub, siempre por https.
+- Cada redireccion de la descarga se vuelve a validar antes de seguirla.
+- Las direcciones locales o de la intranet se rechazan antes de descargar nada.
