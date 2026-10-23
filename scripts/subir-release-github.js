@@ -19,7 +19,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const { leerCambios, notasGithub } = require('./notas-release');
+const { leerCambios } = require('./notas-release');
 const { hashesDe, escribirSha256Sums, binariosDeVersion } = require('./sha256-release');
 
 const REPO = 'korzor/KoRForge';
@@ -100,7 +100,12 @@ async function subirAsset(releaseId, ruta, nombre) {
       ? 'Instalador oficial para Windows (recomendado)'
       : 'Linux x86_64 (AppImage, con actualizador propio)'
   }));
-  const notas = notasGithub({ version, titulo, cambios, entradas, archivos });
+  /* LA RELEASE SE LLAMA SOLO «KoRForge vX.Y.Z» Y NO LLEVA NADA DEBAJO (dueño, 24-10-2026:
+   * «no me gusta que salga nada después de KoRForge v1.3.10… solo quiero que salga a secas el nombre
+   * y número de la versión»). El detalle de los cambios sigue en docs/CAMBIOS-ULTIMA.md y en la web,
+   * pero en GitHub Releases no se publica. */
+  const nombreRelease = `KoRForge v${version}`;
+  const cuerpoRelease = '';
 
   let release = null;
   try {
@@ -112,15 +117,15 @@ async function subirAsset(releaseId, ruta, nombre) {
       await api('DELETE', `/repos/${REPO}/releases/assets/${asset.id}`);
       console.log(`  asset anterior borrado: ${asset.name}`);
     }
-    release = await api('PATCH', `/repos/${REPO}/releases/${release.id}`, { name: titulo, body: notas });
+    release = await api('PATCH', `/repos/${REPO}/releases/${release.id}`, { name: nombreRelease, body: cuerpoRelease });
   } catch (err) {
     if (!/404/.test(err.message)) throw err;
     console.log(`Creando la release ${tagName}...`);
     release = await api('POST', `/repos/${REPO}/releases`, {
       tag_name: tagName,
       target_commitish: 'main',
-      name: titulo,
-      body: notas,
+      name: nombreRelease,
+      body: cuerpoRelease,
       draft: false,
       prerelease: false
     });
