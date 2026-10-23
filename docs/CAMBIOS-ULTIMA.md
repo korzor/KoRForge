@@ -2,10 +2,9 @@
 # Formato: una línea por cambio empezando por "- ". La primera se usa como descripción corta en la web.
 # Las líneas que empiezan por "#" se ignoran, salvo "# Titulo: ...", que fija el título de la tarjeta.
 
-# Titulo: Ventana y descargas cerradas, y estabilidad general
+# Titulo: Accesibilidad de teclado, focos y avisos
 
-- La ventana solo navega a la propia app; los enlaces externos se abren en el navegador y las paginas internas no llevan preload ni Node.
-- La descripcion de los addons se sanea antes de mostrarse y la app aplica una politica CSP.
-- La actualizacion y los codigos de pack ya no pueden quedarse sin memoria (limites anti bomba).
-- La app escucha en un puerto libre y solo cierra sus propias instancias.
-- La consola de desarrollo queda reservada a la version de trabajo.
+- Navegación con teclado: se ve el anillo de foco en botones, campos y enlaces.
+- Botones y campos con nombre accesible (buscar, instalar, ajustes, logo y versions).
+- Los modales de actualizacion, exportar e importar se comportan como dialogo: foco, Esc y retorno.
+- Los avisos emergentes se anuncian al lector de pantalla y ya no inyectan HTML.
