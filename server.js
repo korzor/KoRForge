@@ -53,12 +53,41 @@ const STARTUP_LNK = path.join(
   'KoRForge.lnk'
 );
 
+/* Linux: el arranque automático es un .desktop en ~/.config/autostart (XDG). */
+const AUTOSTART_LINUX = path.join(
+  process.env.XDG_CONFIG_HOME || path.join(process.env.HOME || '', '.config'),
+  'autostart', 'korforge.desktop'
+);
+
 function isAutoStartEnabled() {
+  if (process.platform === 'linux') return fs.existsSync(AUTOSTART_LINUX);
   return fs.existsSync(STARTUP_LNK);
 }
 
 function setAutoStart(enable) {
   try {
+    if (process.platform === 'linux') {
+      if (enable) {
+        fs.mkdirSync(path.dirname(AUTOSTART_LINUX), { recursive: true });
+        /* En un AppImage, process.execPath apunta al binario extraído en /tmp; la ruta buena
+           para volver a lanzarlo es la del propio .AppImage (la pone el runtime en $APPIMAGE). */
+        const rutaApp = process.env.APPIMAGE || process.execPath;
+        const icono = path.join(__dirname, 'korforge.png');
+        fs.writeFileSync(AUTOSTART_LINUX, [
+          '[Desktop Entry]',
+          'Type=Application',
+          'Name=KoRForge',
+          `Exec="${rutaApp}"`,
+          `Icon=${icono}`,
+          'Terminal=false',
+          'X-GNOME-Autostart-enabled=true',
+          ''
+        ].join('\n'), 'utf8');
+      } else if (fs.existsSync(AUTOSTART_LINUX)) {
+        fs.unlinkSync(AUTOSTART_LINUX);
+      }
+      return true;
+    }
     if (enable) {
       const iconPath = path.join(__dirname, 'korforge.ico');
       /* K15 (auditoría 22-10-2026): el acceso directo apunta al ejecutable REAL de la app. Antes
@@ -78,6 +107,19 @@ function setAutoStart(enable) {
     console.error('[KoRForge] Error cambiando auto-start:', err.message);
     return false;
   }
+}
+
+/** Abre una carpeta en el explorador del sistema (Windows: explorer.exe; Linux: xdg-open). */
+function abrirEnElExplorador(destino) {
+  if (process.platform === 'linux') {
+    execFile('xdg-open', [destino], (err) => {
+      if (err) console.error('[KoRForge] No se pudo abrir el gestor de archivos:', err.message);
+    });
+    return;
+  }
+  execFile('explorer.exe', [destino], (err) => {
+    if (err) console.error('[KoRForge] No se pudo abrir el explorador:', err.message);
+  });
 }
 
 const DEFAULT_GAMES = {
@@ -762,9 +804,7 @@ app.post('/api/addons/open-folder', (req, res) => {
     fs.mkdirSync(dirToOpen, { recursive: true });
   }
   /* K3 (auditoría 22-10-2026): execFile con argumentos, sin pasar el nombre por el shell. */
-  execFile('explorer.exe', [dirToOpen], (err) => {
-    if (err) console.error('[KoRForge] No se pudo abrir el explorador:', err.message);
-  });
+  abrirEnElExplorador(dirToOpen);
   res.json({ success: true, opened: dirToOpen });
 });
 
@@ -1113,7 +1153,8 @@ async function checkGitHubRelease() {
     }
     const updateAvailable = compareVersions(remoteVersion, APP_VERSION) > 0;
 
-    const downloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/v${remoteVersion}/KoRForge-Setup-${remoteVersion}.exe`;
+    const plataforma = process.platform === 'linux' ? 'linux' : 'win32';
+    const downloadUrl = `https://github.com/${GITHUB_REPO}/releases/download/v${remoteVersion}/${updater.nombreDelAsset(remoteVersion, plataforma)}`;
 
     return {
       source: 'github',

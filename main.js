@@ -358,7 +358,8 @@ function applyTrayLanguage(lang) {
 function createTray() {
   if (tray) return;
   try {
-    const iconPath = path.join(__dirname, 'korforge.ico');
+    /* Linux: el .ico de Windows no vale; el PNG es el icono del AppImage. */
+    const iconPath = path.join(__dirname, process.platform === 'linux' ? 'korforge.png' : 'korforge.ico');
     const trayImg = nativeImage.createFromPath(iconPath);
     tray = new Tray(trayImg);
 
@@ -418,7 +419,7 @@ function createWindow() {
     backgroundMaterial: 'none',
     thickFrame: false,
     title: 'KoRForge - WoW Forever Addon Forge',
-    icon: path.join(__dirname, 'korforge.ico'),
+    icon: path.join(__dirname, process.platform === 'linux' ? 'korforge.png' : 'korforge.ico'),
     autoHideMenuBar: true,
     show: !cfg.startMinimized,
     webPreferences: {

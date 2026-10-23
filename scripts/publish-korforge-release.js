@@ -39,6 +39,7 @@ console.log(`[KoRForge web] Publicando v${version} en ${releasesDir}`);
 
 const installerName = `KoRForge-Setup-${version}.exe`;
 const zipDestName = `KoRForge-v${version}-win-x64.zip`;
+const appImageName = `KoRForge-${version}-linux-x86_64.AppImage`;
 
 /* 1. Empaquetar (salvo --no-build) ---------------------------------------- */
 if (!sinBuild) {
@@ -91,15 +92,24 @@ if (!zipSrc) {
   process.exit(1);
 }
 
+/* Linux (AppImage): se genera dentro de WSL (electron-builder desde Windows no puede crear los
+   symlinks del AppDir). Si esta, se publica tambien en la web; si no, la build sigue siendo Windows. */
+const appImageSrc = path.join(releaseDir, appImageName);
+const hayAppImage = fs.existsSync(appImageSrc);
+if (!hayAppImage) {
+  console.warn(`AVISO: no hay ${appImageName} en release/; la web publicara solo Windows.`);
+}
+
 /* 3. Copiar a la web y limpiar las versiones anteriores -------------------- */
 fs.mkdirSync(releasesDir, { recursive: true });
 fs.copyFileSync(installerSrc, path.join(releasesDir, installerName));
 fs.copyFileSync(zipSrc, path.join(releasesDir, zipDestName));
-console.log(`[2/4] Copiados: ${installerName} y ${zipDestName}`);
+if (hayAppImage) fs.copyFileSync(appImageSrc, path.join(releasesDir, appImageName));
+console.log(`[2/4] Copiados: ${installerName}, ${zipDestName}${hayAppImage ? ' y ' + appImageName : ''}`);
 
 for (const f of fs.readdirSync(releasesDir)) {
-  if (f === installerName || f === zipDestName || f === '.gitkeep') continue;
-  if (!/^KoRForge(-Setup-.*\.exe|-v.*\.zip|-\d.*-win\.zip)$/i.test(f)) continue;
+  if (f === installerName || f === zipDestName || f === appImageName || f === '.gitkeep') continue;
+  if (!/^KoRForge(-Setup-.*\.exe|-v.*\.zip|-\d.*-win\.zip|-\d.*-linux-x86_64\.AppImage)$/i.test(f)) continue;
   fs.unlinkSync(path.join(releasesDir, f));
   console.log(`  fuera de la web (version anterior): ${f}`);
 }
@@ -107,6 +117,7 @@ for (const f of fs.readdirSync(releasesDir)) {
 /* 3 bis. Hashes: integridad y prueba de autoria (docs/PROTECCION-DERECHOS.md).
    Se publica SHA256SUMS.txt junto a los binarios y cada descarga lleva su hash en el registro. */
 const rutasWeb = [path.join(releasesDir, installerName), path.join(releasesDir, zipDestName)];
+if (hayAppImage) rutasWeb.push(path.join(releasesDir, appImageName));
 const entradas = hashesDe(rutasWeb);
 escribirSha256Sums(path.join(releasesDir, 'SHA256SUMS.txt'), entradas);
 const hashPorArchivo = {};
@@ -152,6 +163,16 @@ const registro = [{
       url: `/api/wow/korforge/download/${zipDestName}`,
       recomendado: false,
     },
+    ...(hayAppImage ? [{
+      tipo: 'appimage',
+      nombre: `KoRForge v${version} (Linux .AppImage)`,
+      archivo: appImageName,
+      tamano: mb(appImageName),
+      sha256: hashPorArchivo[appImageName] || '',
+      arquitectura: 'Linux x86_64',
+      url: `/api/wow/korforge/download/${appImageName}`,
+      recomendado: true,
+    }] : []),
   ],
 }];
 
