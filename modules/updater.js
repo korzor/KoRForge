@@ -751,10 +751,10 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
   });
   child.unref();
 
-  /* Relanzador invisible: cmd con ventana oculta (windowsHide), espera 20 s (la instalación tarda
-     ~13-15 s) y abre la app nueva. No depende de que el instalador relance ni de PowerShell. */
+  /* Relanzador invisible: cmd con ventana oculta (windowsHide), espera ~19 s con `ping` (no depende
+     de consola, a diferencia de `timeout`) y abre la app nueva. No usa PowerShell. */
   try {
-    const relanzador = `timeout /t 20 /nobreak >nul & start "" "${appExePath}"`;
+    const relanzador = `ping -n 20 127.0.0.1 >nul & start "" "${appExePath}"`;
     const espera = spawn('cmd.exe', ['/c', relanzador], {
       detached: true,
       stdio: 'ignore',
