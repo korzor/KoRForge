@@ -45,6 +45,51 @@ function getGitHubToken() {
 const GITHUB_RELEASES_URL = 'https://github.com/korzor/KoRForge/releases/download';
 const VERSION_VALIDA = /^\d+\.\d+\.\d+$/;
 
+/* --- Marca de "actualización en curso" (23-10-2026) ----------------------
+   La tarjeta de carga tiene que salir cuando la app vuelve a arrancar. No se puede fiar al
+   argumento con el que el instalador relance la app (en las pruebas reales no llegaba), así que
+   antes de lanzar el instalador se deja este fichero y la app que arranque después lo lee.
+   main.js puede fijar global.rutaMarcaActualizacion con la carpeta de usuario real de Electron. */
+function rutaDeMarcaActualizacion() {
+  if (global.rutaMarcaActualizacion) return global.rutaMarcaActualizacion;
+  const base = process.env.APPDATA || path.join(os.homedir(), '.config');
+  return path.join(base, 'KoRForge', 'actualizando.json');
+}
+
+/** Escribe la marca: {version, cuando}. Devuelve true si pudo. */
+function marcarActualizacionEnCurso(version) {
+  try {
+    const ruta = rutaDeMarcaActualizacion();
+    fs.mkdirSync(path.dirname(ruta), { recursive: true });
+    fs.writeFileSync(ruta, JSON.stringify({
+      version: String(version || ''),
+      cuando: Date.now()
+    }, null, 2), 'utf8');
+    return true;
+  } catch (err) {
+    console.warn('[KoRForge Updater] No se pudo dejar la marca de actualización:', err.message);
+    return false;
+  }
+}
+
+/** Lee y consume la marca. Devuelve {version, cuando} solo si es reciente (15 min). */
+function leerMarcaActualizacion() {
+  try {
+    const ruta = rutaDeMarcaActualizacion();
+    if (!fs.existsSync(ruta)) return null;
+    /* Sin BOM: si la escribe otra herramienta (PowerShell), JSON.parse la rechaza. */
+    const texto = fs.readFileSync(ruta, 'utf8').replace(/^\uFEFF/, '');
+    const datos = JSON.parse(texto);
+    fs.unlinkSync(ruta);
+    const edad = Date.now() - Number(datos && datos.cuando ? datos.cuando : 0);
+    if (!(edad >= 0 && edad < 15 * 60 * 1000)) return null;
+    return datos;
+  } catch (err) {
+    console.warn('[KoRForge Updater] Marca de actualización ilegible:', err.message);
+    return null;
+  }
+}
+
 function esVersionValida(version) {
   return typeof version === 'string' && VERSION_VALIDA.test(version.trim());
 }
@@ -708,6 +753,8 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
 
 /** F3 (Linux): aplica la actualización sustituyendo el AppImage en su sitio y relanzándolo. */
 function aplicarActualizacionLinux(installerPath) {
+  /* Marca para que la app relanzada enseñe la tarjeta de carga al arrancar. */
+  marcarActualizacionEnCurso(currentDownload.version);
   /* El runtime del AppImage expone su ruta en $APPIMAGE; si se ejecuta el AppRun extraído,
      se usa process.execPath. El reemplazo es un rename en el mismo directorio (el inode viejo
      sigue bloqueado por el proceso actual mientras arranca el nuevo). */
@@ -787,16 +834,12 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     appExePath = standardInstalledExe;
   }
 
-  /* A (23-10-2026, dueño): SIN PowerShell ni cmd. La app lanza el instalador NSIS en silencio (/S)
-     y se cierra; el instalador reemplaza los archivos y (customInstall en build/installer.nsh, solo
-     en modo silencioso) vuelve a abrir la app, esta vez con --actualizado para que la tarjeta de
-     arranque diga que se ha actualizado. El binario ya está verificado con su SHA-256 antes de
-     llegar aquí (K5).
-
-     23-10-2026 (dueño, corrección): la tarjeta de carga NO se pinta aquí. Pintada «antes», la app se
-     cierra para dejar reemplazar sus ficheros y el usuario se queda sin verla. La tarjeta sale al
-     ARRANCAR la app ya actualizada (ver createSplash en main.js), que es cuando puede quedarse en
-     pantalla el tiempo necesario. Por eso aquí solo se lanza el instalador y se cierra enseguida. */
+  /* 23-10-2026 (dueño): «tarda más el proceso de instalación que la app en sí». La instalación son
+     ~8 s y la app arranca en medio segundo, así que una tarjeta pintada por la propia app (antes o
+     después) no cubre lo que importa. La pinta un PROCESO APARTE: el script de PowerShell con ventana
+     WinForms que ya existía (buildApplyScript), lanzado con wscript.exe para que no salga ninguna
+     consola. Ese proceso aguanta el cierre de la app, ejecuta el instalador en silencio, reabre la app
+     y cierra la tarjeta cuando la app pinta su ventana. */
   const cerrarApp = () => {
     try {
       if (global.quitAndApplyUpdate) {
@@ -811,26 +854,41 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     }
   };
 
-  const lanzarInstalador = () => {
+  const lanzarTarjetaEInstalador = () => {
     try {
-      const child = spawn(installerPath, ['/S'], {
-        detached: true,
-        stdio: 'ignore',
-        windowsHide: true,
-        shell: true
-      });
-      child.unref();
+      const pantalla = typeof global.rectPantallaFisica === 'function' ? global.rectPantallaFisica() : null;
+      const splashPng = path.join(__dirname, '..', 'public', 'splash.png');
+      const ps1 = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
+      fs.writeFileSync(ps1, buildApplyScript(installerPath, appExePath, currentDownload.version, { lang, splashPng, pantalla }), 'utf8');
+
+      /* wscript con estilo de ventana 0: el script corre oculto y no aparece ninguna consola. */
+      const vbs = path.join(os.tmpdir(), 'korforge_apply_update.vbs');
+      const comando = `powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "${ps1}"`;
+      fs.writeFileSync(vbs, `CreateObject("WScript.Shell").Run "${comando.replace(/"/g, '""')}", 0, False\r\n`, 'utf8');
+
+      const hijo = spawn('wscript.exe', [vbs], { detached: true, stdio: 'ignore', windowsHide: true });
+      hijo.unref();
+      return true;
     } catch (err) {
-      console.warn('[KoRForge Updater] No se pudo lanzar el instalador:', err.message);
+      console.warn('[KoRForge Updater] No se pudo lanzar la tarjeta de carga:', err.message);
       return false;
     }
-    /* Medio segundo para que el instalador arranque; después se cierra la app para que NSIS pueda
-       reemplazar sus ficheros. La tarjeta la pinta la app nueva al arrancar. */
-    setTimeout(cerrarApp, 700);
-    return true;
   };
 
-  lanzarInstalador();
+  if (lanzarTarjetaEInstalador()) {
+    /* El script mata la app y lanza el instalador; se le da un segundo para que pinte la tarjeta. */
+    setTimeout(cerrarApp, 1200);
+  } else {
+    /* Respaldo: instalador directo y marca en disco para que la app enseñe la tarjeta al arrancar. */
+    marcarActualizacionEnCurso(currentDownload.version);
+    try {
+      const hijo = spawn(installerPath, ['/S'], { detached: true, stdio: 'ignore', windowsHide: true, shell: true });
+      hijo.unref();
+    } catch (err) {
+      console.warn('[KoRForge Updater] No se pudo lanzar el instalador:', err.message);
+    }
+    setTimeout(cerrarApp, 700);
+  }
 
   return { success: true, message: 'Instalador lanzado. Reiniciando KoRForge...' };
 }
@@ -848,5 +906,8 @@ module.exports = {
   urlDelAssetEnRelease,
   urlInstaladorOficial,
   urlSha256Sums,
-  esUrlDeInstalador
+  esUrlDeInstalador,
+  marcarActualizacionEnCurso,
+  leerMarcaActualizacion,
+  rutaDeMarcaActualizacion
 };

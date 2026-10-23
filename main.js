@@ -256,9 +256,31 @@ function ensureServer() {
 // está lista, para que el usuario vea que la app está cargando desde el primer
 // instante (dueño, 20-10-2026). No roba el foco y no sale en la barra de tareas.
 let splash = null;
-/* Arranque justo después de actualizar (el instalador relanza con --actualizado) y momento en que
-   se empezó a pintar el splash: sirve para mantenerlo un mínimo en pantalla. */
-const ARRANQUE_TRAS_ACTUALIZAR = process.argv.includes('--actualizado');
+/* Arranque justo después de actualizar: dos señales, el argumento con el que relanza el instalador
+   (--actualizado / --updated) y la MARCA en disco que deja el actualizador antes de instalar.
+   Es la red de seguridad: la tarjeta de la actualización la pinta el script (ver modules/updater.js). */
+function estadoArranqueTrasActualizar() {
+  const porArgumento = process.argv.includes('--actualizado') || process.argv.includes('--updated');
+
+  let marca = null;
+  try {
+    const updater = require('./modules/updater');
+    global.rutaMarcaActualizacion = path.join(app.getPath('userData'), 'actualizando.json');
+    marca = typeof updater.leerMarcaActualizacion === 'function' ? updater.leerMarcaActualizacion() : null;
+  } catch (err) {
+    logBoot('[splash] no se pudo leer la marca de actualización: ' + (err && err.message));
+  }
+
+  const activo = porArgumento || !!marca;
+  const version = (marca && marca.version) || app.getVersion();
+  logBoot('[splash] arranque-tras-actualizar=' + activo
+    + ' (argumento=' + porArgumento + ', marca=' + (marca ? 'sí' : 'no') + ')'
+    + ' version=' + version + ' argv=' + JSON.stringify(process.argv.slice(1)));
+  return { activo, version };
+}
+
+const ARRANQUE_TRAS_ACTUALIZAR_DATOS = estadoArranqueTrasActualizar();
+const ARRANQUE_TRAS_ACTUALIZAR = ARRANQUE_TRAS_ACTUALIZAR_DATOS.activo;
 const SPLASH_MINIMO_TRAS_ACTUALIZAR_MS = 3600;
 let splashMostradoEn = 0;
 
@@ -304,7 +326,7 @@ function createSplash() {
       query: {
         lang,
         modo: recienActualizada ? 'actualizando' : 'arranque',
-        version: recienActualizada ? String(app.getVersion() || '') : ''
+        version: recienActualizada ? String(ARRANQUE_TRAS_ACTUALIZAR_DATOS.version || app.getVersion() || '') : ''
       }
     });
     splash.once('ready-to-show', () => {
@@ -457,6 +479,8 @@ function createWindow() {
       if (ARRANQUE_TRAS_ACTUALIZAR && splash) {
         espera = Math.max(180, SPLASH_MINIMO_TRAS_ACTUALIZAR_MS - (Date.now() - splashMostradoEn));
       }
+      logBoot('[splash] tras-actualizar=' + ARRANQUE_TRAS_ACTUALIZAR + ' splash=' + (splash ? 'vivo' : 'null')
+        + ' espera=' + espera + 'ms argv=' + JSON.stringify(process.argv.slice(1)));
       setTimeout(cerrarSplash, espera);
     } else {
       cerrarSplash();

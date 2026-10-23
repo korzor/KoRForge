@@ -1,11 +1,16 @@
 ; Instalador NSIS de KoRForge (electron-builder)
-; - En una instalación SILENCIOSA (el actualizador de la app), tras instalar se abre la app sola,
-;   con --actualizado: asi la tarjeta de arranque dice que se ha actualizado (dueño, 23-10-2026).
-; - En una instalación manual (asistente), no hace nada: el usuario tiene la casilla "Ejecutar".
+;
+; La tarjeta de carga NO la pinta el instalador: la pinta un proceso aparte (script con una ventana
+; WinForms que lanza la app, ver modules/updater.js) porque la instalacion dura ~8 s y la ventana del
+; instalador no sirve para eso. Aqui solo se deja la red de seguridad: si algo fallara y el
+; instalador termina sin que la app vuelva, la reabre. Sin argumentos a proposito: la tarjeta de
+; "instalando al arrancar" solo debe salir como respaldo (marca en disco), no siempre.
+
 !macro customInstall
   IfSilent app_launch
   Goto done
   app_launch:
-    Exec '"$INSTDIR\KoRForge.exe" --actualizado'
+    Exec '"$INSTDIR\KoRForge.exe"'
   done:
 !macroend
+
