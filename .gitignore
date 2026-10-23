@@ -7,6 +7,8 @@ release/
 dist/
 build/*
 !build/installer.nsh
+!build/instalando.ps1
+!build/instalando.png
 *.exe
 *.zip
 *.blockmap
