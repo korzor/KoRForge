@@ -53,3 +53,13 @@ for (const f of ficheros) {
 - **No se pinta interfaz que no se haya pedido.** Si algo parece necesario (un texto nuevo, un
   aviso), se propone y se espera el sí. Ejemplo real: el 21-10-2026 se añadió por iniciativa propia
   un texto a la derecha del selector de clientes; el dueño no lo había pedido y se tuvo que quitar.
+
+## El README no lleva la sección de compilación (dueño, 23-10-2026)
+
+- **Prohibido volver a añadir** al README la sección «Compilar desde el código (uso personal)» /
+  «Build from source (personal use)», con sus comandos `git clone`/`npm install`/`npm start` ni el
+  párrafo de «compilar o ejecutar está permitido…». Se quitó de los dos idiomas por orden del dueño
+  del 23-10-2026 y **no se vuelve a meter** en un README, en la web ni en las notas de una release.
+- El README se queda con: qué es, características, descarga e instalación, apoyo al proyecto,
+  privacidad y licencia.
+

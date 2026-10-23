@@ -71,20 +71,6 @@ Widget for your own website (English):
 - All paths and settings stay on your PC (`%APPDATA%\KoRForge\config.json`).
 - Network traffic only goes to the official CurseForge API and the GitHub Releases API, over HTTPS.
 
-### Build from source (personal use)
-Node.js 18+ and Git:
-
-```bash
-git clone https://github.com/korzor/KoRForge.git
-cd KoRForge
-npm install
-npm start                 # app (Electron + local server)
-npm run package:release   # NSIS installer + portable zip in release/
-npm run i18n:check        # language guard used before every release
-```
-
-Compiling or running the code for yourself is allowed. Modifying it, distributing modified copies or publishing your own build is **not**: see the license below.
-
 ### License and Terms of Use
 
 This software is the exclusive property of **KoRZoR**.
@@ -149,20 +135,6 @@ Widget para tu propia web (español):
 - No se envían cuentas, contraseñas ni perfiles personales a ningún sitio.
 - Todas las rutas y la configuración se quedan en tu equipo (`%APPDATA%\KoRForge\config.json`).
 - El tráfico de red va solo a la API oficial de CurseForge y a la API de GitHub Releases, por HTTPS.
-
-### Compilar desde el código (uso personal)
-Node.js 18+ y Git:
-
-```bash
-git clone https://github.com/korzor/KoRForge.git
-cd KoRForge
-npm install
-npm start                 # app (Electron + servidor local)
-npm run package:release   # instalador NSIS + zip portable en release/
-npm run i18n:check        # verificador de idiomas que corre en cada release
-```
-
-Compilar o ejecutar el código para ti está permitido. Modificarlo, distribuir copias modificadas o publicar tu propia compilación **no**: mira la licencia de abajo.
 
 ## Licencia y Términos de Uso
 
