@@ -929,6 +929,12 @@ app.post('/api/install-file', async (req, res) => {
     const { downloadUrl, name, gameId, modId, version, fileId } = req.body;
     if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida', code: 'err_download_url_required' });
 
+    /* K6 (auditoría 22-10-2026): solo https hacia hosts conocidos y con DNS público (sin SSRF). */
+    const validacion = await installer.validarUrlDescarga(downloadUrl);
+    if (!validacion.ok) {
+      return res.status(400).json({ error: 'URL de descarga no válida', code: 'err_bad_url' });
+    }
+
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);
     if (!targetDir) {
@@ -964,6 +970,12 @@ app.post('/api/install-url', async (req, res) => {
   try {
     const { url, nameHint, gameId } = req.body;
     if (!url) return res.status(400).json({ error: 'URL requerida', code: 'err_url_required' });
+
+    /* K6 (auditoría 22-10-2026): solo https hacia hosts conocidos y con DNS público (sin SSRF). */
+    const validacion = await installer.validarUrlDescarga(url);
+    if (!validacion.ok) {
+      return res.status(400).json({ error: 'URL de descarga no válida', code: 'err_bad_url' });
+    }
 
     const targetGame = gameId || config.activeGame || 'forever';
     const targetDir = getAddonsDir(targetGame);

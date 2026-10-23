@@ -217,6 +217,42 @@ async function main() {
     console.log('AVISO no se pudo comprobar SHA256SUMS del release (sin red?); no cuenta como fallo');
   }
 
+  /* --- K6: URLs de descarga de addons (SSRF) ------------------------------- */
+  const installer = require(path.join(RAIZ, 'modules', 'installer.js'));
+  comprobar('K6 https a forgecdn permitido', installer.esUrlDeDescargaPermitida('https://edge.forgecdn.net/files/1/x.zip') === true);
+  comprobar('K6 https a github permitido', installer.esUrlDeDescargaPermitida('https://github.com/o/r/releases/download/v1/a.zip') === true);
+  comprobar('K6 http rechazado (solo https)', installer.esUrlDeDescargaPermitida('http://edge.forgecdn.net/x.zip') === false);
+  comprobar('K6 127.0.0.1 rechazado', installer.esUrlDeDescargaPermitida('https://127.0.0.1/x.zip') === false);
+  comprobar('K6 localhost rechazado', installer.esUrlDeDescargaPermitida('https://localhost/x.zip') === false);
+  comprobar('K6 host ajeno rechazado', installer.esUrlDeDescargaPermitida('https://evil.example/x.zip') === false);
+  comprobar('K6 sufijo falso rechazado', installer.esUrlDeDescargaPermitida('https://github.com.evil.example/x.zip') === false);
+  comprobar('K6 file: rechazado', installer.esUrlDeDescargaPermitida('file:///C:/x.zip') === false);
+  comprobar('K6 IP privadas detectadas',
+    installer.esIpNoPublica('192.168.1.10') === true
+    && installer.esIpNoPublica('10.0.0.8') === true
+    && installer.esIpNoPublica('169.254.1.1') === true
+    && installer.esIpNoPublica('::1') === true
+    && installer.esIpNoPublica('fe80::1') === true);
+  comprobar('K6 IP pública no marcada',
+    installer.esIpNoPublica('8.8.8.8') === false && installer.esIpNoPublica('2606:4700:4700::1111') === false);
+
+  const instUrl = await peticion('POST', '/api/install-url', { token, body: { url: 'http://127.0.0.1/x.zip' } });
+  comprobar('K6 /api/install-url con http+loopback -> 400 err_bad_url',
+    instUrl.status === 400 && instUrl.json && instUrl.json.code === 'err_bad_url');
+
+  const instFile = await peticion('POST', '/api/install-file', { token, body: { downloadUrl: 'https://evil.example/x.zip' } });
+  comprobar('K6 /api/install-file con host ajeno -> 400 err_bad_url',
+    instFile.status === 400 && instFile.json && instFile.json.code === 'err_bad_url');
+
+  const dnsPrivado = await installer.validarUrlDescarga('https://localhost.dev/x.zip');
+  comprobar('K6 validación con DNS rechaza host no permitido', dnsPrivado.ok === false);
+  try {
+    const dnsPublico = await installer.validarUrlDescarga('https://github.com/o/r/releases/download/v1/a.zip');
+    comprobar('K6 validación DNS pública de github.com', dnsPublico.ok === true, dnsPublico.motivo || '');
+  } catch (_) {
+    console.log('AVISO no se pudo resolver DNS (sin red?); no cuenta como fallo');
+  }
+
   console.log('');
   if (fallos.length > 0) {
     console.error(fallos.length + ' comprobación(es) FALLIDA(S): ' + fallos.join(', '));

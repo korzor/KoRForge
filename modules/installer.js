@@ -1,15 +1,114 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
+const net = require('net');
+const dns = require('dns').promises;
 const AdmZip = require('adm-zip');
+
+/* K6 (auditoría 22-10-2026): las descargas de addons solo salen hacia hosts conocidos (CurseForge y
+ * GitHub), SIEMPRE por https, y con el DNS resuelto a direcciones públicas: ni `127.0.0.1`, ni la
+ * intranet, ni `file:`. Cada redirección se vuelve a validar antes de seguirla. */
+const HOSTS_PERMITIDOS = new Set([
+  'github.com',
+  'www.github.com',
+  'api.github.com',
+  'codeload.github.com',
+  'raw.githubusercontent.com',
+  'objects.githubusercontent.com',
+  'release-assets.githubusercontent.com',
+  'github-releases.githubusercontent.com'
+]);
+const SUFIJOS_PERMITIDOS = ['.forgecdn.net'];
+
+function hostDeDescarga(url) {
+  try { return new URL(String(url)).hostname.toLowerCase().replace(/\.$/, ''); } catch (_) { return ''; }
+}
+
+function esHostDeDescargaPermitido(host) {
+  const h = String(host || '').toLowerCase().replace(/\.$/, '');
+  if (!h) return false;
+  if (HOSTS_PERMITIDOS.has(h)) return true;
+  return SUFIJOS_PERMITIDOS.some((sufijo) => h.endsWith(sufijo) && h.length > sufijo.length);
+}
+
+/** ¿Es una IP privada, loopback, link-local o no enrutable? */
+function esIpNoPublica(ip) {
+  if (!net.isIP(ip)) return false;
+  if (net.isIPv4(ip)) {
+    const o = ip.split('.').map(Number);
+    return o[0] === 10
+      || o[0] === 127
+      || o[0] === 0
+      || (o[0] === 169 && o[1] === 254)
+      || (o[0] === 172 && o[1] >= 16 && o[1] <= 31)
+      || (o[0] === 192 && o[1] === 168);
+  }
+  const v6 = ip.toLowerCase();
+  if (v6 === '::1' || v6 === '::') return true;
+  if (/^f[cd][0-9a-f]{2}:/.test(v6)) return true;  // fc00::/7
+  if (/^fe[89ab][0-9a-f]:/.test(v6)) return true;  // fe80::/10
+  return false;
+}
+
+/** Validación SIN red: esquema https, sin credenciales en la URL y host permitido. */
+function esUrlDeDescargaPermitida(url) {
+  let u;
+  try { u = new URL(String(url)); } catch (_) { return false; }
+  if (u.protocol !== 'https:') return false;
+  if (u.username || u.password) return false;
+  return esHostDeDescargaPermitido(u.hostname);
+}
+
+/**
+ * Validación completa: además de esquema y host, resuelve el DNS y exige que todas las
+ * direcciones sean públicas (evita SSRF contra la intranet).
+ */
+async function validarUrlDescarga(url) {
+  let u;
+  try { u = new URL(String(url)); } catch (_) { return { ok: false, motivo: 'url-malformada' }; }
+  if (u.protocol !== 'https:') return { ok: false, motivo: 'solo-https' };
+  if (u.username || u.password) return { ok: false, motivo: 'credenciales-en-url' };
+  if (!esHostDeDescargaPermitido(u.hostname)) return { ok: false, motivo: 'host-no-permitido' };
+  try {
+    const registros = await dns.lookup(u.hostname, { all: true });
+    if (!registros.length) return { ok: false, motivo: 'dns-sin-registros' };
+    for (const r of registros) {
+      if (esIpNoPublica(r.address)) return { ok: false, motivo: 'ip-no-publica' };
+    }
+  } catch (_) {
+    return { ok: false, motivo: 'dns-fallo' };
+  }
+  return { ok: true };
+}
+
+/**
+ * Descarga siguiendo redirecciones a mano: cada salto se valida antes de pedirlo y hay un tope.
+ */
+async function descargarConValidacion(url) {
+  let actual = String(url);
+  for (let salto = 0; salto < 5; salto++) {
+    const v = await validarUrlDescarga(actual);
+    if (!v.ok) {
+      throw new Error(`Descarga no permitida (${v.motivo}).`);
+    }
+    const res = await fetch(actual, {
+      redirect: 'manual',
+      headers: { 'User-Agent': 'KoRForge-AddonManager/1.0 (Windows NT 10.0; Win64; x64)' }
+    });
+    if ([301, 302, 303, 307, 308].includes(res.status)) {
+      const loc = res.headers.get('location');
+      if (!loc) throw new Error(`Redirección sin destino (HTTP ${res.status}).`);
+      actual = new URL(loc, actual).href;
+      continue;
+    }
+    return res;
+  }
+  throw new Error('Demasiadas redirecciones en la descarga del addon.');
+}
 
 // Downloads a file from a URL to a target local path
 async function downloadFile(url, targetPath, onProgress) {
-  const res = await fetch(url, {
-    headers: {
-      'User-Agent': 'KoRForge-AddonManager/1.0 (Windows NT 10.0; Win64; x64)'
-    }
-  });
+  const res = await descargarConValidacion(url);
 
   if (!res.ok) {
     throw new Error(`Error en descarga HTTP ${res.status}: ${res.statusText}`);
@@ -134,6 +233,13 @@ async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon') {
 
 // High-level install workflow from any URL (GitHub, direct zip, or CurseForge)
 async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon') {
+  /* K6: la URL de entrada también se valida (la ruta del API ya responde 400 antes, esto es la
+     segunda barrera por si se llama desde otro sitio). */
+  const validacionEntrada = await validarUrlDescarga(rawUrl);
+  if (!validacionEntrada.ok) {
+    throw new Error(`err_bad_url: URL de descarga no permitida (${validacionEntrada.motivo}).`);
+  }
+
   let downloadUrl = rawUrl;
   if (rawUrl.includes('github.com')) {
     downloadUrl = await resolveGitHubRelease(rawUrl);
@@ -158,5 +264,8 @@ async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon') {
 module.exports = {
   installFromUrl,
   installFromZip,
-  resolveGitHubRelease
+  resolveGitHubRelease,
+  esUrlDeDescargaPermitida,
+  validarUrlDescarga,
+  esIpNoPublica
 };
