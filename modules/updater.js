@@ -740,11 +740,11 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     appExePath = standardInstalledExe;
   }
 
-  /* A (23-10-2026, dueño): SIN PowerShell. La app lanza el instalador NSIS en silencio (/S) y se
-     cierra; el propio instalador espera a que el proceso desaparezca, reemplaza los archivos y
-     (runAfterFinish en package.json) reabre KoRForge. El binario ya está verificado con su SHA-256
-     antes de llegar aquí (K5). */
-  const child = spawn(installerPath, ['/S'], {
+  /* A (23-10-2026, dueño): SIN PowerShell. La app lanza el instalador NSIS en silencio (/S a
+     --updated: así el instalador relanza la app al terminar) y se cierra; el instalador espera a
+     que el proceso desaparezca y reemplaza los archivos. El binario ya está verificado con su
+     SHA-256 antes de llegar aquí (K5). */
+  const child = spawn(installerPath, ['/S', '--updated'], {
     detached: true,
     stdio: 'ignore',
     windowsHide: true,
