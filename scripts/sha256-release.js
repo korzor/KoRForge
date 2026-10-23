@@ -60,14 +60,13 @@ function escribirSha256Sums(destino, entradas) {
   return destino;
 }
 
-/** Busca en release/ el instalador, el ZIP portable y el AppImage de una version concreta. */
+/** Busca en release/ el instalador y el AppImage de una version concreta.
+ *  El ZIP portable se retiro el 23-10-2026 a peticion del dueño: lleva el mismo app.asar que el
+ *  instalador y se descomprime sin mas, asi que era la via mas facil de copiar el codigo. */
 function binariosDeVersion(version) {
   const releaseDir = path.join(projectDir, 'release');
   const candidatos = [
     path.join(releaseDir, `KoRForge-Setup-${version}.exe`),
-    path.join(releaseDir, `KoRForge-${version}-win.zip`),
-    path.join(releaseDir, `KoRForge-v${version}-win-x64.zip`),
-    path.join(releaseDir, `KoRForge-${version}-win-x64.zip`),
     path.join(releaseDir, `KoRForge-${version}-linux-x86_64.AppImage`),
   ];
   return candidatos.filter((ruta) => fs.existsSync(ruta));

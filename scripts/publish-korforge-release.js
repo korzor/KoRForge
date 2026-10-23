@@ -38,7 +38,6 @@ const registroPath = path.join(centolosDir, 'data', 'korforge-releases.json');
 console.log(`[KoRForge web] Publicando v${version} en ${releasesDir}`);
 
 const installerName = `KoRForge-Setup-${version}.exe`;
-const zipDestName = `KoRForge-v${version}-win-x64.zip`;
 const appImageName = `KoRForge-${version}-linux-x86_64.AppImage`;
 
 /* 1. Empaquetar (salvo --no-build) ---------------------------------------- */
@@ -48,7 +47,9 @@ if (!sinBuild) {
     execSync('taskkill /F /IM electron.exe /T 2>nul || exit 0', { shell: 'cmd.exe', stdio: 'ignore' });
   } catch (_) { /* da igual si no habia ninguna abierta */ }
   console.log('[1/4] Empaquetando con electron-builder...');
-  execSync('npx electron-builder --win nsis zip dir', { cwd: projectDir, stdio: 'inherit' });
+  /* Solo instalador (y la carpeta suelta para desarrollo). El ZIP portable se retiro el
+     23-10-2026: es lo mismo que el instalador pero descomprimido, la via mas facil de copiar. */
+  execSync('npx electron-builder --win nsis dir', { cwd: projectDir, stdio: 'inherit' });
 } else {
   console.log('[1/4] Empaquetado saltado (--no-build): se usan los binarios de release/');
 }
@@ -57,38 +58,8 @@ if (!sinBuild) {
 const releaseDir = path.join(projectDir, 'release');
 const installerSrc = path.join(releaseDir, installerName);
 
-/** Busca el ZIP portable de ESTA version. Devuelve null si no lo encuentra. */
-function buscarZip() {
-  const candidatos = [
-    `KoRForge-${version}-win.zip`,
-    `KoRForge-v${version}-win-x64.zip`,
-    `KoRForge-${version}-win-x64.zip`,
-  ];
-  for (const c of candidatos) {
-    const p = path.join(releaseDir, c);
-    if (fs.existsSync(p)) return p;
-  }
-  /* Ultimo recurso: cualquier zip cuyo nombre contenga la version exacta. */
-  if (fs.existsSync(releaseDir)) {
-    const conVersion = fs.readdirSync(releaseDir)
-      .filter((f) => f.toLowerCase().endsWith('.zip') && f.includes(version));
-    if (conVersion.length === 1) return path.join(releaseDir, conVersion[0]);
-    if (conVersion.length > 1) {
-      console.error('  Varios ZIP con la version ' + version + ': ' + conVersion.join(', '));
-      console.error('  Deja solo el bueno en release/ (o renombralo) y vuelve a lanzar.');
-      return null;
-    }
-  }
-  return null;
-}
-
 if (!fs.existsSync(installerSrc)) {
   console.error(`ERROR: no existe el instalador ${installerSrc}. Empaqueta primero (sin --no-build).`);
-  process.exit(1);
-}
-const zipSrc = buscarZip();
-if (!zipSrc) {
-  console.error(`ERROR: no encuentro el ZIP portable de la version ${version} en ${releaseDir}.`);
   process.exit(1);
 }
 
@@ -103,20 +74,19 @@ if (!hayAppImage) {
 /* 3. Copiar a la web y limpiar las versiones anteriores -------------------- */
 fs.mkdirSync(releasesDir, { recursive: true });
 fs.copyFileSync(installerSrc, path.join(releasesDir, installerName));
-fs.copyFileSync(zipSrc, path.join(releasesDir, zipDestName));
 if (hayAppImage) fs.copyFileSync(appImageSrc, path.join(releasesDir, appImageName));
-console.log(`[2/4] Copiados: ${installerName}, ${zipDestName}${hayAppImage ? ' y ' + appImageName : ''}`);
+console.log(`[2/4] Copiados: ${installerName}${hayAppImage ? ' y ' + appImageName : ''}`);
 
 for (const f of fs.readdirSync(releasesDir)) {
-  if (f === installerName || f === zipDestName || f === appImageName || f === '.gitkeep') continue;
+  if (f === installerName || f === appImageName || f === '.gitkeep') continue;
   if (!/^KoRForge(-Setup-.*\.exe|-v.*\.zip|-\d.*-win\.zip|-\d.*-linux-x86_64\.AppImage)$/i.test(f)) continue;
   fs.unlinkSync(path.join(releasesDir, f));
-  console.log(`  fuera de la web (version anterior): ${f}`);
+  console.log(`  fuera de la web (version anterior o retirada): ${f}`);
 }
 
-/* 3 bis. Hashes: integridad y prueba de autoria (docs/PROTECCION-DERECHOS.md).
+/* 3 bis. Hashes: integridad y prueba de autoria.
    Se publica SHA256SUMS.txt junto a los binarios y cada descarga lleva su hash en el registro. */
-const rutasWeb = [path.join(releasesDir, installerName), path.join(releasesDir, zipDestName)];
+const rutasWeb = [path.join(releasesDir, installerName)];
 if (hayAppImage) rutasWeb.push(path.join(releasesDir, appImageName));
 const entradas = hashesDe(rutasWeb);
 escribirSha256Sums(path.join(releasesDir, 'SHA256SUMS.txt'), entradas);
@@ -152,16 +122,6 @@ const registro = [{
       arquitectura: 'Windows x64',
       url: `/api/wow/korforge/download/${installerName}`,
       recomendado: true,
-    },
-    {
-      tipo: 'portable',
-      nombre: `KoRForge v${version} (Portable Standalone .zip)`,
-      archivo: zipDestName,
-      tamano: mb(zipDestName),
-      sha256: hashPorArchivo[zipDestName] || '',
-      arquitectura: 'Windows x64',
-      url: `/api/wow/korforge/download/${zipDestName}`,
-      recomendado: false,
     },
     ...(hayAppImage ? [{
       tipo: 'appimage',

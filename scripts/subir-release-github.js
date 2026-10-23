@@ -96,7 +96,9 @@ async function subirAsset(releaseId, ruta, nombre) {
   const archivos = entradas.map((e) => ({
     nombre: e.archivo,
     bytes: e.bytes,
-    detalle: /\.exe$/i.test(e.archivo) ? 'Instalador oficial para Windows (recomendado)' : 'Version portable, sin instalar nada'
+    detalle: /\.exe$/i.test(e.archivo)
+      ? 'Instalador oficial para Windows (recomendado)'
+      : 'Linux x86_64 (AppImage, con actualizador propio)'
   }));
   const notas = notasGithub({ version, titulo, cambios, entradas, archivos });
 

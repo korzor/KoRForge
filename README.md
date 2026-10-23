@@ -55,8 +55,7 @@ KoRForge is a **standalone** addon manager for World of Warcraft: a modern, fast
 Latest official build: [GitHub Releases](https://github.com/korzor/KoRForge/releases/latest)
 
 1. **Official installer** (`KoRForge-Setup-x.x.x.exe`), recommended: assisted install on Windows 64-bit, desktop and Start Menu shortcuts, clean uninstall from Windows Settings.
-2. **Portable** (`KoRForge-vx.x.x-win-x64.zip`): unzip anywhere and run `KoRForge.exe`. No installation needed.
-3. **Linux** (`KoRForge-x.x.x-linux-x86_64.AppImage`): mark it executable (`chmod +x`), run it and it updates itself from GitHub Releases like the Windows build. See [docs/LINUX.md](docs/LINUX.md).
+2. **Linux** (`KoRForge-x.x.x-linux-x86_64.AppImage`): mark it executable (`chmod +x`) and run it. It updates itself from GitHub Releases, exactly like the Windows build.
 
 **Requirements:** Windows 10 or 11 (64-bit) and World of Warcraft installed locally. On Linux: a 64-bit distro with FUSE (AppImage) and World of Warcraft under Wine or a native client.
 
@@ -128,9 +127,9 @@ KoRForge es un gestor de addons **standalone** para World of Warcraft: una alter
 Última versión oficial: [Releases de GitHub](https://github.com/korzor/KoRForge/releases/latest)
 
 1. **Instalador oficial** (`KoRForge-Setup-x.x.x.exe`), recomendado: instalación asistida en Windows 64 bits, accesos en Escritorio y Menú Inicio, desinstalación limpia desde Configuración de Windows.
-2. **Portable** (`KoRForge-vx.x.x-win-x64.zip`): descomprime donde quieras y ejecuta `KoRForge.exe`. Sin instalar nada.
+2. **Linux** (`KoRForge-x.x.x-linux-x86_64.AppImage`): dale permiso de ejecución (`chmod +x`) y ábrelo. Se actualiza solo desde GitHub Releases, igual que la versión de Windows.
 
-**Requisitos:** Windows 10 u 11 (64 bits) y World of Warcraft instalado en el equipo.
+**Requisitos:** Windows 10 u 11 (64 bits) y World of Warcraft instalado en el equipo. En Linux: distribución de 64 bits con FUSE (AppImage) y World of Warcraft bajo Wine o un cliente nativo.
 
 ### Apoyar el proyecto
 

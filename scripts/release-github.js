@@ -2,14 +2,14 @@
  * Publica la version actual de KoRForge en GitHub Releases.
  *
  * Que hace:
- *   0. Puerta de idiomas (docs/REGLAS-IDIOMAS.md): no se publica con textos sin traducir.
- *   1. Empaqueta con electron-builder (instalador NSIS, ZIP portable y carpeta desempaquetada).
+ *   0. Puerta de idiomas (docs internos: REGLAS-IDIOMAS): no se publica con textos sin traducir.
+ *   1. Empaqueta con electron-builder (instalador NSIS y carpeta desempaquetada). El ZIP portable
+ *      se retiro el 23-10-2026: era la via mas facil de copiar el codigo.
  *   2. Calcula el SHA-256 de los binarios y escribe release/SHA256SUMS.txt.
  *   3. Crea la release con el texto de docs/CAMBIOS-ULTIMA.md, los binarios y el SHA256SUMS.txt.
  *
  * Los hashes quedan en el cuerpo de la release y como asset: sirven para que cualquiera
- * verifique el archivo y como prueba fechada de que ese binario salio de aqui
- * (docs/PROTECCION-DERECHOS.md).
+ * verifique el archivo y como prueba fechada de que ese binario salio de aqui.
  */
 
 const { execSync } = require('child_process');
@@ -42,23 +42,10 @@ try {
 } catch (_) {}
 
 console.log(`\n[1/3] Empaquetando KoRForge v${version} con electron-builder...`);
-execSync('npx electron-builder --win nsis zip dir', { cwd: projectDir, stdio: 'inherit' });
+execSync('npx electron-builder --win nsis dir', { cwd: projectDir, stdio: 'inherit' });
 
 const releaseDir = path.join(projectDir, 'release');
 const installerName = `KoRForge-Setup-${version}.exe`;
-const defaultZipName = `KoRForge-${version}-win.zip`;
-
-let zipSrc = path.join(releaseDir, defaultZipName);
-if (!fs.existsSync(zipSrc)) {
-  const matchingZips = fs.readdirSync(releaseDir)
-    .filter((f) => f.toLowerCase().endsWith('.zip') && f.includes(version) && !f.includes('test'))
-    .map((f) => ({ name: f, path: path.join(releaseDir, f), time: fs.statSync(path.join(releaseDir, f)).mtimeMs }))
-    .sort((a, b) => b.time - a.time);
-  if (matchingZips.length > 0) {
-    zipSrc = matchingZips[0].path;
-  }
-}
-
 const installerSrc = path.join(releaseDir, installerName);
 
 if (!fs.existsSync(installerSrc)) {
@@ -70,12 +57,14 @@ const tamano = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
 
 console.log('\n[2/3] Archivos generados:');
 console.log(`  - Instalador: ${installerName} (${tamano(fs.statSync(installerSrc).size)})`);
-if (fs.existsSync(zipSrc)) {
-  console.log(`  - Portable:   ${path.basename(zipSrc)} (${tamano(fs.statSync(zipSrc).size)})`);
+const appImageName = `KoRForge-${version}-linux-x86_64.AppImage`;
+const appImageSrc = path.join(releaseDir, appImageName);
+if (fs.existsSync(appImageSrc)) {
+  console.log(`  - Linux:      ${appImageName} (${tamano(fs.statSync(appImageSrc).size)})`);
 }
 
 // 2. Hashes de los binarios
-const entradas = hashesDe([installerSrc, fs.existsSync(zipSrc) ? zipSrc : null]);
+const entradas = hashesDe([installerSrc, fs.existsSync(appImageSrc) ? appImageSrc : null]);
 const sumsPath = escribirSha256Sums(path.join(releaseDir, 'SHA256SUMS.txt'), entradas);
 console.log('\nSHA-256 de los binarios:');
 for (const e of entradas) console.log(`  ${e.sha256}  ${e.archivo}`);
@@ -86,7 +75,7 @@ console.log(`\n[3/3] Publicando Release ${tagName} en GitHub (korzor/KoRForge)..
 const notesFile = path.join(releaseDir, 'release-notes.tmp.md');
 const archivos = [
   { nombre: installerName, bytes: fs.statSync(installerSrc).size, detalle: 'Instalador oficial para Windows (recomendado)' },
-  ...(fs.existsSync(zipSrc) ? [{ nombre: path.basename(zipSrc), bytes: fs.statSync(zipSrc).size, detalle: 'Version portable, sin instalar nada' }] : []),
+  ...(fs.existsSync(appImageSrc) ? [{ nombre: appImageName, bytes: fs.statSync(appImageSrc).size, detalle: 'Linux x86_64 (AppImage)' }] : []),
 ];
 fs.writeFileSync(notesFile, notasGithub({ version, titulo, cambios, entradas, archivos }), 'utf-8');
 
@@ -100,7 +89,7 @@ try {
   }
 
   const filesToUpload = [`"${installerSrc}"`];
-  if (fs.existsSync(zipSrc)) filesToUpload.push(`"${zipSrc}"`);
+  if (fs.existsSync(appImageSrc)) filesToUpload.push(`"${appImageSrc}"`);
   filesToUpload.push(`"${sumsPath}"`);
 
   if (releaseExists) {

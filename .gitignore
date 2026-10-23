@@ -45,3 +45,9 @@ modules/_cfkey.generated.js
 *.ntvs*
 *.njsproj
 .build-src-backup
+
+# Documentacion interna: no se publica (vive en Documents\DeepSeek Harness\korforge-interno).
+# Del repo solo sale lo que ve el usuario: README, LICENSE y la nota de cambios de la version.
+docs/*
+!docs/CAMBIOS-ULTIMA.md
+scripts/prueba-linux-wsl.sh
