@@ -73,16 +73,55 @@
 <body>
   <div class="splash-wrap">
     <img class="splash-logo" src="splash.png" data-i18n-alt="brand_home" alt="KoRForge">
-    <div class="splash-texto"><span data-i18n="splash_loading">Loading...</span></div>
-    <div class="splash-barra"><i></i></div>
+    <div class="splash-texto"><span id="splashTexto" data-i18n="splash_loading">Loading...</span></div>
+    <div class="splash-barra"><i id="splashBarra"></i></div>
   </div>
 
   <script src="i18n.js"></script>
   <script>
     (function () {
-      var lang = 'en';
-      try { lang = new URLSearchParams(location.search).get('lang') || 'en'; } catch (_) {}
+      var params = null;
+      try { params = new URLSearchParams(location.search); } catch (_) { params = null; }
+      var leer = function (clave, defecto) {
+        try { return (params && params.get(clave)) || defecto; } catch (_) { return defecto; }
+      };
+
+      var lang = leer('lang', 'en');
+      var modo = leer('modo', 'arranque');
+      var version = leer('version', '');
+
       try { if (window.I18N) window.I18N.setLanguage(lang); } catch (_) {}
+
+      var texto = document.getElementById('splashTexto');
+      var barra = document.getElementById('splashBarra');
+
+      /* Tres modos: arranque normal, instalando la actualización y actualización terminada.
+         El de "instalando" es el que pide el dueño (23-10-2026): mientras se actualiza la app
+         tiene que verse el logo, no una pantalla en negro. */
+      if (modo === 'actualizando') {
+        var plantilla = 'Instalando la actualización a {version}…';
+        try {
+          if (window.I18N && typeof window.I18N.t === 'function' && window.I18N.hasKey('splash_updating')) {
+            plantilla = window.I18N.t('splash_updating');
+          }
+        } catch (_) {}
+        var mensaje = version ? plantilla.replace('{version}', version) : plantilla;
+        if (texto) texto.textContent = mensaje;
+        if (barra) barra.style.animationDuration = '0.85s';
+      } else if (modo === 'actualizado') {
+        var listo = 'Actualización completada. Abriendo KoRForge…';
+        try {
+          if (window.I18N && typeof window.I18N.t === 'function' && window.I18N.hasKey('splash_updated')) {
+            listo = window.I18N.t('splash_updated');
+          }
+        } catch (_) {}
+        if (texto) texto.textContent = listo;
+        if (barra) {
+          barra.style.animation = 'none';
+          barra.style.width = '100%';
+          barra.style.transform = 'none';
+        }
+      }
     })();
   </script>
 </body>

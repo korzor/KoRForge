@@ -723,7 +723,8 @@ function aplicarActualizacionLinux(installerPath) {
      Solución: un lanzador detached que espera a que ESTE proceso muera y entonces hace exec del
      AppImage. Determinista, sin depender de tiempos. */
   const rutaSegura = `'${String(destino).replace(/'/g, `'\\''`)}'`;
-  const comando = `while kill -0 ${process.pid} 2>/dev/null; do sleep 0.2; done; exec ${rutaSegura}`;
+  /* --actualizado: la app relanzada enseña la tarjeta de "actualización completada" un momento. */
+  const comando = `while kill -0 ${process.pid} 2>/dev/null; do sleep 0.2; done; exec ${rutaSegura} --actualizado`;
   const hijo = spawn('/bin/sh', ['-c', comando], { detached: true, stdio: 'ignore' });
   hijo.unref();
 }
@@ -788,16 +789,13 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
 
   /* A (23-10-2026, dueño): SIN PowerShell ni cmd. La app lanza el instalador NSIS en silencio (/S)
      y se cierra; el instalador reemplaza los archivos y (customInstall en build/installer.nsh, solo
-     en modo silencioso) vuelve a abrir la app. El binario ya está verificado con su SHA-256 antes de
-     llegar aquí (K5). */
-  const child = spawn(installerPath, ['/S'], {
-    detached: true,
-    stdio: 'ignore',
-    windowsHide: true,
-    shell: true
-  });
-  child.unref();
+     en modo silencioso) vuelve a abrir la app, esta vez con --actualizado para que la tarjeta de
+     arranque diga que se ha actualizado. El binario ya está verificado con su SHA-256 antes de
+     llegar aquí (K5).
 
+     23-10-2026 (más tarde, pedido del dueño): ANTES de lanzar el instalador se pinta la tarjeta de
+     carga («Instalando la actualización a X…»). Antes la pintaba un script de PowerShell; ahora la
+     pinta la propia app y el usuario ve el logo durante la actualización. */
   const cerrarApp = () => {
     try {
       if (global.quitAndApplyUpdate) {
@@ -812,9 +810,32 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     }
   };
 
-  /* Medio segundo para que el instalador arranque; después se cierra la app para que NSIS pueda
-     reemplazar sus ficheros (si la app ya salió, el instalador simplemente sigue). */
-  setTimeout(cerrarApp, 700);
+  const lanzarInstalador = () => {
+    try {
+      const child = spawn(installerPath, ['/S'], {
+        detached: true,
+        stdio: 'ignore',
+        windowsHide: true,
+        shell: true
+      });
+      child.unref();
+    } catch (err) {
+      console.warn('[KoRForge Updater] No se pudo lanzar el instalador:', err.message);
+      return false;
+    }
+    /* La tarjeta se queda ~2,2 s mientras NSIS descomprime. Si el instalador mata antes el
+       proceso (lo normal para poder reemplazar ficheros), da igual: el instalador la relanza. */
+    setTimeout(cerrarApp, 2200);
+    return true;
+  };
+
+  if (typeof global.mostrarTarjetaActualizacion === 'function') {
+    Promise.resolve(global.mostrarTarjetaActualizacion(currentDownload.version, lang))
+      .then(lanzarInstalador)
+      .catch(lanzarInstalador);
+  } else {
+    lanzarInstalador();
+  }
 
   return { success: true, message: 'Instalador lanzado. Reiniciando KoRForge...' };
 }

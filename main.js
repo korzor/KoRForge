@@ -269,6 +269,9 @@ function createSplash() {
     const cfg = loadConfigSync();
     if (cfg.startMinimized) return; // arrancar en la bandeja: sin splash
     const lang = TRAY_TEXTS[cfg.language] ? cfg.language : 'en';
+    /* Si la app acaba de actualizarse (el instalador la relanza con --actualizado), la tarjeta lo
+       dice y se queda algo más: es la continuidad visual de la actualización. */
+    const recienActualizada = process.argv.includes('--actualizado');
 
     splash = new BrowserWindow({
       width: 560,
@@ -291,17 +294,66 @@ function createSplash() {
       }
     });
 
-    splash.loadFile(path.join(__dirname, 'public', 'splash.html'), { query: { lang } });
+    splash.loadFile(path.join(__dirname, 'public', 'splash.html'), {
+      query: { lang, modo: recienActualizada ? 'actualizado' : 'arranque' }
+    });
     splash.once('ready-to-show', () => {
       try { splash.showInactive(); } catch (_) {}
     });
     // Red de seguridad: pase lo que pase, el splash no se queda colgado
-    setTimeout(cerrarSplash, 12000);
+    setTimeout(cerrarSplash, recienActualizada ? 16000 : 12000);
   } catch (err) {
     logBoot('[KoRForge] No se pudo abrir el splash: ' + (err?.message || err));
     splash = null;
   }
 }
+
+/* Tarjeta de carga mientras se instala una actualización (dueño, 23-10-2026: «tiene que salir,
+   es obligatorio»). Antes la pintaba un script de PowerShell; ahora la pinta la propia app.
+   Devuelve una promesa que se resuelve cuando la tarjeta ya está en pantalla (1,5 s como máximo),
+   para que el instalador no arranque antes de que se vea algo. */
+global.mostrarTarjetaActualizacion = function (version, lang) {
+  return new Promise((resolve) => {
+    let resuelto = false;
+    const terminar = () => { if (!resuelto) { resuelto = true; resolve(true); } };
+
+    try {
+      if (splash && !splash.isDestroyed()) splash.destroy();
+      splash = new BrowserWindow({
+        width: 560,
+        height: 372,
+        frame: false,
+        transparent: true,
+        backgroundColor: '#00000000',
+        resizable: false,
+        movable: false,
+        minimizable: false,
+        maximizable: false,
+        alwaysOnTop: true,
+        skipTaskbar: false,
+        show: false,
+        hasShadow: false,
+        webPreferences: { contextIsolation: true, nodeIntegration: false }
+      });
+
+      const idioma = TRAY_TEXTS[lang] ? lang : 'en';
+      splash.loadFile(path.join(__dirname, 'public', 'splash.html'), {
+        query: { lang: idioma, modo: 'actualizando', version: String(version || '') }
+      });
+      splash.once('ready-to-show', () => {
+        try {
+          splash.show();
+          splash.setAlwaysOnTop(true, 'screen-saver');
+        } catch (_) {}
+        terminar();
+      });
+      setTimeout(terminar, 1500);
+    } catch (err) {
+      logBoot('[KoRForge] No se pudo abrir la tarjeta de actualización: ' + (err?.message || err));
+      terminar();
+    }
+  });
+};
 
 // --- Textos de la bandeja del sistema (interfaz nativa) -------------------
 // Las etiquetas del menú de la bandeja también existen en los cinco idiomas

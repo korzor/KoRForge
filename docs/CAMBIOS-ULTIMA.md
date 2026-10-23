@@ -2,8 +2,8 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.0 - Instaladores con nombre claro: Windows y Linux
+# Titulo: KoRForge v1.3.1 - Vuelve la tarjeta de carga mientras se actualiza
 
-- Los ficheros se llaman ya KoRForge 1.3.0 Windows y KoRForge 1.3.0 Linux, sin sufijos tecnicos.
-- El actualizador entiende los nombres nuevos y los antiguos, asi que nadie se queda sin actualizar.
-- En Ajustes, la ficha de la app lleva el aviso legal en letra pequena.
+- Al actualizar vuelve a salir la tarjeta con el logo: "Instalando la actualizacion a X", como antes.
+- Al terminar, la app se abre con el aviso de que la actualizacion se ha completado.
+- Los ficheros siguen llamandose KoRForge 1.3.1 Windows y KoRForge 1.3.1 Linux.
