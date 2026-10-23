@@ -56,8 +56,9 @@ Latest official build: [GitHub Releases](https://github.com/korzor/KoRForge/rele
 
 1. **Official installer** (`KoRForge-Setup-x.x.x.exe`), recommended: assisted install on Windows 64-bit, desktop and Start Menu shortcuts, clean uninstall from Windows Settings.
 2. **Portable** (`KoRForge-vx.x.x-win-x64.zip`): unzip anywhere and run `KoRForge.exe`. No installation needed.
+3. **Linux** (`KoRForge-x.x.x-linux-x86_64.AppImage`): mark it executable (`chmod +x`), run it and it updates itself from GitHub Releases like the Windows build. See [docs/LINUX.md](docs/LINUX.md).
 
-**Requirements:** Windows 10 or 11 (64-bit) and World of Warcraft installed locally.
+**Requirements:** Windows 10 or 11 (64-bit) and World of Warcraft installed locally. On Linux: a 64-bit distro with FUSE (AppImage) and World of Warcraft under Wine or a native client.
 
 ### Support the project
 
