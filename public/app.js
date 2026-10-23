@@ -1510,9 +1510,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="empty-icon">⚠️</span>
           <h3 class="empty-title">${T('catalog_error_title')}</h3>
           <p class="empty-desc">${err.message}</p>
+          <button class="btn btn-secondary" type="button" data-retry-catalog>${T('catalog_retry')}</button>
         </div>
       `;
     }
+  }
+
+  /* K-D7: si el catálogo falla, se puede reintentar sin recargar la app. */
+  if (cfResultsGrid) {
+    cfResultsGrid.addEventListener('click', (e) => {
+      if (e.target && e.target.closest && e.target.closest('[data-retry-catalog]')) {
+        triggerCurseForgeSearch();
+      }
+    });
   }
 
   // Estado de la última consulta: permite repintar tarjetas al cambiar de idioma
@@ -1981,7 +1991,16 @@ document.addEventListener('DOMContentLoaded', () => {
         <h3 class="empty-title">${T('detail_loading_title', { name: modName || T('nav_search') })}</h3>
       </div>
     `;
-    detailHtmlBody.innerHTML = `<p>${T('detail_loading_desc')}</p>`;
+    detailHtmlBody.innerHTML = `
+      <div class="skeleton-sheet" aria-hidden="true">
+        <div class="skeleton skeleton-title"></div>
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line short"></div>
+        <div class="skeleton skeleton-block"></div>
+        <div class="skeleton skeleton-line"></div>
+        <div class="skeleton skeleton-line"></div>
+      </div>`;
     detailFilesList.innerHTML = `<p>${T('detail_loading_files')}</p>`;
     detailGalleryGrid.innerHTML = '';
 
@@ -2629,6 +2648,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (btnApplyUpdateRestart) btnApplyUpdateRestart.style.display = 'none';
     if (btnRecheckUpdate) btnRecheckUpdate.style.display = hayNueva ? 'none' : 'inline-flex';
+    if (btnCancelUpdateDownload) btnCancelUpdateDownload.style.display = 'none';
     if (btnDismissUpdate) btnDismissUpdate.textContent = hayNueva ? T('upd_btn_later') : T('upd_btn_close');
     abrirModalDialogo(updateModal);
   }
@@ -2690,6 +2710,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const updateProgressFill = document.getElementById('updateProgressFill');
   const updateProgressInfo = document.getElementById('updateProgressInfo');
   const btnApplyUpdateRestart = document.getElementById('btnApplyUpdateRestart');
+  const btnCancelUpdateDownload = document.getElementById('btnCancelUpdateDownload');
   let updatePollInterval = null;
 
   if (btnAppUpdate) {
@@ -2728,6 +2749,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       btnDownloadUpdate.disabled = true;
       btnDownloadUpdate.textContent = T('btn_downloading');
+      if (btnCancelUpdateDownload) btnCancelUpdateDownload.style.display = 'inline-flex';
       if (updateProgressWrap) updateProgressWrap.style.display = 'block';
       if (updateProgressFill) updateProgressFill.style.width = '0%';
       if (updateProgressInfo) updateProgressInfo.textContent = T('upd_starting');
@@ -2764,15 +2786,29 @@ document.addEventListener('DOMContentLoaded', () => {
             }
           } else if (prog.status === 'completed') {
             clearInterval(updatePollInterval);
+            if (btnCancelUpdateDownload) btnCancelUpdateDownload.style.display = 'none';
             if (updateProgressFill) updateProgressFill.style.width = '100%';
-            if (updateProgressInfo) updateProgressInfo.textContent = T('upd_complete');
+            if (updateProgressInfo) {
+              /* K-D8: el SHA-256 verificado se enseña antes de reiniciar (lo comprueba K5). */
+              updateProgressInfo.textContent = prog.sha256
+                ? T('upd_complete_sha', { sha: prog.sha256.slice(0, 12) + '…' })
+                : T('upd_complete');
+            }
             btnDownloadUpdate.style.display = 'none';
             if (btnApplyUpdateRestart) {
               btnApplyUpdateRestart.style.display = 'inline-flex';
             }
             showToast(T('toast_download_ok'), 'success');
+          } else if (prog.status === 'cancelled') {
+            clearInterval(updatePollInterval);
+            if (btnCancelUpdateDownload) btnCancelUpdateDownload.style.display = 'none';
+            if (updateProgressWrap) updateProgressWrap.style.display = 'none';
+            btnDownloadUpdate.disabled = false;
+            btnDownloadUpdate.textContent = T('upd_btn_update_app');
+            showToast(T('upd_cancelled'), 'info');
           } else if (prog.status === 'error') {
             clearInterval(updatePollInterval);
+            if (btnCancelUpdateDownload) btnCancelUpdateDownload.style.display = 'none';
             if (updateProgressInfo) updateProgressInfo.textContent = T('upd_error', { message: prog.error || T('upd_download_failed') });
             btnDownloadUpdate.disabled = false;
             btnDownloadUpdate.textContent = T('upd_btn_retry_download');
@@ -2786,6 +2822,21 @@ document.addEventListener('DOMContentLoaded', () => {
       btnDownloadUpdate.disabled = false;
       btnDownloadUpdate.textContent = T('upd_btn_update_app');
     }
+  });
+
+  // K-D8: cancelar la descarga en curso (AbortController en el updater + endpoint /cancel).
+  btnCancelUpdateDownload?.addEventListener('click', async () => {
+    try {
+      await fetch('/api/app-updates/cancel', { method: 'POST' });
+    } catch (_) { /* sin red igualmente se resetea la UI */ }
+    clearInterval(updatePollInterval);
+    if (btnCancelUpdateDownload) btnCancelUpdateDownload.style.display = 'none';
+    if (updateProgressWrap) updateProgressWrap.style.display = 'none';
+    if (btnDownloadUpdate) {
+      btnDownloadUpdate.disabled = false;
+      btnDownloadUpdate.textContent = T('upd_btn_update_app');
+    }
+    showToast(T('upd_cancelled'), 'info');
   });
 
   // Apply Update and Restart

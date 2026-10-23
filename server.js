@@ -1174,6 +1174,15 @@ app.get('/api/app-updates/download-progress', (req, res) => {
   res.json(updater.getDownloadProgress());
 });
 
+/* K-D8 (auditoría 22-10-2026): cancelar la descarga en curso desde el modal de actualización. */
+app.post('/api/app-updates/cancel', (req, res) => {
+  try {
+    res.json(updater.cancelUpdateDownload());
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API: Apply Downloaded In-App Update and Restart
 app.post('/api/app-updates/apply', (req, res) => {
   try {

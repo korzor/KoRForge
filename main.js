@@ -409,8 +409,8 @@ function createWindow() {
   win = new BrowserWindow({
     width: 1400,
     height: 900,
-    minWidth: 1120,
-    minHeight: 720,
+    minWidth: 980,
+    minHeight: 640,
     frame: false, // Custom borderless window
     transparent: true,
     hasShadow: false,

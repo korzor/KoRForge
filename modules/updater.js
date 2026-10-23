@@ -124,6 +124,9 @@ async function startUpdateDownload(downloadUrl, version) {
     throw new Error('Ruta de descarga fuera del directorio temporal.');
   }
 
+  /* K-D8: la descarga se puede cancelar desde la ventana (AbortController). */
+  const abortController = new AbortController();
+
   currentDownload = {
     status: 'downloading',
     percent: 0,
@@ -133,7 +136,8 @@ async function startUpdateDownload(downloadUrl, version) {
     error: null,
     filePath: targetPath,
     version: versionLimpia,
-    sha256: null
+    sha256: null,
+    abortController
   };
 
   try {
@@ -149,7 +153,8 @@ async function startUpdateDownload(downloadUrl, version) {
 
     let res = await fetch(fetchUrl, {
       headers,
-      redirect: 'manual'
+      redirect: 'manual',
+      signal: abortController.signal
     });
 
     // If GitHub returns 302 Found, redirect to asset storage (S3) without Authorization header to avoid auth errors
@@ -159,7 +164,8 @@ async function startUpdateDownload(downloadUrl, version) {
         headers: {
           'User-Agent': 'KoRForge-InAppUpdater/1.0 (Windows NT 10.0; Win64; x64)'
         },
-        redirect: 'follow'
+        redirect: 'follow',
+        signal: abortController.signal
       });
     }
 
@@ -221,11 +227,34 @@ async function startUpdateDownload(downloadUrl, version) {
 
     return { success: true, filePath: targetPath, sha256: esperado };
   } catch (err) {
+    if (err && err.name === 'AbortError') {
+      /* K-D8: cancelada por el usuario: sin error y sin fichero a medias. */
+      currentDownload.status = 'cancelled';
+      currentDownload.error = null;
+      try { fs.rmSync(targetPath, { force: true }); } catch (_) {}
+      return { status: 'cancelled' };
+    }
     currentDownload.status = 'error';
     currentDownload.error = err.message;
     console.error('[KoRForge Updater] Error descargando actualización:', err.message);
     throw err;
   }
+}
+
+/** K-D8: cancela la descarga en curso (botón «Cancelar» del modal de actualización). */
+function cancelUpdateDownload() {
+  if (!currentDownload || currentDownload.status !== 'downloading') {
+    return { status: currentDownload ? currentDownload.status : 'idle' };
+  }
+  try { if (currentDownload.abortController) currentDownload.abortController.abort(); } catch (_) {}
+  if (currentDownload.filePath) {
+    try { fs.rmSync(currentDownload.filePath, { force: true }); } catch (_) {}
+  }
+  currentDownload = {
+    status: 'cancelled', percent: 0, downloadedBytes: 0, totalBytes: 0,
+    speedMb: '0.0', error: null, filePath: null, version: null, sha256: null, abortController: null
+  };
+  return { status: 'cancelled' };
 }
 
 // Textos de la tarjeta de carga que se pinta mientras se aplica la actualización.
@@ -754,6 +783,7 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
 module.exports = {
   getDownloadProgress,
   startUpdateDownload,
+  cancelUpdateDownload,
   applyUpdateAndRestart,
   buildApplyScript,
   getGitHubToken,
