@@ -2,8 +2,8 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.7 - La imagen de KoRForge en el instalador y el reborde dorado
+# Titulo: KoRForge v1.3.8 - La ventana de actualizar, con el arte de KoRForge
 
-- El instalador ya enseña la imagen de KoRForge, con marco dorado y barra, mientras copia los archivos.
-- La ventana que sale al actualizar tiene las esquinas bien redondeadas y un reborde dorado, sin recortes.
-- El logo de esa ventana deja aire a los lados: antes se comia el borde.
+- La ventana que sale mientras se aplica la actualizacion lleva ahora el arte de KoRForge, con reborde dorado y las esquinas bien redondeadas.
+- El arte entra entero y sin deformarse, con aire a los lados, y debajo siguen el texto y la barra dorada de progreso.
+- El instalador de Windows sigue enseñando esa misma imagen, con su marco, mientras copia los archivos.
