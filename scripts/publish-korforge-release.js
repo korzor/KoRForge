@@ -31,7 +31,7 @@ const version = pkg.version;
 const sinBuild = process.argv.includes('--no-build');
 
 const centolosDir = process.env.CENTOLOS_DIR
-  || path.join(process.env.USERPROFILE || 'C:\\Users\\KoRZoR', 'centolos');
+  || path.join(process.env.USERPROFILE || process.env.HOME || '.', 'centolos');
 const releasesDir = path.join(centolosDir, 'public', 'wow', 'releases');
 const registroPath = path.join(centolosDir, 'data', 'korforge-releases.json');
 
