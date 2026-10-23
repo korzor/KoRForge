@@ -1447,6 +1447,18 @@ input:checked + .slider:before {
   color: var(--c-fff);
 }
 
+/* Letra pequeña legal de la ficha "Acerca de" (23-10-2026, pedido del dueño).
+   Discreta, pero legible: no es decorativa, es un aviso. */
+.about-legal {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.68rem;
+  line-height: 1.5;
+  color: var(--text-faint);
+  text-align: center;
+}
+
 /* 2-Column CurseForge Layout */
 .cf-layout {
   display: flex;
