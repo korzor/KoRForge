@@ -104,8 +104,8 @@ Hi, I'm **KoRZoR**, an independent developer and a technology and video games en
 free time building tools with no advertising, no telemetry and no unnecessary background processes,
 designed to run fast and respect the user's resources.
 
-If KoRForge saves you time, you can invite me to a coffee: it pays for the release hosting, the testing
-hardware and the hours behind it.
+If KoRForge saves you time, you can invite me to a coffee. It is simply to support the working hours
+behind it, nothing else.
 
 <p>
   <a href="https://www.buymeacoffee.com/korzor" target="_blank">
@@ -201,8 +201,8 @@ instalar `libfuse2`.
 Dedico mi tiempo libre a hacer herramientas sin publicidad, sin telemetría y sin procesos
 innecesarios, pensadas para ir rápido y respetar los recursos del equipo.
 
-Si KoRForge te ahorra tiempo, puedes invitarme a un café: paga el alojamiento de las descargas, el
-equipo de pruebas y las horas que hay detrás.
+Si KoRForge te ahorra tiempo, puedes invitarme a un café. Es solo por las horas de trabajo que hay
+detrás, nada más.
 
 <p>
   <a href="https://www.buymeacoffee.com/korzor" target="_blank">
