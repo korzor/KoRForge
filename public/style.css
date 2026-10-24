@@ -3434,10 +3434,31 @@ input:checked + .slider:before {
 
 /* ===== K-D2/K-D5/K-D6/K-D11 (auditoria 22-10-2026, version 1.2.27) ================= */
 
-/* K-D2: anillo de foco visible al navegar con teclado (dorado de la casa). */
-:focus-visible {
+/* K-D2: anillo de foco visible al navegar con teclado (dorado de la casa).
+   OJO (dueño, 24-10-2026): en los CAMPOS de texto el recuadro dorado no se quiere. En un `input`
+   el navegador marca `:focus-visible` también al pinchar con el ratón, así que salía un cuadrado
+   alrededor del buscador al hacer clic. Los campos llevan su propio realce (abajo) y el anillo se
+   queda para lo que sí se maneja con el teclado: botones, enlaces, pestañas, selects. */
+:focus-visible:not(input):not(textarea) {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
+}
+
+/* Los campos de texto: sin recuadro; el foco se ve en el contenedor y con un halo suave. */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
+
+.search-box:focus-within {
+  border-color: var(--accent-gold);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.2);
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+textarea:focus {
+  outline: none;
 }
 
 /* K-D6: el brand es ahora un div con role="button"; se le da foco visible como a cualquier botón. */
@@ -3507,4 +3528,85 @@ input:checked + .slider:before {
   .game-version-pill { height: 52px; }
   .game-version-pill .pill-logo { height: 32px; max-width: 82px; }
   .cf-results-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+}
+
+/* ===== Menú contextual de texto (dueño, 24-10-2026) ================================
+   Cortar / copiar / pegar en los campos, y copiar en las páginas de solo lectura.
+   Vive en menu-contextual.js; aquí solo su aspecto, con el dorado y las superficies de la casa. */
+.kf-menu-contextual {
+  position: fixed;
+  z-index: 2147483000;
+  min-width: 200px;
+  padding: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(245, 158, 11, 0.14);
+  color: var(--c-fff);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.kf-menu-contextual[hidden] { display: none; }
+
+.kf-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kf-menu-item:hover:not(:disabled),
+.kf-menu-item.kf-menu-foco:not(:disabled) {
+  background: var(--bg-card-hover);
+  color: var(--accent-gold);
+}
+
+/* Dentro del menú el realce ya se ve: el anillo dorado ahí sobra. */
+.kf-menu-item:focus-visible { outline: none; }
+
+.kf-menu-item:disabled {
+  opacity: 0.38;
+  cursor: default;
+}
+
+.kf-menu-etiqueta { flex: 1; }
+
+.kf-menu-atajo {
+  color: var(--text-faint);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+.kf-menu-separador {
+  height: 1px;
+  margin: 5px 8px;
+  background: var(--border-subtle);
+}
+/* ===== Texto seleccionable en las zonas de LECTURA (dueño, 24-10-2026) =================
+   Arriba hay `* { user-select: none }`: la app se comporta como una app de escritorio y no se puede
+   seleccionar nada. Pero en la ficha del addon (descripción, archivos) y en las notas de Ajustes el
+   texto es para leer y copiar, así que ahí se permite seleccionar. El menú de copiar/cortar/pegar
+   (menu-contextual.js) aparece justo sobre estas zonas. */
+#detailTabDesc,
+#detailTabFiles,
+.detail-hero-summary,
+.detail-tab-content,
+.settings-desc,
+.option-desc {
+  user-select: text;
+}
+
+/* El menú contextual, en cambio, no se selecciona (un clic no debe marcar sus etiquetas). */
+.kf-menu-contextual,
+.kf-menu-contextual * {
+  user-select: none;
 }
