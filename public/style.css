@@ -2981,6 +2981,12 @@ input:checked + .slider:before {
   opacity: 0.75;
 }
 
+/* Mientras se pregunta a GitHub al abrir la ventana de actualización (dueño, 24-10-2026). */
+.btn-app-update-nav.is-checking {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
 .btn-app-update-nav.is-latest .update-nav-label {
   color: var(--text-faint);
 }

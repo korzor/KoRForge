@@ -2763,10 +2763,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return data;
     } catch (err) {
+      /* Sin red NO se borra lo que ya se sabía: antes se ponía `appUpdateData = null` y las novedades
+         de la versión desaparecían de la ventana (dueño, 24-10-2026). */
       console.warn('[KoRForge Updates] Comprobación de actualizaciones fallida:', err.message);
-      appUpdateData = null;
       pintarBotonVersion('latest', versionInstalada);
-      return null;
+      return appUpdateData;
     }
   }
 
@@ -2879,7 +2880,20 @@ document.addEventListener('DOMContentLoaded', () => {
   let updatePollInterval = null;
 
   if (btnAppUpdate) {
-    btnAppUpdate.addEventListener('click', abrirModalActualizacion);
+    /* Al ABRIR la ventana se pregunta a GitHub otra vez (dueño, 24-10-2026 de noche: «en la ventana de
+       update deberían salir los cambios de la última versión»). Antes se enseñaba la foto que se tomó
+       al arrancar la app, así que una release publicada después seguía saliendo sin novedades hasta
+       reiniciar. Si la consulta falla, se pinta lo que ya se sabía (`checkAppUpdates` conserva los
+       datos); el modal se abre igual, en cuanto termina la consulta. */
+    btnAppUpdate.addEventListener('click', async () => {
+      btnAppUpdate.classList.add('is-checking');
+      try {
+        await checkAppUpdates();
+      } finally {
+        btnAppUpdate.classList.remove('is-checking');
+      }
+      abrirModalActualizacion();
+    });
   }
 
   btnCloseUpdateModal?.addEventListener('click', closeUpdateModal);
