@@ -652,8 +652,12 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
     '    $lbl = New-Object System.Windows.Forms.Label',
     '    $lbl.AutoSize = $false',
     '    $lbl.TextAlign = \'MiddleCenter\'',
-    '    $lbl.Location = New-Object System.Drawing.Point(0, (T 306))',
-    '    $lbl.Size = New-Object System.Drawing.Size($ancho, [math]::Max(16, (T 24)))',
+    '    # EL TEXTO NO PUEDE TOCAR LOS LADOS (dueno, 24-10-2026: *"ambos lados de la tarjeta salen',
+    '    # rotos, sin borde"*): con el ancho entero, su fondo tapaba el reborde dorado a esa altura.',
+    '    # Ahora deja 12 px por cada lado y lleva el mismo color que el relleno.',
+    '    $lbl.Location = New-Object System.Drawing.Point((T 12), (T 306))',
+    '    $lbl.Size = New-Object System.Drawing.Size(($ancho - (T 24)), [math]::Max(16, (T 24)))',
+    '    $lbl.BackColor = [System.Drawing.Color]::FromArgb(11, 16, 24)',
     "    $lbl.Font = New-Object System.Drawing.Font('Segoe UI', [math]::Max(7, (9 * $e)), [System.Drawing.FontStyle]::Bold)",
     '    $lbl.ForeColor = [System.Drawing.Color]::FromArgb(241, 245, 249)',
     '    $lbl.Text = $textoInstalando',
@@ -931,8 +935,20 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
       const pantalla = typeof global.rectPantallaFisica === 'function' ? global.rectPantallaFisica() : null;
       /* LA IMAGEN DE LA TARJETA (dueno, 23-10-2026: *"yo te hablaba del updater"*): la ventana que
          sale mientras se aplica la actualizacion lleva el arte de la marca
-         (`public/actualizando.png`, el mismo de la ficha del repo), no el yunque del splash. */
-      const splashPng = path.join(__dirname, '..', 'public', 'actualizando.png');
+         (`public/actualizando.png`, el mismo de la ficha del repo), no el yunque del splash.
+         OJO, ESTO ERA EL FALLO DEL LOGO: ese PNG vive DENTRO de app.asar y PowerShell (que es quien
+         copia la imagen) no sabe leer un asar, asi que la tarjeta salia sin dibujo. Node sí puede, así
+         que la copia a %TEMP% se hace aquí y al script se le pasa la copia. (dueno, 24-10-2026:
+         *"el updater sigue sin tener el logo"*). */
+      const arteAsar = path.join(__dirname, '..', 'public', 'actualizando.png');
+      let splashPng = arteAsar;
+      try {
+        const arteTemp = path.join(os.tmpdir(), 'korforge_actualizando.png');
+        fs.copyFileSync(arteAsar, arteTemp);
+        splashPng = arteTemp;
+      } catch (err) {
+        console.warn('[KoRForge Updater] No se pudo preparar la imagen de la tarjeta:', err.message);
+      }
       const ps1 = path.join(os.tmpdir(), 'korforge_apply_update.ps1');
       /* El .ps1 se escribe con BOM: sin él, PowerShell 5.1 lee el archivo como ANSI y los textos con
          tilde salen rotos en la tarjeta ("Mise Ã  jour..."). Visto por el dueño el 24-10-2026:
