@@ -1418,6 +1418,31 @@ input:checked + .slider:before {
   color: var(--accent-gold);
 }
 
+/* --- Quitar la asociación de un cliente (dueño, 24-10-2026) --------------------------------
+   El botón va en su propia fila, debajo de Guardar/Abrir, y se ve como algo que aparta el cliente
+   (no destructivo: en el disco no se toca nada). */
+.game-manage-unlink-row {
+  margin-top: 2px;
+}
+
+.btn-unlink-game {
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  color: var(--text-muted);
+}
+
+.btn-unlink-game:hover {
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.5);
+  background: rgba(239, 68, 68, 0.12);
+}
+
+/* Cliente desasociado: el estado se lee en gris, sin punto de error (es a propósito). */
+.game-manage-status .status-txt.unlinked {
+  color: var(--text-faint);
+  font-style: italic;
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));

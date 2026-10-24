@@ -637,9 +637,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const subKey = 'game_sub_' + key;
       const gameSubtitle = (window.I18N && window.I18N.hasKey(subKey)) ? T(subKey) : (g.subtitle || '');
-      const statusTxt = g.addonsExists
-        ? T('game_status_connected', { path: g.resolvedPath || g.path })
-        : (g.folderExists ? T('game_status_detected', { path: g.resolvedPath || g.path }) : T('game_status_missing'));
+      const desasociado = g.unlinked === true;
+      const statusTxt = desasociado
+        ? T('game_status_unlinked')
+        : (g.addonsExists
+          ? T('game_status_connected', { path: g.resolvedPath || g.path })
+          : (g.folderExists ? T('game_status_detected', { path: g.resolvedPath || g.path }) : T('game_status_missing')));
+      const claseEstado = desasociado ? 'unlinked' : (g.addonsExists ? 'connected' : (g.folderExists ? 'warning' : ''));
+      const puntoEnError = !desasociado && !g.addonsExists && !g.folderExists;
+      /* «Eliminar asociación» solo tiene sentido si el cliente tiene algo asociado. */
+      const puedeDesasociar = !desasociado && !!(g.path || g.resolvedPath);
 
       item.innerHTML = `
         <div class="game-manage-top">
@@ -659,9 +666,13 @@ document.addEventListener('DOMContentLoaded', () => {
           <button class="btn btn-primary btn-sm btn-save-game-path" data-game-id="${g.id}">${T('game_save')}</button>
           <button class="btn btn-secondary btn-sm btn-open-game-folder" data-game-id="${g.id}">${T('game_open')}</button>
         </div>
+        ${puedeDesasociar ? `
+        <div class="game-manage-input-row game-manage-unlink-row">
+          <button class="btn btn-secondary btn-sm btn-unlink-game" data-game-id="${g.id}" title="${T('game_unlink_hint')}">${T('game_unlink')}</button>
+        </div>` : ''}
         <div class="game-manage-status">
-          <span class="pulse-dot ${g.addonsExists ? '' : 'error'}"></span>
-          <span class="status-txt ${g.addonsExists ? 'connected' : (g.folderExists ? 'warning' : '')}">
+          <span class="pulse-dot ${puntoEnError ? 'error' : ''}"></span>
+          <span class="status-txt ${claseEstado}">
             ${statusTxt}
           </span>
         </div>
@@ -689,8 +700,59 @@ document.addEventListener('DOMContentLoaded', () => {
         await switchActiveGame(g.id);
       });
 
+      // Eliminar asociación (dueño, 24-10-2026): se pregunta antes porque el cliente deja de estar
+      // disponible arriba hasta que se le vuelva a poner ruta.
+      item.querySelector('.btn-unlink-game')?.addEventListener('click', async () => {
+        const seguir = await askConfirm({
+          title: T('modal_confirm_title'),
+          sub: T('game_unlink'),
+          mensaje: T('game_unlink_confirm', { name: g.name }),
+          okLabel: T('game_unlink_ok'),
+        });
+        if (!seguir) return;
+        await desasociarJuego(g.id);
+      });
+
       gamesManagementList.appendChild(item);
     }
+  }
+
+  /**
+   * Todo lo que hay que repintar cuando cambia el cliente activo (o cuando se quita la asociacion de
+   * uno y la app se pasa a otro). Se saco de switchActiveGame para no duplicar el bloque entero.
+   * `avisarRuta: false` calla el aviso de «este cliente no tiene carpeta» (al desasociar ya se dice
+   * lo que ha pasado con otro mensaje).
+   */
+  async function refrescarPorCambioDeJuego({ avisarRuta = true } = {}) {
+    const activeGameObj = currentGamesData[currentActiveGame];
+
+    updateTopbarGamePills(currentActiveGame);
+    renderGamesManagement(currentGamesData, currentActiveGame);
+
+    // Sidebar widget
+    if (activeGameSelect) activeGameSelect.value = currentActiveGame;
+    if (widgetGameIcon) widgetGameIcon.textContent = activeGameObj?.icon || '⚔️';
+    if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
+    if (avisarRuta) avisarFaltaDeCarpeta();
+
+    // Datos del cliente nuevo
+    await loadInstalledAddons(false);
+    await loadFavorites(currentActiveGame);
+    renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
+    await loadBackups(currentActiveGame);
+
+    // Subtitulos de las pestanas
+    const addonsSub = document.getElementById('addonsSubtitle');
+    if (addonsSub) {
+      addonsSub.textContent = T('addons_subtitle', { game: gameLabel(currentActiveGame) });
+    }
+    const backupsSub = document.querySelector('#pane-backups .page-subtitle');
+    if (backupsSub) {
+      backupsSub.textContent = T('vault_subtitle_game', { game: gameLabel(currentActiveGame) });
+    }
+
+    // Busqueda con la version del cliente nuevo
+    triggerCurseForgeSearch();
   }
 
   async function switchActiveGame(gameId) {
@@ -705,47 +767,53 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.success) {
         currentActiveGame = data.activeGame;
         currentGamesData = data.games || {};
-        const activeGameObj = currentGamesData[currentActiveGame];
 
-        // Update topbar pills
-        updateTopbarGamePills(currentActiveGame);
-
-        // Update sidebar widget
-        if (activeGameSelect) activeGameSelect.value = currentActiveGame;
-        if (widgetGameIcon) widgetGameIcon.textContent = activeGameObj?.icon || '⚔️';
-        if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
-        avisarFaltaDeCarpeta();
-
-        // Re-render settings list
-        renderGamesManagement(currentGamesData, currentActiveGame);
-
-        // Reload installed addons for this new game client
-        await loadInstalledAddons(false);
-
-        // Reload favorites for this new game client
-        await loadFavorites(currentActiveGame);
-        renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
-
-        // Reload backups for this new game client
-        await loadBackups(currentActiveGame);
-
-        // Update page subtitles
-        const addonsSub = document.getElementById('addonsSubtitle');
-        if (addonsSub) {
-          addonsSub.textContent = T('addons_subtitle', { game: gameLabel(currentActiveGame) });
-        }
-        const backupsSub = document.querySelector('#pane-backups .page-subtitle');
-        if (backupsSub) {
-          backupsSub.textContent = T('vault_subtitle_game', { game: gameLabel(currentActiveGame) });
-        }
-
-        // Re-run search with new game version
-        triggerCurseForgeSearch();
+        await refrescarPorCambioDeJuego();
 
         showToast(T('toast_game_switched', { name: gameLabel(currentActiveGame) }));
       }
     } catch (err) {
       showToast(T('toast_game_switch_error', { message: err.message }), 'error');
+    }
+  }
+
+  /**
+   * «Eliminar asociación» de un cliente (dueño, 24-10-2026).
+   *
+   * KoRForge olvida la carpeta de ESE cliente y, con eso, arriba sale en gris y no se puede elegir.
+   * En el disco no se toca nada: los addons siguen donde están. Si el cliente quitado era el activo
+   * y queda otro con carpeta, el servidor pasa la app a ese y aquí se refresca todo con ese cliente.
+   */
+  async function desasociarJuego(gameId) {
+    try {
+      const res = await fetch('/api/config/unlink-game', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        throw new Error(data.code ? mensajeDeError(data) : (data.error || ''));
+      }
+
+      const nombre = gameLabel(gameId);
+      currentGamesData = data.games || {};
+      currentActiveGame = data.activeGame || currentActiveGame;
+
+      if (data.switchedTo) {
+        await refrescarPorCambioDeJuego({ avisarRuta: false });
+        showToast(T('toast_game_unlinked_switched', { name: nombre, otro: gameLabel(data.switchedTo) }));
+        return;
+      }
+
+      renderGamesManagement(currentGamesData, currentActiveGame);
+      updateTopbarGamePills(currentActiveGame);
+      const activeGameObj = currentGamesData[currentActiveGame];
+      if (widgetGameIcon) widgetGameIcon.textContent = activeGameObj?.icon || '⚔️';
+      if (detectedPathEl) detectedPathEl.textContent = activeGameObj?.resolvedPath || activeGameObj?.path || T('game_path_empty');
+      showToast(T('toast_game_unlinked', { name: nombre }));
+    } catch (err) {
+      showToast(T('toast_game_unlink_error', { message: err.message }), 'error');
     }
   }
 
@@ -764,6 +832,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (data.success) {
         currentGamesData = data.games || {};
         renderGamesManagement(currentGamesData, currentActiveGame);
+        /* Guardar una ruta vuelve a asociar el cliente (y quita el gris de la barra de arriba): la
+           barra se repinta siempre, no solo cuando el cliente guardado es el activo (dueño,
+           24-10-2026, al añadir «eliminar asociación»). */
+        updateTopbarGamePills(currentActiveGame);
         if (gameId === currentActiveGame) {
           if (detectedPathEl) detectedPathEl.textContent = newPath || T('game_path_empty');
           await loadInstalledAddons(true);

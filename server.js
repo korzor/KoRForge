@@ -227,6 +227,9 @@ function getGameStatus(game) {
   return {
     ...game,
     resolvedPath: gamePath,
+    /* El cliente esta desasociado a mano: la interfaz lo pinta en gris aunque `folderExists` no
+       lo diria (puede existir la carpeta en el disco). */
+    unlinked: game.unlinked === true,
     folderExists,
     addonsDir,
     wtfDir,
@@ -249,6 +252,10 @@ function getGameStatus(game) {
 function rutaDeJuego(gameId) {
   const gKey = gameId || config.activeGame || 'forever';
   const game = config.games[gKey];
+  /* Cliente DESASOCIADO a mano (dueño, 24-10-2026: «eliminar asociacion»). Aunque la carpeta exista
+     bajo la raiz configurada, aqui no cuenta: es lo que hace que arriba salga en gris. Se vuelve a
+     asociar guardando una ruta (los botones de la ficha de Ajustes). */
+  if (game && game.unlinked === true) return '';
   const p = (game?.path || '').trim();
   if (p) return p;
   const raiz = (config.rootWoWDir || '').trim();
@@ -449,7 +456,12 @@ app.post('/api/config', (req, res) => {
   if (games && typeof games === 'object') {
     for (const [key, gData] of Object.entries(games)) {
       if (config.games[key]) {
-        if (gData.path !== undefined) config.games[key].path = gData.path.trim();
+        if (gData.path !== undefined) {
+          const rutaNueva = String(gData.path || '').trim();
+          config.games[key].path = rutaNueva;
+          /* Guardar una ruta vuelve a asociar el cliente (si estaba quitado a mano). */
+          if (rutaNueva) delete config.games[key].unlinked;
+        }
       }
     }
     if (config.games[config.activeGame]?.path) {
@@ -490,6 +502,52 @@ app.post('/api/config', (req, res) => {
   });
 });
 
+/* API: quitar la asociacion de un cliente (dueño, 24-10-2026).
+ *
+ * QUE HACE: KoRForge olvida la carpeta de ESE cliente (`games.<id>.path` vacia + marca `unlinked`)
+ * y, con eso, el cliente sale en gris en la barra de arriba y no se puede elegir. En el disco no se
+ * toca nada: los addons siguen donde estan.
+ *
+ * POR QUE LA MARCA: sin ella, si hay una raiz configurada (`rootWoWDir`) y la carpeta del cliente
+ * existe debajo, `rutaDeJuego` la derivaria otra vez y el cliente seguiria "asociado" aunque el
+ * dueño acabe de quitarlo. La marca manda sobre la derivacion. Se borra sola al guardar una ruta o
+ * al encontrarla con la autodeteccion.
+ */
+app.post('/api/config/unlink-game', (req, res) => {
+  const { gameId } = req.body || {};
+  const juego = config.games[gameId];
+  if (!juego) {
+    return res.status(400).json({ error: 'Juego desconocido', code: 'err_game_unknown' });
+  }
+
+  juego.path = '';
+  juego.unlinked = true;
+
+  /* Si era el cliente activo y queda otro con carpeta, la app se pasa a ese: no tiene sentido
+     quedarse mirando un cliente que el dueño acaba de quitar. Si no queda ninguno, se queda (arriba
+     sale en gris y los avisos de «sin carpeta» ya existen). */
+  let switchedTo = '';
+  if (config.activeGame === gameId) {
+    const otro = Object.keys(config.games).find((k) => k !== gameId && getGameStatus(config.games[k]).folderExists);
+    if (otro) {
+      config.activeGame = otro;
+      switchedTo = otro;
+    }
+  }
+  if (config.games[config.activeGame]?.path) {
+    config.wowDir = config.games[config.activeGame].path;
+  }
+
+  saveConfig(config);
+
+  const gamesStatus = {};
+  for (const [key, g] of Object.entries(config.games)) {
+    gamesStatus[key] = getGameStatus(g);
+  }
+
+  res.json({ success: true, activeGame: config.activeGame, switchedTo, games: gamesStatus });
+});
+
 // API: Auto-Detect Game Versions inside a Root Directory
 app.post('/api/config/auto-detect', (req, res) => {
   const { rootDir } = req.body;
@@ -505,6 +563,8 @@ app.post('/api/config/auto-detect', (req, res) => {
     const candidatePath = path.join(targetRoot, g.subfolder);
     if (fs.existsSync(candidatePath)) {
       config.games[key].path = candidatePath;
+      /* La deteccion encuentra la carpeta: el cliente vuelve a estar asociado. */
+      delete config.games[key].unlinked;
       detected[key] = candidatePath;
     }
   }

@@ -375,6 +375,17 @@
       toast_setting_error: 'Error saving the setting: {message}',
       toast_folder_opening: 'Opening the {name} folder',
 
+      // --- Quitar la asociación de un cliente -------------------------------
+      game_unlink: 'Remove association',
+      game_unlink_hint: 'KoRForge forgets this client folder and stops offering it at the top. Nothing is deleted from the disk.',
+      game_unlink_confirm: 'Remove the association of "{name}"? KoRForge will forget its folder and the client will show greyed out in the top bar. Nothing is deleted from the disk.',
+      game_unlink_ok: 'Remove',
+      game_status_unlinked: 'No association: this client does not appear in the top bar',
+      toast_game_unlinked: 'Association removed: {name}',
+      toast_game_unlinked_switched: 'Association removed: {name}. You are now using {otro}',
+      toast_game_unlink_error: 'Could not remove the association: {message}',
+      err_game_unknown: 'That game client does not exist',
+
       // --- Actualizador de la app -----------------------------------------
       upd_nav_latest_hint: 'KoRForge {version} · latest version. Click to check again',
       upd_nav_unknown_hint: 'Click to check whether there is a new version',
@@ -883,6 +894,17 @@
       toast_setting_saved: 'Ajuste guardado: {label}',
       toast_setting_error: 'Error guardando el ajuste: {message}',
       toast_folder_opening: 'Abriendo la carpeta de {name}',
+
+      // --- Quitar la asociación de un cliente -------------------------------
+      game_unlink: 'Eliminar asociación',
+      game_unlink_hint: 'KoRForge olvida la carpeta de este cliente y deja de ofrecerlo arriba. En el disco no se borra nada.',
+      game_unlink_confirm: '¿Quitar la asociación de «{name}»? KoRForge olvidará su carpeta y el cliente saldrá en gris en la barra de arriba. En el disco no se borra nada.',
+      game_unlink_ok: 'Quitar',
+      game_status_unlinked: 'Sin asociación: el cliente no aparece en la barra de arriba',
+      toast_game_unlinked: 'Asociación quitada: {name}',
+      toast_game_unlinked_switched: 'Asociación quitada: {name}. Ahora usas {otro}',
+      toast_game_unlink_error: 'No se pudo quitar la asociación: {message}',
+      err_game_unknown: 'Ese cliente de juego no existe',
 
       // --- Actualizador de la app -----------------------------------------
       upd_nav_latest_hint: 'KoRForge {version} · última versión. Haz clic para comprobar de nuevo',
@@ -1393,6 +1415,17 @@
       toast_setting_error: 'Erro gardando o axuste: {message}',
       toast_folder_opening: 'Abrindo o cartafol de {name}',
 
+      // --- Quitar a asociación dun cliente ----------------------------------
+      game_unlink: 'Eliminar asociación',
+      game_unlink_hint: 'KoRForge esquece a carpeta deste cliente e deixa de ofrecelo arriba. No disco non se borra nada.',
+      game_unlink_confirm: '¿Quitar a asociación de «{name}»? KoRForge esquecerá a súa carpeta e o cliente sairá en gris na barra de arriba. No disco non se borra nada.',
+      game_unlink_ok: 'Quitar',
+      game_status_unlinked: 'Sen asociación: o cliente non aparece na barra de arriba',
+      toast_game_unlinked: 'Asociación quitada: {name}',
+      toast_game_unlinked_switched: 'Asociación quitada: {name}. Agora usas {otro}',
+      toast_game_unlink_error: 'Non se puido quitar a asociación: {message}',
+      err_game_unknown: 'Ese cliente de xogo non existe',
+
       // --- Actualizador de la app -----------------------------------------
       upd_nav_latest_hint: 'KoRForge {version} · última versión. Fai clic para comprobar de novo',
       upd_nav_unknown_hint: 'Fai clic para comprobar se hai unha versión nova',
@@ -1902,6 +1935,17 @@
       toast_setting_error: 'Erreur lors de l’enregistrement du réglage : {message}',
       toast_folder_opening: 'Ouverture du dossier de {name}',
 
+      // --- Supprimer l’association d’un client ------------------------------
+      game_unlink: 'Supprimer l’association',
+      game_unlink_hint: 'KoRForge oublie le dossier de ce client et cesse de le proposer en haut. Rien n’est supprimé du disque.',
+      game_unlink_confirm: 'Supprimer l’association de « {name} » ? KoRForge oubliera son dossier et le client apparaîtra en gris dans la barre du haut. Rien n’est supprimé du disque.',
+      game_unlink_ok: 'Supprimer',
+      game_status_unlinked: 'Sans association : le client n’apparaît pas dans la barre du haut',
+      toast_game_unlinked: 'Association supprimée : {name}',
+      toast_game_unlinked_switched: 'Association supprimée : {name}. Vous utilisez maintenant {otro}',
+      toast_game_unlink_error: 'Impossible de supprimer l’association : {message}',
+      err_game_unknown: 'Ce client de jeu n’existe pas',
+
       // --- Actualizador de la app -----------------------------------------
       upd_nav_latest_hint: 'KoRForge {version} · dernière version. Cliquez pour vérifier à nouveau',
       upd_nav_unknown_hint: 'Cliquez pour vérifier s’il existe une nouvelle version',
@@ -2410,6 +2454,17 @@
       toast_setting_saved: 'Impostazione salvata: {label}',
       toast_setting_error: 'Errore nel salvataggio dell’impostazione: {message}',
       toast_folder_opening: 'Apertura della cartella di {name}',
+
+      // --- Rimuovere l’associazione di un client ----------------------------
+      game_unlink: 'Rimuovi associazione',
+      game_unlink_hint: 'KoRForge dimentica la cartella di questo client e smette di offrirlo in alto. Sul disco non viene cancellato nulla.',
+      game_unlink_confirm: 'Rimuovere l’associazione di «{name}»? KoRForge dimenticherà la sua cartella e il client apparirà in grigio nella barra in alto. Sul disco non viene cancellato nulla.',
+      game_unlink_ok: 'Rimuovi',
+      game_status_unlinked: 'Senza associazione: il client non appare nella barra in alto',
+      toast_game_unlinked: 'Associazione rimossa: {name}',
+      toast_game_unlinked_switched: 'Associazione rimossa: {name}. Ora usi {otro}',
+      toast_game_unlink_error: 'Impossibile rimuovere l’associazione: {message}',
+      err_game_unknown: 'Quel client di gioco non esiste',
 
       // --- Actualizador de la app -----------------------------------------
       upd_nav_latest_hint: 'KoRForge {version} · ultima versione. Clicca per controllare di nuovo',
