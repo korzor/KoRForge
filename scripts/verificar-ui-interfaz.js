@@ -307,6 +307,28 @@ const CHECK_EMPTY = `(async () => {
   return out;
 })()`;
 
+/* El panel lateral tiene que quedar a la altura de la palabra «Filtros» del panel de búsqueda
+   (dueño, 25-10-2026: «baja los botones del panel lateral para que se alineen con la palabra
+   filtro»). Se comparan los CENTROS verticales, que es lo que se ve alineado. */
+const CHECK_PANEL_LATERAL = `(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const out = { pasos: [], problemas: [] };
+  document.querySelector('.nav-item[data-tab="search"]').click();
+  await sleep(900);
+  const nav = document.querySelector('.nav-menu .nav-item[data-tab="search"]');
+  const titulo = document.querySelector('.cf-filters-title');
+  if (!nav || !titulo) { out.problemas.push('no encuentro el primer boton del panel lateral o la palabra Filtros'); return out; }
+  const rn = nav.getBoundingClientRect();
+  const rt = titulo.getBoundingClientRect();
+  const centroNav = rn.top + rn.height / 2;
+  const centroTitulo = rt.top + rt.height / 2;
+  const desfase = Math.round(centroTitulo - centroNav);
+  out.pasos.push('panel lateral: primer boton centro=' + Math.round(centroNav) + ' | palabra Filtros centro=' + Math.round(centroTitulo) + ' | desfase=' + desfase + ' px');
+  out.pasos.push('ventana: ' + innerWidth + 'x' + innerHeight);
+  if (Math.abs(desfase) > 3) out.problemas.push('los botones del panel lateral no estan a la altura de la palabra Filtros (desfase ' + desfase + ' px)');
+  return out;
+})()`;
+
 async function main() {
   console.log('Sonda de interfaz de KoRForge\n');
   const server = await startStaticServer();
@@ -370,9 +392,14 @@ async function main() {
     for (const p of r2.pasos) console.log('   Â· ' + p);
     for (const p of r2.problemas) console.error('   ! ' + p);
 
+    const r3 = await cdp.evaluate(CHECK_PANEL_LATERAL);
+    console.log('\n3) Panel lateral alineado con «Filtros»');
+    for (const p of r3.pasos) console.log('   Â· ' + p);
+    for (const p of r3.problemas) console.error('   ! ' + p);
+
     if (log.deletes.length) console.log('\nDELETE de prueba: ' + log.deletes.join(' | '));
 
-    const problemas = [...r1.problemas, ...r2.problemas];
+    const problemas = [...r1.problemas, ...r2.problemas, ...r3.problemas];
     if (problemas.length) {
       console.error(`\nERRORES: ${problemas.length}`);
       process.exitCode = 1;

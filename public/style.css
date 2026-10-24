@@ -551,9 +551,14 @@ body.is-maximized .app-body {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 26px 8px 14px 8px;
+  padding: 66px 8px 14px 8px;
   flex-shrink: 0;
 }
+
+/* El panel lateral arranca más abajo para que sus botones queden a la altura de la palabra «Filtros»
+   de la barra de filtros del catálogo (dueño, 25-10-2026). Esos 66 px son los 26 de antes más los 40
+   que separan el centro del primer botón del centro del título de filtros a 1400x900; si cambia la
+   barra de búsqueda de arriba, hay que volver a medirlo (`scripts/verificar-ui-interfaz.js` avisa). */
 
 body.is-maximized .app-sidebar {
   border-bottom-left-radius: 0;
@@ -3889,6 +3894,9 @@ textarea:focus {
   .game-version-pill .pill-logo { height: 36px; max-width: 92px; }
   .cf-results-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
   .app-content { padding: 12px 8px; }
+  /* Aquí el contenido lleva 12 px arriba en vez de 14: el panel lateral baja 2 px para seguir
+     alineado con la palabra «Filtros» (dueño, 25-10-2026). */
+  .app-sidebar { padding-top: 64px; }
 }
 @media (max-width: 1024px) {
   .app-topbar { padding-right: 108px; }
