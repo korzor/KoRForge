@@ -291,6 +291,21 @@ class Cdp {
       const boton = document.querySelector('.nav-item[data-tab="news"]');
       out.pasos.push('boton lateral Noticias: ' + (boton ? JSON.stringify(boton.textContent.trim()) : 'NO EXISTE'));
       if (!boton) { fallo('no hay botón Noticias en el panel lateral'); return out; }
+
+      /* El icono del botón es el PNG del dueño (no un emoji), y se carga de verdad. */
+      const iconoNoticias = boton.querySelector('img.nav-icon-img');
+      const iconoAjustes = document.querySelector('.nav-item[data-tab="settings"] img.nav-icon-img');
+      out.pasos.push('icono Noticias: ' + JSON.stringify(iconoNoticias ? {
+        src: iconoNoticias.getAttribute('src'), ancho: iconoNoticias.naturalWidth, alto: iconoNoticias.naturalHeight
+      } : 'NO ES UNA IMAGEN'));
+      out.pasos.push('icono Ajustes: ' + JSON.stringify(iconoAjustes ? {
+        src: iconoAjustes.getAttribute('src'), ancho: iconoAjustes.naturalWidth, alto: iconoAjustes.naturalHeight
+      } : 'NO ES UNA IMAGEN'));
+      if (!iconoNoticias || !/icon-news\.png$/.test(iconoNoticias.getAttribute('src') || '')) fallo('el botón Noticias no usa icon-news.png');
+      else if (!iconoNoticias.naturalWidth) fallo('icon-news.png no carga en el botón Noticias');
+      if (!iconoAjustes || !/icon-settings\.png$/.test(iconoAjustes.getAttribute('src') || '')) fallo('el botón Ajustes no usa icon-settings.png');
+      else if (!iconoAjustes.naturalWidth) fallo('icon-settings.png no carga en el botón Ajustes');
+
       boton.click();
       await sleep(1200);
 
