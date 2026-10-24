@@ -54,6 +54,10 @@ const CONFIG = {
 };
 
 function startServer(notas) {
+  /* La PRIMERA consulta (la del arranque de la app) contesta con notas VIEJAS a propósito: reproduce
+     el caso del dueño (la release se publicó después de abrir la app y la ventana seguía sin
+     novedades). La ventana, al abrirse, tiene que volver a preguntar y pintar las notas buenas. */
+  let llamadas = 0;
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, `http://127.0.0.1:${HTTP_PORT}`);
     const json = (payload) => {
@@ -67,12 +71,15 @@ function startServer(notas) {
       if (url.pathname === '/api/search') return json({ success: true, results: [] });
       if (url.pathname === '/api/backups') return json({ success: true, backups: [] });
       if (url.pathname === '/api/addons/check-updates') return json({ success: true, updates: [] });
+      if (url.pathname === '/api/__llamadas') return json({ llamadas });
       if (url.pathname === '/api/app-updates/check') {
+        llamadas += 1;
         return json({
           source: 'github', checked: true, updateAvailable: true,
           currentVersion: '1.3.18', remoteVersion: '1.3.19',
           downloadUrl: 'https://github.com/korzor/KoRForge/releases/download/v1.3.19/KoRForge-1.3.19-Windows.exe',
-          releaseNotes: notas, date: '2026-10-24'
+          releaseNotes: llamadas === 1 ? 'Nueva versión de KoRForge' : notas,
+          date: '2026-10-24'
         });
       }
       return json({ success: true });
@@ -192,8 +199,13 @@ class Cdp {
       const archivoWindows = ${JSON.stringify(`KoRForge-${version}-Windows.exe`)};
       const boton = document.getElementById('btnAppUpdate');
       if (!boton) { out.problemas.push('no hay boton de version en el menu'); return out; }
+      const llamadas = async () => (await (await fetch('/api/__llamadas')).json()).llamadas;
+      const antes = await llamadas();
       boton.click();
-      await sleep(700);
+      await sleep(1500);
+      const despues = await llamadas();
+      out.pasos.push('consultas a GitHub antes de abrir: ' + antes + ' / despues: ' + despues);
+      if (despues <= antes) out.problemas.push('abrir la ventana NO vuelve a preguntar las novedades (se queda con la foto del arranque)');
       const modal = document.getElementById('updateModal');
       const visible = !!(modal && getComputedStyle(modal).display !== 'none');
       out.pasos.push('modal visible: ' + visible);
