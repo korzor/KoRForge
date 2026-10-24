@@ -678,7 +678,8 @@ body.is-maximized .app-sidebar {
 #pane-addons.active,
 #pane-favorites.active,
 #pane-backups.active,
-#pane-settings.active {
+#pane-settings.active,
+#pane-news.active {
   overflow-y: auto;
   padding-right: 6px;
   padding-bottom: 20px;

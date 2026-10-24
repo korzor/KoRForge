@@ -125,9 +125,22 @@ const CONFIG = {
 };
 
 const NOTICIAS_PRUEBA = {
+  /* Doce noticias de Forever: hacen falta para comprobar que la pestaña TIENE SCROLL (dueño,
+     25-10-2026: «te faltó el scroll en las noticias»). */
   forever: [
     { id: 'a1', titulo: 'Dive Into WoW: Forever', resumen: 'Todo lo que llega con el parche de Zul’Aman.', imagen: '', enlace: 'https://us.forums.blizzard.com/en/wow/t/a/1', fecha: new Date().toISOString(), autor: 'Linxy', version: 'forever', tipo: 'announcement' },
-    { id: 'a2', titulo: 'Beta Realm Restart Today', resumen: 'Reinicio del reino beta a las 2:00 p.m. PDT.', imagen: '', enlace: 'https://us.forums.blizzard.com/en/wow/t/b/2', fecha: new Date(Date.now() - 3600e3).toISOString(), autor: 'Linxy', version: 'forever', tipo: 'maintenance' }
+    { id: 'a2', titulo: 'Beta Realm Restart Today', resumen: 'Reinicio del reino beta a las 2:00 p.m. PDT.', imagen: '', enlace: 'https://us.forums.blizzard.com/en/wow/t/b/2', fecha: new Date(Date.now() - 3600e3).toISOString(), autor: 'Linxy', version: 'forever', tipo: 'maintenance' },
+    ...Array.from({ length: 10 }, (_, i) => ({
+      id: 'x' + (i + 3),
+      titulo: 'Aviso de Forever número ' + (i + 3),
+      resumen: 'Resumen del aviso número ' + (i + 3) + ' para llenar la lista y obligar a bajar.',
+      imagen: '',
+      enlace: 'https://us.forums.blizzard.com/en/wow/t/x/' + (i + 3),
+      fecha: new Date(Date.now() - (i + 2) * 3600e3).toISOString(),
+      autor: 'Linxy',
+      version: 'forever',
+      tipo: 'announcement'
+    }))
   ],
   retail: [
     { id: 'r1', titulo: 'Midnight Hotfixes - October 23', resumen: 'Arreglos de clases y de la Casa de Subastas.', imagen: '', enlace: 'https://us.forums.blizzard.com/en/wow/t/c/3', fecha: new Date().toISOString(), autor: 'Linxy', version: 'retail', tipo: 'patch' }
@@ -285,7 +298,19 @@ class Cdp {
       const tarjetas = [...document.querySelectorAll('#newsList .news-card')];
       out.pasos.push('pestaña activa: ' + !!(pane && pane.classList.contains('active')) + ' | tarjetas: ' + tarjetas.length);
       if (!pane || !pane.classList.contains('active')) fallo('la pestaña Noticias no se abre');
-      if (tarjetas.length !== 2) fallo('no pinta las 2 noticias de prueba de WoW Forever');
+      if (tarjetas.length !== 12) fallo('no pinta las 12 noticias de prueba de WoW Forever');
+
+      /* SCROLL (dueño, 25-10-2026: «te faltó el scroll en las noticias»). */
+      const estiloPane = getComputedStyle(pane);
+      const puedeBajar = pane.scrollHeight - pane.clientHeight;
+      pane.scrollTop = pane.scrollHeight;
+      await sleep(200);
+      const bajado = pane.scrollTop;
+      out.pasos.push('scroll: overflow-y=' + estiloPane.overflowY + ' scrollHeight=' + pane.scrollHeight + ' clientHeight=' + pane.clientHeight + ' recorrido=' + puedeBajar + ' scrollTop tras bajar=' + Math.round(bajado));
+      if (estiloPane.overflowY !== 'auto' && estiloPane.overflowY !== 'scroll') fallo('la pestaña Noticias no tiene scroll (overflow-y=' + estiloPane.overflowY + ')');
+      if (puedeBajar <= 0) fallo('la lista de noticias no desborda: la comprobación no vale (¿poco alto?)');
+      if (Math.round(bajado) <= 0) fallo('la pestaña Noticias no se deja bajar');
+      pane.scrollTop = 0;
       const primera = tarjetas[0];
       if (primera) {
         const titulo = primera.querySelector('.news-card-title');
