@@ -105,4 +105,39 @@ function notasGithub({ version, titulo, cambios, entradas, archivos }) {
   ].join('\n');
 }
 
-module.exports = { leerCambios, versionActual, notasGithub };
+/**
+ * Cuerpo CORTO de la release: los cambios primero y, debajo, los archivos.
+ *
+ * POR QUE ASI (dueño, 24-10-2026 de noche: «en la ventana de update deberían salir los cambios, y en
+ * GitHub también; eso de "repositorio de descargas" no debería salir»):
+ *   - La ventana de actualización de la app lee `release.body` y lo pinta con `formatReleaseNotes()`
+ *     (admite `##`/`###`, listas, **negrita** y `código`, NO bloques ``` de código).
+ *   - Un cuerpo vacío hacía que GitHub enseñara el README del repo debajo de la release.
+ *   - Los hashes van en el asset `SHA256SUMS.txt` (con fecha); en el cuerpo solo se indica dónde
+ *     están, que es lo que se lee bien en la tarjeta de la app.
+ */
+function cuerpoRelease({ titulo, cambios, archivos }) {
+  const mb = (bytes) => `${(bytes / 1048576).toFixed(1)} MB`;
+  const listaCambios = (cambios && cambios.length ? cambios : ['Nueva versión de KoRForge'])
+    .map((c) => `- ${c}`)
+    .join('\n');
+  const listaArchivos = (archivos || [])
+    .map((a) => `- \`${a.nombre}\`${a.bytes ? ` (${mb(a.bytes)})` : ''}${a.detalle ? ` - ${a.detalle}` : ''}`)
+    .join('\n');
+
+  return [
+    `## ${titulo}`,
+    '',
+    listaCambios,
+    '',
+    '### Archivos de esta versión',
+    '',
+    listaArchivos,
+    '- `SHA256SUMS.txt` - SHA-256 de los binarios',
+    '',
+    'Los hashes de cada binario están en `SHA256SUMS.txt`, dentro de esta misma release.',
+    '',
+  ].join('\n');
+}
+
+module.exports = { leerCambios, versionActual, notasGithub, cuerpoRelease };

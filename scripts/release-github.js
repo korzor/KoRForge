@@ -16,7 +16,7 @@ const { execSync } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
-const { leerCambios, notasGithub } = require('./notas-release');
+const { leerCambios, cuerpoRelease } = require('./notas-release');
 const { hashesDe, escribirSha256Sums } = require('./sha256-release');
 
 console.log('[KoRForge Release] Publicando en GitHub Releases...');
@@ -77,7 +77,9 @@ const archivos = [
   { nombre: installerName, bytes: fs.statSync(installerSrc).size, detalle: 'Instalador oficial para Windows (recomendado)' },
   ...(fs.existsSync(appImageSrc) ? [{ nombre: appImageName, bytes: fs.statSync(appImageSrc).size, detalle: 'Linux x86_64 (AppImage)' }] : []),
 ];
-fs.writeFileSync(notesFile, notasGithub({ version, titulo, cambios, entradas, archivos }), 'utf-8');
+/* El cuerpo es el mismo que manda scripts/subir-release-github.js: los cambios y la lista de
+   archivos (lo lee también la ventana de actualización de la app). */
+fs.writeFileSync(notesFile, cuerpoRelease({ titulo, cambios, archivos }), 'utf-8');
 
 try {
   let releaseExists = false;

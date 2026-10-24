@@ -19,7 +19,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
-const { leerCambios } = require('./notas-release');
+const { leerCambios, cuerpoRelease: notasDeRelease } = require('./notas-release');
 const { hashesDe, escribirSha256Sums, binariosDeVersion } = require('./sha256-release');
 
 const REPO = 'korzor/KoRForge';
@@ -100,12 +100,18 @@ async function subirAsset(releaseId, ruta, nombre) {
       ? 'Instalador oficial para Windows (recomendado)'
       : 'Linux x86_64 (AppImage, con actualizador propio)'
   }));
-  /* LA RELEASE SE LLAMA SOLO «KoRForge vX.Y.Z» Y NO LLEVA NADA DEBAJO (dueño, 24-10-2026:
-   * «no me gusta que salga nada después de KoRForge v1.3.10… solo quiero que salga a secas el nombre
-   * y número de la versión»). El detalle de los cambios sigue en docs/CAMBIOS-ULTIMA.md y en la web,
-   * pero en GitHub Releases no se publica. */
+  /* LA RELEASE SE LLAMA SOLO «KoRForge vX.Y.Z» (dueño, 24-10-2026: «no quiero que salga nada después
+   * del nombre y número de la versión»).
+   *
+   * PERO EL CUERPO SÍ LLEVA LOS CAMBIOS (dueño, 24-10-2026 de noche): «en la ventana de update de la
+   * app deberían salir los cambios de la última versión, y en la release de GitHub también; eso de
+   * "repositorio de descargas" no debería salir». El cuerpo se lee en dos sitios a la vez:
+   *   1. la página de la release en GitHub (con el cuerpo vacío GitHub enseñaba el README del repo);
+   *   2. la ventana de actualización de la app (`/api/app-updates/check` devuelve `release.body` y la
+   *      interfaz lo pinta con formatReleaseNotes()).
+   * Lo que cuenta sale de docs/CAMBIOS-ULTIMA.md, igual que en la web: una sola fuente. */
   const nombreRelease = `KoRForge v${version}`;
-  const cuerpoRelease = '';
+  const cuerpoRelease = notasDeRelease({ titulo, cambios, archivos });
 
   let release = null;
   try {
