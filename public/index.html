@@ -95,6 +95,10 @@
             <span class="nav-label" data-i18n="nav_backups">WTF Vault</span>
             <span class="badge" id="backupsCountBadge">0</span>
           </button>
+          <button class="nav-item" data-tab="news" data-i18n-title="nav_news_hint">
+            <span class="nav-icon">📰</span>
+            <span class="nav-label" data-i18n="nav_news">News</span>
+          </button>
         </nav>
 
         <div class="sidebar-footer">
@@ -198,6 +202,24 @@
           </div>
 
           <div class="cf-results-grid" id="favoritesTabGrid">
+            <!-- Populated by app.js -->
+          </div>
+        </section>
+
+        <!-- View: Noticias de Blizzard (dueño, 24-10-2026). Las noticias son las de la versión del
+             cliente elegido en la barra de arriba. -->
+        <section class="tab-pane" id="pane-news">
+          <div class="content-header">
+            <div>
+              <h2 class="page-title" data-i18n="news_title">Blizzard News</h2>
+              <p class="page-subtitle" id="newsSubtitle" data-i18n-skip></p>
+            </div>
+            <div class="header-actions">
+              <button class="btn btn-secondary" id="btnRefreshNews" data-i18n="news_refresh">🔄 Refresh</button>
+            </div>
+          </div>
+
+          <div class="news-list" id="newsList">
             <!-- Populated by app.js -->
           </div>
         </section>
@@ -869,5 +891,7 @@
   <!-- Compartir un addon: su repositorio (o una búsqueda en GitHub), nunca la página de CurseForge.
        Dueño, 24-10-2026. -->
   <script src="compartir.js"></script>
+  <!-- Visor de capturas de la ficha: todas, con flechas y rueda del ratón. Dueño, 24-10-2026. -->
+  <script src="visor-capturas.js"></script>
 </body>
 </html>

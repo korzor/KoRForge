@@ -413,6 +413,24 @@ app.get('/api/ping', (req, res) => {
   res.json({ pong: true, pid: process.pid, time: Date.now() });
 });
 
+// API: Noticias de Blizzard de la versión del cliente elegido (dueño, 24-10-2026)
+const noticiasBlizzard = require('./modules/noticias');
+
+app.get('/api/noticias', async (req, res) => {
+  const version = String(req.query.gameId || config.activeGame || 'forever');
+  const limite = Number(req.query.limite || 30);
+  const forzar = req.query.forzar === '1';
+  try {
+    const datos = await noticiasBlizzard.noticiasDe(version, limite, forzar);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ success: true, ...datos });
+  } catch (err) {
+    /* K-C4: el detalle del error se queda en el log; al cliente, un código. */
+    console.error('[KoRForge Noticias] Error leyendo los foros de Blizzard:', err.message);
+    res.status(502).json({ success: false, code: 'err_news_unavailable' });
+  }
+});
+
 // API: Config
 app.get('/api/config', (req, res) => {
   const activeGame = config.activeGame || 'forever';

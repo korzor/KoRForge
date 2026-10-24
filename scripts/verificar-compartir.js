@@ -73,7 +73,7 @@ function startStaticServer() {
       if (url.pathname === '/api/config') return json(CONFIG);
       if (url.pathname === '/api/addons') return json({ success: true, addons: [ADDON_INSTALADO] });
       if (url.pathname === '/api/search') return json({ success: true, results: [MOD_CON_REPO, MOD_SOLO_ISSUES, MOD_SIN_NADA] });
-      if (url.pathname === '/api/favorites') return json({ success: true, favorites: [] });
+      if (url.pathname === '/api/favorites') return json({ success: true, favorites: [MOD_CON_REPO] });
       if (url.pathname === '/api/backups') return json({ success: true, backups: [] });
       if (url.pathname === '/api/mod/1') return json({ success: true, mod: MOD_CON_REPO });
       if (url.pathname === '/api/mod/1/files') return json({ success: true, files: [] });
@@ -376,11 +376,38 @@ class Cdp {
       out.pasos.push('mis addons tiene boton de compartir: ' + !!btnInstalado);
       if (!btnInstalado) out.problemas.push('Mis addons no tiene boton de compartir');
       else {
+        /* El dibujo de esa tarjeta tiene que ir a LÍNEA (antes los círculos salían como puntos negros,
+           dueño 24-10-2026). */
+        const svg = btnInstalado.querySelector('svg');
+        const estilo = getComputedStyle(svg);
+        const circulo = getComputedStyle(svg.querySelector('circle'));
+        out.pasos.push('icono de instalados: fill=' + estilo.fill + ' stroke=' + circulo.stroke + ' ancho=' + estilo.strokeWidth);
+        if (circulo.fill !== 'none') out.problemas.push('el icono de compartir de Mis addons sale RELLENO (puntos negros): fill=' + circulo.fill);
+        if (circulo.stroke === 'none') out.problemas.push('el icono de compartir de Mis addons no tiene trazo');
+
         btnInstalado.click();
         await sleep(900);
         const listaInstalado = entradas();
         out.pasos.push('menu en Mis addons: ' + JSON.stringify(listaInstalado));
         if (!listaInstalado.some(t => /Abrir repositorio/.test(t))) out.problemas.push('el addon instalado no saco su repositorio del catalogo');
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+        await sleep(200);
+      }
+
+      /* J. Favoritos: sus tarjetas tienen que llevar también el botón de compartir. */
+      document.querySelector('.nav-item[data-tab="favorites"]').click();
+      await sleep(1000);
+      const tarjetasFav = [...document.querySelectorAll('#favoritesTabGrid .cf-card')];
+      const btnFavCompartir = document.querySelector('#favoritesTabGrid .btn-card-share');
+      out.pasos.push('favoritos: ' + tarjetasFav.length + ' tarjeta(s) | boton de compartir: ' + !!btnFavCompartir);
+      if (!tarjetasFav.length) out.problemas.push('la pestaña Favoritos no pinto ninguna tarjeta');
+      if (!btnFavCompartir) out.problemas.push('las tarjetas de Favoritos no tienen boton de compartir');
+      else {
+        btnFavCompartir.click();
+        await sleep(400);
+        const listaFav = entradas();
+        out.pasos.push('menu en Favoritos: ' + JSON.stringify(listaFav));
+        if (!listaFav.length) out.problemas.push('el boton de compartir de Favoritos no abre el menu');
         document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
         await sleep(200);
       }

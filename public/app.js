@@ -486,6 +486,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (cur.tabId === 'search') triggerCurseForgeSearch();
         else if (cur.tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
         else if (cur.tabId === 'backups') loadBackups();
+        else if (cur.tabId === 'news') cargarNoticias(true);
         else if (cur.tabId === 'settings') loadConfig();
       } else if (cur.type === 'detail') {
         openAddonDetailInternal(cur.modId, cur.modName);
@@ -527,6 +528,7 @@ document.addEventListener('DOMContentLoaded', () => {
       addons: { icon: '📦', text: T('topbar_installed') },
       favorites: { icon: '⭐', text: T('topbar_favorites') },
       backups: { icon: '💾', text: T('topbar_backups') },
+      news: { icon: '📰', text: T('topbar_news') },
       settings: { icon: '⚙️', text: T('topbar_settings') }
     };
     return labels[tabId] || { icon: '🔍', text: T('topbar_explorer') };
@@ -551,6 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cfResultsGrid.children.length === 0) triggerCurseForgeSearch();
     }
     if (tabId === 'backups') loadBackups();
+    if (tabId === 'news') cargarNoticias();
     if (tabId === 'settings') loadConfig();
   }
 
@@ -753,6 +756,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Busqueda con la version del cliente nuevo
     triggerCurseForgeSearch();
+
+    /* Noticias: son las del cliente elegido, asi que se vacian y, si la pestaña esta a la vista, se
+       piden las del cliente nuevo (dueño, 24-10-2026). */
+    ultimasNoticias = [];
+    if (document.getElementById('pane-news')?.classList.contains('active')) cargarNoticias();
   }
 
   async function switchActiveGame(gameId) {
@@ -1118,6 +1126,188 @@ document.addEventListener('DOMContentLoaded', () => {
   btnExploreFromFav?.addEventListener('click', () => {
     switchTab('search');
   });
+
+  /* ==========================================================================
+   * Noticias de Blizzard (dueño, 24-10-2026).
+   *
+   * Igual que en Centolos: el servidor lee los foros oficiales (`modules/noticias.js`) y aquí se pintan
+   * las de la versión del cliente elegido arriba. Los textos de las noticias son de fuera: se pintan
+   * con textContent (nunca innerHTML) y los enlaces solo se aceptan si son http(s).
+   * ========================================================================== */
+  const newsList = document.getElementById('newsList');
+  const newsSubtitle = document.getElementById('newsSubtitle');
+  const btnRefreshNews = document.getElementById('btnRefreshNews');
+  let ultimasNoticias = [];
+  let cargandoNoticias = false;
+
+  function urlDeNoticia(valor) {
+    const texto = String(valor || '').trim();
+    return /^https?:\/\//i.test(texto) ? texto : '';
+  }
+
+  function etiquetaDeNoticia(tipo) {
+    const claves = {
+      patch: 'news_tag_patch',
+      maintenance: 'news_tag_maintenance',
+      stress: 'news_tag_stress',
+      issues: 'news_tag_issues',
+      announcement: 'news_tag_announcement',
+    };
+    return T(claves[tipo] || 'news_tag_announcement');
+  }
+
+  function abrirNoticia(noticia) {
+    const url = noticia && urlDeNoticia(noticia.enlace);
+    if (!url) return;
+    openInAppBrowser(url, noticia.titulo || '');
+  }
+
+  async function cargarNoticias(forzar = false) {
+    if (!newsList || cargandoNoticias) return;
+    cargandoNoticias = true;
+    if (newsSubtitle) newsSubtitle.textContent = T('news_subtitle', { game: gameLabel(currentActiveGame) });
+    if (btnRefreshNews) {
+      btnRefreshNews.disabled = true;
+      btnRefreshNews.textContent = T('news_refreshing');
+    }
+    if (!ultimasNoticias.length) {
+      newsList.innerHTML = '';
+      const espera = document.createElement('div');
+      espera.className = 'empty-state';
+      const icono = document.createElement('span');
+      icono.className = 'empty-icon';
+      icono.textContent = '📰';
+      const titulo = document.createElement('h3');
+      titulo.className = 'empty-title';
+      titulo.textContent = T('news_loading');
+      espera.appendChild(icono);
+      espera.appendChild(titulo);
+      newsList.appendChild(espera);
+    }
+
+    try {
+      const params = new URLSearchParams({ gameId: currentActiveGame, limite: '40' });
+      if (forzar) params.set('forzar', '1');
+      const res = await fetch(`/api/noticias?${params.toString()}`);
+      const data = await res.json();
+      if (!data || !data.success) throw new Error((data && data.code) || 'err_news');
+      ultimasNoticias = Array.isArray(data.noticias) ? data.noticias : [];
+      pintarNoticias();
+    } catch (_) {
+      newsList.innerHTML = '';
+      const error = document.createElement('div');
+      error.className = 'empty-state';
+      const icono = document.createElement('span');
+      icono.className = 'empty-icon';
+      icono.textContent = '⚠️';
+      const titulo = document.createElement('h3');
+      titulo.className = 'empty-title';
+      titulo.textContent = T('news_error_title');
+      const desc = document.createElement('p');
+      desc.className = 'empty-desc';
+      desc.textContent = T('news_error_desc');
+      error.appendChild(icono);
+      error.appendChild(titulo);
+      error.appendChild(desc);
+      newsList.appendChild(error);
+    } finally {
+      cargandoNoticias = false;
+      if (btnRefreshNews) {
+        btnRefreshNews.disabled = false;
+        btnRefreshNews.textContent = T('news_refresh');
+      }
+    }
+  }
+
+  function pintarNoticias() {
+    if (!newsList) return;
+    newsList.innerHTML = '';
+
+    if (!ultimasNoticias.length) {
+      const vacio = document.createElement('div');
+      vacio.className = 'empty-state';
+      const icono = document.createElement('span');
+      icono.className = 'empty-icon';
+      icono.textContent = '📰';
+      const titulo = document.createElement('h3');
+      titulo.className = 'empty-title';
+      titulo.textContent = T('news_empty_title', { game: gameLabel(currentActiveGame) });
+      const desc = document.createElement('p');
+      desc.className = 'empty-desc';
+      desc.textContent = T('news_empty_desc');
+      vacio.appendChild(icono);
+      vacio.appendChild(titulo);
+      vacio.appendChild(desc);
+      newsList.appendChild(vacio);
+      if (newsSubtitle) newsSubtitle.textContent = T('news_subtitle', { game: gameLabel(currentActiveGame) });
+      return;
+    }
+
+    if (newsSubtitle) {
+      newsSubtitle.textContent = T('news_subtitle_count', {
+        game: gameLabel(currentActiveGame),
+        count: ultimasNoticias.length,
+      });
+    }
+
+    ultimasNoticias.forEach((noticia) => {
+      const tarjeta = document.createElement('article');
+      tarjeta.className = 'news-card';
+
+      const imagen = urlDeNoticia(noticia.imagen);
+      if (imagen) {
+        const img = document.createElement('img');
+        img.className = 'news-card-img';
+        img.src = imagen;
+        img.alt = '';
+        img.loading = 'lazy';
+        tarjeta.appendChild(img);
+      }
+
+      const cuerpo = document.createElement('div');
+      cuerpo.className = 'news-card-body';
+
+      const fila = document.createElement('div');
+      fila.className = 'news-card-top';
+      const etiqueta = document.createElement('span');
+      etiqueta.className = `news-tag news-tag-${noticia.tipo || 'announcement'}`;
+      etiqueta.textContent = etiquetaDeNoticia(noticia.tipo);
+      const fecha = document.createElement('span');
+      fecha.className = 'news-date';
+      fecha.textContent = relDate(noticia.fecha) || fmtDate(noticia.fecha, { day: 'numeric', month: 'numeric', year: 'numeric' });
+      fila.appendChild(etiqueta);
+      fila.appendChild(fecha);
+
+      const titulo = document.createElement('h3');
+      titulo.className = 'news-card-title';
+      titulo.textContent = noticia.titulo || '';
+
+      cuerpo.appendChild(fila);
+      cuerpo.appendChild(titulo);
+
+      if (noticia.resumen) {
+        const resumen = document.createElement('p');
+        resumen.className = 'news-card-summary';
+        resumen.textContent = noticia.resumen;
+        cuerpo.appendChild(resumen);
+      }
+
+      if (urlDeNoticia(noticia.enlace)) {
+        const abrir = document.createElement('button');
+        abrir.type = 'button';
+        abrir.className = 'btn btn-secondary btn-sm news-open';
+        abrir.textContent = T('news_open');
+        abrir.addEventListener('click', (ev) => { ev.stopPropagation(); abrirNoticia(noticia); });
+        cuerpo.appendChild(abrir);
+      }
+
+      tarjeta.appendChild(cuerpo);
+      tarjeta.addEventListener('click', () => abrirNoticia(noticia));
+      newsList.appendChild(tarjeta);
+    });
+  }
+
+  btnRefreshNews?.addEventListener('click', () => { cargarNoticias(true); });
 
 
   btnOpenAddonsFolder?.addEventListener('click', async () => {
@@ -2267,22 +2457,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Pinta la galería de capturas de la ficha.
+  // Las capturas se guardan para el visor (flechas y rueda del ratón): al pinchar una miniatura se
+  // abren todas, no una en el navegador interno (dueño, 24-10-2026).
+  let lastDetailScreenshots = [];
+  let lastDetailAddonTitle = '';
+
   function renderDetailGallery(mod) {
     if (!mod) return;
+    lastDetailAddonTitle = mod.name || '';
     if (mod.screenshots && mod.screenshots.length > 0) {
+      lastDetailScreenshots = mod.screenshots.slice();
       detailGalleryGrid.innerHTML = '';
-      mod.screenshots.forEach(s => {
+      mod.screenshots.forEach((s, i) => {
         const item = document.createElement('div');
         item.className = 'gallery-thumb';
+        item.dataset.index = String(i);
         item.innerHTML = `
           <a href="${s.url}" title="${s.title || mod.name}">
-            <img src="${s.thumbnailUrl || s.url}" alt="${s.title || mod.name}">
+            <img src="${s.thumbnailUrl || s.url}" alt="${s.title || mod.name}" loading="lazy">
           </a>
           ${s.title ? `<div class="gallery-title">${s.title}</div>` : ''}
         `;
         detailGalleryGrid.appendChild(item);
       });
     } else {
+      lastDetailScreenshots = [];
       detailGalleryGrid.innerHTML = `
         <div class="empty-state" style="grid-column: 1 / -1;">
           <span class="empty-icon">🖼️</span>
@@ -2290,6 +2489,18 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }
+  }
+
+  /** Abre el visor de capturas en la miniatura pulsada (o devuelve false si no era una captura). */
+  function abrirVisorDeCapturas(miniatura) {
+    if (!miniatura || !window.KorforgeVisorCapturas || !lastDetailScreenshots.length) return false;
+    const indice = Number(miniatura.dataset.index || 0);
+    return window.KorforgeVisorCapturas.abrir(
+      lastDetailScreenshots,
+      Number.isFinite(indice) ? indice : 0,
+      lastDetailAddonTitle,
+      miniatura.querySelector('a') || miniatura
+    );
   }
 
   // In-App Browser Navigation
@@ -2378,6 +2589,14 @@ document.addEventListener('DOMContentLoaded', () => {
   cfDetailView?.addEventListener('click', (e) => {
     const anchor = e.target.closest('a');
     if (!anchor) return;
+
+    /* Las capturas NO se abren en el navegador: se abren en el visor con todas (flechas + rueda). */
+    const miniatura = anchor.closest('.gallery-thumb');
+    if (miniatura && abrirVisorDeCapturas(miniatura)) {
+      e.preventDefault();
+      return;
+    }
+
     const href = anchor.getAttribute('href');
     if (href && /^https?:\/\//i.test(href)) {
       e.preventDefault();
@@ -2385,6 +2604,10 @@ document.addEventListener('DOMContentLoaded', () => {
       openInAppBrowser(href, title);
     }
   });
+
+  /* Al salir de la ficha (volver al catálogo, cambiar de addon…) se cierra el visor si estaba abierto. */
+  btnBackToCatalog?.addEventListener('click', () => { window.KorforgeVisorCapturas?.cerrar(); });
+  btnBackToCatalogBottom?.addEventListener('click', () => { window.KorforgeVisorCapturas?.cerrar(); });
 
   // Render Files Table inside Detail View
   // Última lista de versiones pintada (para repintar al cambiar de idioma)
