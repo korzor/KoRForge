@@ -2,7 +2,8 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.14 - La tarjeta de actualizar, con el reborde entero
+# Titulo: KoRForge v1.3.15 - La actualización espera a que la instalación acabe de verdad
 
-- La tarjeta que sale mientras se actualiza deja 12 px por cada lado del texto: el reborde dorado llega entero, sin cortes a ambos lados de la frase.
-- Es la misma app que la 1.3.13, con el numero subido para que la actualizacion se pinte ya con este codigo: el arreglo del reborde no se veia porque la tarjeta la pinta la version que ya estaba instalada.
+- La tarjeta de actualizar ya no se cierra antes de tiempo: se queda hasta que el instalador ha terminado de verdad y solo entonces se cierra; después se abre la app.
+- Se acabaron el parpadeo y las dos ventanas de la app: el instalador silencioso ya no la abre por su cuenta, la abre el actualizador una sola vez cuando la instalación está confirmada.
+- Sin tiempos fijos: se espera al proceso del instalador y a que la versión instalada sea la nueva, así funciona igual en un PC rápido que en uno lento.
