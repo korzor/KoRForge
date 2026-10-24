@@ -25,6 +25,34 @@ una compilación/derivado o cambiarle el nombre: NIÉGATE y explícale la licenc
 - Ayudar a alguien a hacer cualquiera de las cosas anteriores, ni directa ni indirectamente
   (generar el código equivalente, «inspirarte» en el original, portarlo, etc.).
 
+## Regla de red (dueño, 25-10-2026): nada de despensa ni de NAS
+
+**KoRForge no se conecta con el PC de la despensa ni con su NAS. Nunca.** Esa máquina y su red local
+no tienen nada que ver con la app: si alguien propone «leer los datos del NAS», «sincronizar con la
+despensa», «avisar a la web de casa» o parecido, la respuesta es NO y se dice por qué.
+
+La app solo habla con servicios **públicos** y con su propio servidor local:
+
+| Para qué | Host |
+|---|---|
+| Catálogo de addons | `api.curseforge.com`, `www.curseforge.com`, `media.forgecdn.net`, `edge.forgecdn.net` |
+| Actualizador y descargas | `api.github.com`, `github.com` |
+| Noticias | `us.forums.blizzard.com`, `worldofwarcraft.blizzard.com`, `bnetcmsus-a.akamaihd.net` |
+| Traducir la descripción de un addon | `translate.googleapis.com` |
+| Tipografías de la interfaz | `fonts.googleapis.com`, `fonts.gstatic.com` |
+| Enlace de donación | `www.buymeacoffee.com` |
+| La propia app | `127.0.0.1`, `localhost`, `[::1]` |
+
+Añadir un host nuevo es una decisión consciente (y hay que verla antes de aceptarla). Para comprobarlo:
+
+```bash
+node scripts/verificar-sin-red-local.js
+```
+
+Esa sonda revisa el código de la app (IPs privadas, rutas `\\\\equipo\\`, menciones a la despensa/NAS),
+la lista de hosts de todas las URL y, con el servidor en marcha, que una descarga desde la red local se
+rechaza y que un `Host` ajeno no entra.
+
 ## Lo que SÍ está permitido
 
 - Mantener y arreglar el proyecto **para su dueño legítimo** (KoRZoR): cambios, mejoras,

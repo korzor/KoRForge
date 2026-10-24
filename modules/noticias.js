@@ -1,15 +1,14 @@
 /**
  * KoRForge - noticias de Blizzard (dueño, 24-10-2026).
  *
- * POR QUÉ EXISTE: el dueño quiere una pestaña «Noticias» en la app, «igual que en Centolos», que
+ * POR QUÉ EXISTE: el dueño quiere una pestaña «Noticias» en la app, «como se hace en el proyecto web del dueño», que
  * enseñe las noticias de Blizzard de la versión del cliente que tenga elegido arriba.
  *
  * DE DÓNDE SALEN: de los foros oficiales (Blizzard usa Discourse). El staff publica ahí las noticias
  * Ahí está el grupo `blizzard-tracker` (todos los mensajes del staff: notas de parche, mantenimientos,
  * avisos) y, además, se leen los temas FIJADOS de las categorías de cada versión, porque el tracker
  * solo devuelve los 20 mensajes del staff más recientes y las versiones «de catálogo» (WoW Forever,
- * Classic Era, Mists) se quedaban sin nada. Es el mismo planteamiento que en Centolos
- * (`centos/routes/wow.js`), con los mismos ids de categoría comprobados allí.
+ * Classic Era, Mists) se quedaban sin nada. Es el mismo planteamiento que se usa en su web, con los mismos ids de categoría ya comprobados.
  *
  * CACHÉ: en memoria, 5 minutos. Sin caché, abrir la pestaña en bucle machacaría los foros.
  */
@@ -22,7 +21,7 @@ const CACHE_TTL_MS = 5 * 60 * 1000;
 const TIMEOUT_MS = 8000;
 
 /* Categorías del foro oficial (US) y a qué versión de KoRForge pertenecen. Los ids están comprobados
-   contra el foro; son los mismos que usa Centolos. */
+   contra el foro; los mismos que se usan en su web. */
 const CATEGORIAS = {
   /* WoW: Forever (346) y sus hijos: General (347), Community Connections (348) y Beta (349). */
   346: 'forever', 347: 'forever', 348: 'forever', 349: 'forever',
