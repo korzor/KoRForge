@@ -26,5 +26,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     pegar: () => ipcRenderer.invoke('korforge:portapapeles', 'pegar'),
     seleccionarTodo: () => ipcRenderer.invoke('korforge:portapapeles', 'seleccionarTodo'),
     hayTexto: () => ipcRenderer.invoke('korforge:portapapeles-hay-texto'),
+
+    /**
+     * Copia un texto que pone la app (botón de compartir un addon, dueño 25-10-2026).
+     * No es el «Copiar» de arriba: aquel copia la selección del campo con el foco.
+     */
+    copiarTexto: (texto) => ipcRenderer.invoke('korforge:copiar-texto', texto),
   },
 });

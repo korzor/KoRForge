@@ -143,6 +143,19 @@
       toast_fav_removed: '"{name}" removed from Favorites',
       toast_fav_error: 'Error updating favorites',
 
+      // --- Share ------------------------------------------------------------
+      card_share_hint: 'Share this addon',
+      detail_share: 'Share',
+      detail_share_hint: 'Share the author repository (never the CurseForge page)',
+      share_menu_label: 'Share addon',
+      share_copy_name_link: 'Copy name and link',
+      share_copy_repo: 'Copy repository link',
+      share_open_repo: 'Open repository',
+      share_search_github: 'Search on GitHub',
+      share_copy_name: 'Copy name and version',
+      share_toast_copied: 'Copied to the clipboard',
+      share_toast_copy_error: 'Could not copy',
+
       // --- Explorador: barra y orden --------------------------------------
       nav_back_hint: 'Go back (Alt+←)',
       nav_forward_hint: 'Go forward (Alt+→)',
@@ -638,6 +651,19 @@
       toast_fav_added: '★ "{name}" añadido a Favoritos',
       toast_fav_removed: '"{name}" quitado de Favoritos',
       toast_fav_error: 'Error al actualizar favoritos',
+
+      // --- Compartir --------------------------------------------------------
+      card_share_hint: 'Compartir este addon',
+      detail_share: 'Compartir',
+      detail_share_hint: 'Compartir el repositorio del autor (nunca la página de CurseForge)',
+      share_menu_label: 'Compartir addon',
+      share_copy_name_link: 'Copiar nombre y enlace',
+      share_copy_repo: 'Copiar enlace del repositorio',
+      share_open_repo: 'Abrir repositorio',
+      share_search_github: 'Buscar en GitHub',
+      share_copy_name: 'Copiar nombre y versión',
+      share_toast_copied: 'Copiado al portapapeles',
+      share_toast_copy_error: 'No se pudo copiar',
 
       // --- Explorador: barra y orden --------------------------------------
       nav_back_hint: 'Volver atrás (Alt+←)',
@@ -1135,6 +1161,19 @@
       toast_fav_removed: '"{name}" quitado de Favoritos',
       toast_fav_error: 'Erro ao actualizar favoritos',
 
+      // --- Compartir --------------------------------------------------------
+      card_share_hint: 'Compartir este addon',
+      detail_share: 'Compartir',
+      detail_share_hint: 'Compartir o repositorio do autor (nunca a páxina de CurseForge)',
+      share_menu_label: 'Compartir addon',
+      share_copy_name_link: 'Copiar nome e ligazón',
+      share_copy_repo: 'Copiar a ligazón do repositorio',
+      share_open_repo: 'Abrir o repositorio',
+      share_search_github: 'Buscar en GitHub',
+      share_copy_name: 'Copiar nome e versión',
+      share_toast_copied: 'Copiado no portapapeis',
+      share_toast_copy_error: 'Non se puido copiar',
+
       // --- Explorador: barra y orden --------------------------------------
       nav_back_hint: 'Volver atrás (Alt+←)',
       nav_forward_hint: 'Ir adiante (Alt+→)',
@@ -1631,6 +1670,19 @@
       toast_fav_removed: '"{name}" retiré des Favoris',
       toast_fav_error: 'Erreur lors de la mise à jour des favoris',
 
+      // --- Partager ---------------------------------------------------------
+      card_share_hint: 'Partager cet addon',
+      detail_share: 'Partager',
+      detail_share_hint: 'Partager le dépôt de l’auteur (jamais la page CurseForge)',
+      share_menu_label: 'Partager l’addon',
+      share_copy_name_link: 'Copier le nom et le lien',
+      share_copy_repo: 'Copier le lien du dépôt',
+      share_open_repo: 'Ouvrir le dépôt',
+      share_search_github: 'Rechercher sur GitHub',
+      share_copy_name: 'Copier le nom et la version',
+      share_toast_copied: 'Copié dans le presse-papiers',
+      share_toast_copy_error: 'Impossible de copier',
+
       // --- Explorador: barra y orden --------------------------------------
       nav_back_hint: 'Retour (Alt+←)',
       nav_forward_hint: 'Avancer (Alt+→)',
@@ -2126,6 +2178,19 @@
       toast_fav_added: '★ "{name}" aggiunto ai Preferiti',
       toast_fav_removed: '"{name}" rimosso dai Preferiti',
       toast_fav_error: 'Errore nell’aggiornamento dei preferiti',
+
+      // --- Condividi --------------------------------------------------------
+      card_share_hint: 'Condividi questo addon',
+      detail_share: 'Condividi',
+      detail_share_hint: 'Condividi il repository dell’autore (mai la pagina CurseForge)',
+      share_menu_label: 'Condividi addon',
+      share_copy_name_link: 'Copia nome e link',
+      share_copy_repo: 'Copia il link del repository',
+      share_open_repo: 'Apri il repository',
+      share_search_github: 'Cerca su GitHub',
+      share_copy_name: 'Copia nome e versione',
+      share_toast_copied: 'Copiato negli appunti',
+      share_toast_copy_error: 'Impossibile copiare',
 
       // --- Explorador: barra y orden --------------------------------------
       nav_back_hint: 'Indietro (Alt+←)',

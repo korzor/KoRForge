@@ -2225,6 +2225,90 @@ input:checked + .slider:before {
   stroke: currentColor;
 }
 
+/* ===== Compartir un addon (dueño, 24-10-2026) ==========================================
+   El icono mide exactamente lo mismo que la estrella de favoritos: 32x32 el botón y 17px el
+   dibujo, para que las dos acciones de la tarjeta se vean como una pareja. */
+.btn-card-share {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.btn-card-share:hover {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: var(--accent-gold);
+  transform: translateY(-1px) scale(1.08);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.25);
+}
+
+.share-icon {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.btn-card-share:hover .share-icon,
+.btn-share-detail:hover .share-icon {
+  transform: scale(1.1);
+}
+
+/* Las dos acciones de la tarjeta, juntas a la derecha del título. */
+.cf-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cf-card-top .cf-title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Compartir en la ficha: mismo botón que el de favoritos, con su etiqueta. */
+.btn-share-detail {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-share-detail .share-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Compartir en «Mis addons»: 32x32, como la estrella y la papelera de al lado. */
+.installed-btn-action.btn-addon-share:hover {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.5);
+  color: var(--accent-gold);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(245, 158, 11, 0.25);
+}
+
+/* Icono de las entradas del menú de compartir. */
+.kf-menu-icono {
+  width: 1.1em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
 /* Addon Detail View */
 .cf-detail-view {
   display: flex;

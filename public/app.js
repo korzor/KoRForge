@@ -310,6 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const detailHeroCard = document.getElementById('detailHeroCard');
   const btnDetailToggleFav = document.getElementById('btnDetailToggleFav');
   const btnDetailInstall = document.getElementById('btnDetailInstall');
+  const btnDetailShare = document.getElementById('btnDetailShare');
   const detailTabsBtns = document.querySelectorAll('.detail-tab-btn');
   const detailTabContents = document.querySelectorAll('.detail-tab-content');
   const detailHtmlBody = document.getElementById('detailHtmlBody');
@@ -957,6 +958,51 @@ document.addEventListener('DOMContentLoaded', () => {
     return datos;
   }
 
+  /**
+   * Abre el menú de compartir un addon (dueño, 24-10-2026).
+   *
+   * Lo que se comparte es el REPOSITORIO del autor, no la página de CurseForge. Del menú se
+   * encarga public/compartir.js; aquí solo se conecta con la app (aviso y navegador interno).
+   */
+  function compartirAddon(boton, mod) {
+    if (!mod || !window.KorforgeCompartir) return false;
+    return window.KorforgeCompartir.abrir(boton, mod, {
+      avisar: (mensaje, tipo) => showToast(mensaje, tipo === 'error' ? 'error' : 'info'),
+      abrirEnApp: (url, titulo) => openInAppBrowser(url, titulo),
+    });
+  }
+
+  /**
+   * Los datos de un addon instalado que hacen falta para compartirlo.
+   *
+   * El .toc de un addon no trae su repositorio, así que si lo instaló la app se le pregunta al
+   * catálogo por su modId (una petición, solo al pulsar compartir), igual que se hace en Favoritos.
+   */
+  async function datosCompartirDeAddon(addon) {
+    const datos = {
+      name: addon.title || addon.actualName || addon.folderName,
+      author: addon.author || '',
+      version: (addon.version && addon.version !== 'N/A') ? addon.version : '',
+    };
+
+    if (addon && addon.modId) {
+      try {
+        const res = await fetch(`/api/mod/${encodeURIComponent(addon.modId)}`);
+        const respuesta = await res.json();
+        const detalles = respuesta && (respuesta.mod || respuesta);
+        if (detalles) {
+          if (detalles.name) datos.name = detalles.name;
+          if (detalles.author && detalles.author !== 'Desconocido') datos.author = detalles.author;
+          if (detalles.sourceUrl) datos.sourceUrl = detalles.sourceUrl;
+          if (detalles.issuesUrl) datos.issuesUrl = detalles.issuesUrl;
+          if (detalles.wikiUrl) datos.wikiUrl = detalles.wikiUrl;
+        }
+      } catch (_) { /* sin datos del catalogo: se comparte lo que se sepa del addon */ }
+    }
+
+    return datos;
+  }
+
   function renderFavoritesTab(searchTerm = '') {
     if (!favoritesTabGrid) return;
     favoritesTabGrid.innerHTML = '';
@@ -1172,6 +1218,12 @@ document.addEventListener('DOMContentLoaded', () => {
               <button class="installed-btn-action btn-addon-fav ${esFavorito ? 'is-fav' : ''}" data-folder="${addon.folderName}" title="${esFavorito ? T('card_fav_remove_hint') : T('detail_fav_add')}">
                 <span class="fav-star">${esFavorito ? '★' : '☆'}</span>
               </button>
+              <button class="installed-btn-action btn-addon-share" data-folder="${addon.folderName}" title="${T('card_share_hint')}" aria-label="${T('card_share_hint')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                  <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/>
+                </svg>
+              </button>
               <button class="installed-btn-action btn-addon-folder" data-folder="${addon.folderName}" title="${T('card_open_folder_hint', { folder: addon.folderName })}">
                 <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
@@ -1295,6 +1347,19 @@ document.addEventListener('DOMContentLoaded', () => {
         e.stopPropagation();
         await toggleFavorite(await modFavoritoDeAddon(addon));
         renderInstalledAddons(filter, searchTerm);
+      });
+
+      // 6. Compartir (dueño, 24-10-2026): el repositorio del autor, no la pagina de CurseForge
+      const btnShareAddon = card.querySelector('.btn-addon-share');
+      btnShareAddon?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (btnShareAddon.dataset.cargando === '1') return;
+        btnShareAddon.dataset.cargando = '1';
+        try {
+          compartirAddon(btnShareAddon, await datosCompartirDeAddon(addon));
+        } finally {
+          btnShareAddon.removeAttribute('data-cargando');
+        }
       });
 
       addonsGrid.appendChild(card);
@@ -1709,11 +1774,19 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="cf-card-main">
             <div class="cf-card-top">
               <h4 class="cf-title" title="${mod.name}">${mod.name}</h4>
-              <button class="btn-card-fav ${isFav ? 'is-fav' : ''}" data-id="${mod.id}" title="${isFav ? T('fav_remove_hint') : T('fav_add_hint')}">
-                <svg class="fav-star-icon" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              </button>
+              <div class="cf-card-actions">
+                <button class="btn-card-share" data-id="${mod.id}" title="${T('card_share_hint')}" aria-label="${T('card_share_hint')}">
+                  <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/>
+                  </svg>
+                </button>
+                <button class="btn-card-fav ${isFav ? 'is-fav' : ''}" data-id="${mod.id}" title="${isFav ? T('fav_remove_hint') : T('fav_add_hint')}">
+                  <svg class="fav-star-icon" viewBox="0 0 24 24">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                </button>
+              </div>
             </div>
             <div class="cf-card-sub">
               <span class="cf-author">${T('card_by', { author: mod.author })}${mod.categories && mod.categories[0] ? ` <span style="color:var(--text-faint); font-weight:normal;">• ${mod.categories[0].name}</span>` : ''}</span>
@@ -1737,11 +1810,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // 1. Click to open Detail View (when clicking card body, except install & fav buttons)
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.btn-install-cf') || e.target.closest('.btn-card-fav')) return;
+        if (e.target.closest('.btn-install-cf') || e.target.closest('.btn-card-fav') || e.target.closest('.btn-card-share')) return;
         openAddonDetail(mod.id, mod.name);
       });
 
-      // 2. Favorite Toggle Button
+      // 2. Compartir (dueño, 24-10-2026): repositorio del autor o búsqueda en GitHub
+      const btnShare = card.querySelector('.btn-card-share');
+      btnShare?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        compartirAddon(btnShare, mod);
+      });
+
+      // 3. Favorite Toggle Button
       const btnFav = card.querySelector('.btn-card-fav');
       btnFav.addEventListener('click', async (e) => {
         e.stopPropagation();
@@ -1763,7 +1843,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // 3. Install Button
+      // 4. Install Button
       const btnInstall = card.querySelector('.btn-install-cf');
       if (!isInstalled) {
         btnInstall.addEventListener('click', async (e) => {
@@ -2330,6 +2410,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const isNowFav = await toggleFavorite(currentDetailMod);
     btnDetailToggleFav.className = `btn btn-secondary btn-fav-detail ${isNowFav ? 'is-fav' : ''}`;
     btnDetailToggleFav.innerHTML = `<span class="star-icon">${isNowFav ? '★' : '☆'}</span><span class="fav-label">${isNowFav ? T('detail_fav_has') : T('detail_fav_add')}</span>`;
+  });
+
+  // Detail View Share: repositorio del autor o busqueda en GitHub (dueño, 24-10-2026)
+  btnDetailShare?.addEventListener('click', () => {
+    if (!currentDetailMod) return;
+    compartirAddon(btnDetailShare, currentDetailMod);
   });
 
   // Detail View Install Latest

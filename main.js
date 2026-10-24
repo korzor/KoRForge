@@ -793,6 +793,21 @@ ipcMain.handle('korforge:portapapeles', (evento, accion) => {
   }
 });
 
+/*
+ * Copiar un texto que pone la app, no el que hay seleccionado (dueño, 24-10-2026: el botón de
+ * compartir un addon). Es el portapapeles del sistema, no el del campo con el foco.
+ */
+ipcMain.handle('korforge:copiar-texto', (evento, texto) => {
+  try {
+    const valor = String(texto == null ? '' : texto).slice(0, 2000);
+    if (!valor.trim()) return false;
+    clipboard.writeText(valor);
+    return true;
+  } catch (_) {
+    return false;
+  }
+});
+
 // Para saber si ofrecer «Pegar» o dejarlo apagado.
 ipcMain.handle('korforge:portapapeles-hay-texto', () => {
   try {

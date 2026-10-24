@@ -202,7 +202,11 @@ async function main() {
       headers: { 'User-Agent': 'KoRForge-security-probe/1.0' }
     });
     const texto = rSums.ok ? await rSums.text() : '';
-    const nombreExe = `KoRForge-Setup-${versionActual}.exe`;
+    /* Desde la 1.3.0 el binario se llama `KoRForge-<v>-Windows.exe`; antes `KoRForge-Setup-<v>.exe`.
+       La sonda acepta el nombre canonico de HOY y el antiguo, para no dar un falso fallo. */
+    const nombresExe = [updater.nombreDelAsset(versionActual, 'win32'), `KoRForge-Setup-${versionActual}.exe`];
+    const nombreExe = nombresExe.find((n) =>
+      texto.split(/\r?\n/).map((l) => l.trim()).some((l) => l.endsWith('  ' + n))) || nombresExe[0];
     const linea = texto.split(/\r?\n/).map((l) => l.trim()).find((l) => l.endsWith('  ' + nombreExe));
     comprobar('K5 el release publica SHA256SUMS del instalador', !!(linea && /^[0-9a-f]{64}\s/.test(linea)), 'sin línea para ' + nombreExe);
     if (linea) {

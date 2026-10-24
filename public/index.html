@@ -445,6 +445,13 @@
                   <span class="star-icon">☆</span>
                   <span class="fav-label" data-i18n="detail_fav_add">Add to Favorites</span>
                 </button>
+                <button class="btn btn-secondary btn-share-detail" id="btnDetailShare" data-i18n-title="detail_share_hint">
+                  <svg class="share-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                    <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49"/>
+                  </svg>
+                  <span class="share-label" data-i18n="detail_share">Compartir</span>
+                </button>
                 <button class="btn btn-gold btn-install-detail" id="btnDetailInstall" data-i18n="detail_install">
                   ⚡ Install Addon
                 </button>
@@ -859,5 +866,8 @@
   <!-- Menú contextual propio (cortar/copiar/pegar) para los campos de texto y las páginas de solo
        lectura. Dueño, 24-10-2026. -->
   <script src="menu-contextual.js"></script>
+  <!-- Compartir un addon: su repositorio (o una búsqueda en GitHub), nunca la página de CurseForge.
+       Dueño, 24-10-2026. -->
+  <script src="compartir.js"></script>
 </body>
 </html>
