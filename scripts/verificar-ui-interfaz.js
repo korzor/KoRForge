@@ -369,14 +369,30 @@ const CHECK_BANNER = `(async () => {
     out.problemas.push('el banner no esta encuadrado por arriba: ' + estiloBanner.backgroundPosition);
   }
   if (banner.alto < 110) out.problemas.push('el banner no baja lo suficiente (alto ' + Math.round(banner.alto) + ' px)');
-  const hueco = nav.top - banner.bottom;
-  if (hueco < 0 || hueco > 12) out.problemas.push('el borde inferior del banner no queda casi pegado al boton Buscar Addons (hueco ' + Math.round(hueco) + ' px)');
+  /* Línea divisoria entre la imagen y el resto de la app (dueño, 25-10-2026): se pinta como sombra
+     de 1 px en el borde inferior del banner, así que se comprueba que exista. */
+  if (!/1px|0px 1px/.test(estiloBanner.boxShadow) && !/rgb|rgba/.test(estiloBanner.boxShadow)) {
+    out.problemas.push('el banner no lleva linea divisoria abajo: ' + estiloBanner.boxShadow);
+  }
+  out.pasos.push('linea divisoria (sombra del banner): ' + String(estiloBanner.boxShadow).slice(0, 70));
   if (banner.bottom < toolbar.getBoundingClientRect().bottom) out.problemas.push('el banner no llega por detras de la barra de busqueda');
   if (getComputedStyle(barra).backgroundImage !== 'none') out.problemas.push('la barra superior sigue pintando su propio fondo (tapa el banner)');
-  const fondoSidebar = getComputedStyle(sidebar).backgroundImage;
-  /* Arriba tiene que ser transparente (para que se vea el banner) y luego la superficie del panel. */
-  if (!/rgba\\(0, 0, 0, 0\\) 0px/.test(fondoSidebar) || fondoSidebar.indexOf('rgba(0, 0, 0, 0)') > fondoSidebar.indexOf('rgb(15, 20, 28)')) {
-    out.problemas.push('el panel lateral no deja ver el banner arriba: ' + fondoSidebar.slice(0, 90));
+
+  /* Panel lateral = misma tarjeta que el de filtros (dueño, 25-10-2026). */
+  const filtros = document.querySelector('.cf-filters-sidebar');
+  const eS = getComputedStyle(sidebar);
+  const eF = filtros ? getComputedStyle(filtros) : null;
+  out.pasos.push('panel lateral: bg=' + eS.backgroundColor + ' borde=' + eS.borderTopColor + ' radio=' + eS.borderTopLeftRadius);
+  out.pasos.push('panel de filtros: bg=' + (eF ? eF.backgroundColor : '-') + ' borde=' + (eF ? eF.borderTopColor : '-') + ' radio=' + (eF ? eF.borderTopLeftRadius : '-'));
+  if (eS.backgroundColor === 'rgba(0, 0, 0, 0)') out.problemas.push('el panel lateral es transparente (deberia ser una tarjeta como el de filtros)');
+  if (eS.borderTopWidth === '0px') out.problemas.push('el panel lateral no tiene borde');
+  if (parseFloat(eS.borderTopLeftRadius) < 8) out.problemas.push('el panel lateral no tiene el redondeo del de filtros (' + eS.borderTopLeftRadius + ')');
+  if (eF) {
+    const rf = filtros.getBoundingClientRect();
+    out.pasos.push('alto: panel lateral ' + Math.round(sidebar.getBoundingClientRect().top) + '-' + Math.round(sidebar.getBoundingClientRect().bottom) + ' | filtros ' + Math.round(rf.top) + '-' + Math.round(rf.bottom));
+    if (Math.abs(sidebar.getBoundingClientRect().top - rf.top) > 2) out.problemas.push('el panel lateral no arranca a la altura del de filtros');
+    if (Math.abs(sidebar.getBoundingClientRect().bottom - rf.bottom) > 2) out.problemas.push('el panel lateral no acaba a la altura del de filtros');
+    if (eS.backgroundColor !== eF.backgroundColor) out.problemas.push('el panel lateral y el de filtros no tienen el mismo fondo');
   }
 
   const r = await fetch('/topbar-grifon.jpg');

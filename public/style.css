@@ -79,9 +79,11 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  height: 138px;
+  height: 140px;
   z-index: 0;
   pointer-events: none;
+  /* Línea divisoria entre la imagen y el resto de la app (dueño, 25-10-2026): de lado a lado. */
+  box-shadow: 0 1px 0 0 rgba(245, 158, 11, 0.32), 0 10px 24px rgba(0, 0, 0, 0.35);
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
   background-color: var(--bg-surface);
@@ -591,25 +593,22 @@ body.is-maximized .app-body {
 .app-sidebar {
   width: max-content;
   min-width: fit-content;
-  /* El trozo de arriba es transparente para que se vea el banner del grifón (dueño, 25-10-2026): el
-     corte está a 60 px, justo donde acaba el banner (barra 76 + 60 = 136). */
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 10px, var(--bg-surface) 10px);
-  border-right: none;
-  border-bottom-left-radius: 16px;
+  /* Misma tarjeta que el panel de filtros (dueño, 25-10-2026): borde de 1 px, redondeo de 10 px y el
+     mismo alto. Los márgenes de 14 px la alinean con él, porque el panel de filtros vive dentro del
+     contenido, que ya lleva 14 px de relleno. */
+  margin: 14px 6px 14px 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 18px 8px 14px 8px;
+  padding: 4px 8px 12px 8px;
   flex-shrink: 0;
 }
 
-/* El panel lateral arranca más abajo para que sus botones queden a la altura de la palabra «Filtros»
-   de la barra de filtros del catálogo (dueño, 25-10-2026). Esos 66 px son los 26 de antes más los 40
-   que separan el centro del primer botón del centro del título de filtros a 1400x900; si cambia la
-   barra de búsqueda de arriba, hay que volver a medirlo (`scripts/verificar-ui-interfaz.js` avisa). */
-
 body.is-maximized .app-sidebar {
-  border-bottom-left-radius: 0;
+  border-radius: 10px;
 }
 
 .nav-menu {
@@ -1786,7 +1785,8 @@ input:checked + .slider:before {
 .app-toolbar-row {
   position: relative;
   z-index: 40;
-  padding: 6px 10px 8px 10px;
+  /* 22 px arriba: la barra baja 16 px y queda 8 px por encima de la línea divisoria (dueño, 25-10-2026). */
+  padding: 22px 10px 8px 10px;
   flex-shrink: 0;
 }
 
@@ -1952,7 +1952,9 @@ input:checked + .slider:before {
   line-height: 1;
 }
 
+/* Leyenda de resultados: fuera (dueño, 25-10-2026: «quita la leyenda de Addons destacados»). */
 .cf-results-info {
+  display: none;
   font-size: 0.8rem;
   color: var(--text-faint);
   margin-bottom: 10px;
@@ -3967,7 +3969,7 @@ textarea:focus {
   .app-content { padding: 12px 8px; }
   /* Aquí el contenido lleva 12 px arriba en vez de 14: el panel lateral baja 2 px para seguir
      alineado con la palabra «Filtros» (dueño, 25-10-2026). */
-  .app-sidebar { padding-top: 16px; }
+  .app-sidebar { margin-top: 12px; }
 }
 @media (max-width: 1024px) {
   .app-topbar { padding-right: 108px; }
