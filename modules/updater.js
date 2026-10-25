@@ -354,14 +354,18 @@ function cancelUpdateDownload() {
 
 // Textos de la tarjeta de carga que se pinta mientras se aplica la actualización.
 // Es interfaz nativa (el proceso que instala no puede leer i18n.js), así que vive aquí,
-// en los cinco idiomas, igual que TRAY_TEXTS (docs/REGLAS-IDIOMAS.md). El idioma lo manda
+// en todos los idiomas, igual que TRAY_TEXTS (docs/REGLAS-IDIOMAS.md). El idioma lo manda
 // la ventana al pedir el reinicio. {version} lo rellena buildApplyScript.
 const SPLASH_TEXTS = {
   en: { instalando: 'Updating KoRForge to {version}...', abriendo: 'Opening KoRForge...' },
   es: { instalando: 'Actualizando KoRForge a la {version}...', abriendo: 'Abriendo KoRForge...' },
   gl: { instalando: 'Actualizando KoRForge á {version}...', abriendo: 'Abrindo KoRForge...' },
   fr: { instalando: 'Mise à jour de KoRForge vers {version}...', abriendo: 'Ouverture de KoRForge...' },
-  it: { instalando: 'Aggiornamento di KoRForge alla {version}...', abriendo: 'Apertura di KoRForge...' }
+  it: { instalando: 'Aggiornamento di KoRForge alla {version}...', abriendo: 'Apertura di KoRForge...' },
+  ru: { instalando: 'Обновление KoRForge до {version}...', abriendo: 'Открытие KoRForge...' },
+  zh: { instalando: '正在将 KoRForge 更新到 {version}...', abriendo: '正在打开 KoRForge...' },
+  ko: { instalando: 'KoRForge를 {version} 버전으로 업데이트하는 중...', abriendo: 'KoRForge를 여는 중...' },
+  ja: { instalando: 'KoRForge を {version} に更新しています...', abriendo: 'KoRForge を開いています...' }
 };
 
 function textosSplash(lang) {
@@ -397,7 +401,7 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
   const psQuote = (p) => `'${String(p).replace(/'/g, "''")}'`;
   const versionEsperada = String(targetVersion || '').replace(/^v/i, '');
   const textos = textosSplash(opciones.lang);
-  // La versión a la que se actualiza se ve en la tarjeta: {version} en los cinco idiomas
+  // La versión a la que se actualiza se ve en la tarjeta: {version} en todos los idiomas
   const textoInstalando = textos.instalando.split('{version}').join(versionEsperada || '');
   const splashPng = opciones.splashPng || '';
   const flagFile = opciones.flagFile || path.join(os.tmpdir(), 'korforge_splash_listo');

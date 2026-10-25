@@ -962,11 +962,16 @@ app.post('/api/translate-mod', async (req, res) => {
   try {
     const { modId, summary, html, targetLang } = req.body;
     if (!modId) return res.status(400).json({ error: 'modId requerido', code: 'err_mod_id_required' });
+    // Idiomas a los que se puede traducir (los mismos que habla la app). El inglés no
+    // se ofrece: las fichas de CurseForge ya vienen en inglés.
+    const IDIOMAS_TRADUCCION = ['es', 'gl', 'fr', 'it', 'ru', 'zh-CN', 'ko', 'ja'];
+    const pedido = String(targetLang || 'es');
+    const destino = IDIOMAS_TRADUCCION.includes(pedido) ? pedido : 'es';
     const result = await translator.translateMod({
       modId,
       summary,
       html,
-      targetLang: targetLang || 'es'
+      targetLang: destino
     });
     res.json({ success: true, ...result });
   } catch (err) {

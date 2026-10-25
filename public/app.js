@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('link[data-activar-media]').forEach((l) => { l.media = 'all'; });
   // --- Textos -----------------------------------------------------------
   // REGLA (docs/REGLAS-IDIOMAS.md): aquí no se escribe NI UN texto visible a mano.
-  // Todo pasa por T('clave', {variables}) y vive en public/i18n.js, en los cinco idiomas.
+  // Todo pasa por T('clave', {variables}) y vive en public/i18n.js, en todos los idiomas.
   const T = (key, vars) => (window.I18N ? window.I18N.t(key, vars) : key);
   const LOCALE = () => (window.I18N ? window.I18N.getLocale() : 'en-US');
   const fmtDate = (value, options) => (window.I18N ? window.I18N.fmtDate(value, options) : '');
@@ -133,8 +133,8 @@ document.addEventListener('DOMContentLoaded', () => {
    * ========================================================================== */
   const sortLista = document.getElementById('sortLista');
   const OPCIONES_ORDEN = {
-    favorites: ['added', 'name_az', 'name_za', 'author', 'downloads', 'updated'],
-    addons: ['name_az', 'name_za', 'version', 'updates', 'state', 'problems'],
+    favorites: ['added', 'name_az', 'downloads', 'updated'],
+    addons: ['name_az', 'version', 'updates', 'state', 'problems'],
   };
   const CLAVE_ORDEN = {
     added: 'sort_added',
@@ -485,6 +485,9 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentOriginalSummary = '';
   let currentTranslatedSummary = '';
   let isTranslated = false;
+  // Idioma en el que está la traducción en pantalla: si el usuario cambia el idioma de la
+  // app, la traducción guardada ya no sirve y se vuelve al original (25-10-2026).
+  let idiomaDeLaTraduccion = '';
 
   // URL Install Elements
   const installUrlInput = document.getElementById('installUrlInput');
@@ -2428,8 +2431,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* ------------------------------------------------------------------
+   * Traducción de la ficha al IDIOMA DE LA APP (dueño, 25-10-2026): si la app está en francés se
+   * ofrece traducir al francés, y en inglés no se ofrece traducción (las fichas de CurseForge ya
+   * vienen en inglés).
+   * ------------------------------------------------------------------ */
+  function idiomaDeTraduccion() {
+    try { return (window.I18N && window.I18N.getLanguage && window.I18N.getLanguage()) || 'en'; } catch (_) { return 'en'; }
+  }
+
+  function hayTraduccion() {
+    return idiomaDeTraduccion() !== 'en';
+  }
+
+  /** Código que entiende el traductor (Google) para el idioma de la app. */
+  const CODIGO_TRADUCCION = { es: 'es', gl: 'gl', fr: 'fr', it: 'it', ru: 'ru', zh: 'zh-CN', ko: 'ko', ja: 'ja' };
+  function codigoDeTraduccion() {
+    const lang = idiomaDeTraduccion();
+    return CODIGO_TRADUCCION[lang] || 'es';
+  }
+
+  /** Bandera del idioma al que se traduce (la del idioma activo de la app). */
+  const BANDERA_IDIOMA = { es: '🇪🇸', gl: '🌐', fr: '🇫🇷', it: '🇮🇹', ru: '🇷🇺', zh: '🇨🇳', ko: '🇰🇷', ja: '🇯🇵' };
+  function banderaDeTraduccion() {
+    return BANDERA_IDIOMA[idiomaDeTraduccion()] || '🌐';
+  }
+
+  /** El botón de traducir solo se ve si el idioma de la app no es inglés. */
+  function aplicarVisibilidadTraductor() {
+    if (!btnTranslateToggle) return;
+    btnTranslateToggle.style.display = hayTraduccion() ? '' : 'none';
+  }
+
   function updateTranslateButtonUI(loading, translated) {
     if (!btnTranslateToggle) return;
+    aplicarVisibilidadTraductor();
     if (loading) {
       btnTranslateToggle.classList.add('loading');
       btnTranslateToggle.innerHTML = `<span class="translate-icon">⏳</span><span class="translate-label">${T('detail_translating')}</span>`;
@@ -2439,7 +2475,7 @@ document.addEventListener('DOMContentLoaded', () => {
       btnTranslateToggle.innerHTML = `<span class="translate-icon">🇬🇧</span><span class="translate-label">${T('detail_original')}</span>`;
     } else {
       btnTranslateToggle.classList.remove('loading', 'translated');
-      btnTranslateToggle.innerHTML = `<span class="translate-icon">🇪🇸</span><span class="translate-label">${T('detail_translate')}</span>`;
+      btnTranslateToggle.innerHTML = `<span class="translate-icon">${banderaDeTraduccion()}</span><span class="translate-label">${T('detail_translate')}</span>`;
     }
   }
 
@@ -2450,6 +2486,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isTranslated) {
       if (currentTranslatedDesc && currentTranslatedSummary) {
         isTranslated = true;
+        idiomaDeLaTraduccion = codigoDeTraduccion();
         detailHtmlBody.innerHTML = sanitizarHtmlCurseforge(currentTranslatedDesc);
         if (heroSummaryEl) heroSummaryEl.textContent = currentTranslatedSummary;
         updateTranslateButtonUI(false, true);
@@ -2466,7 +2503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modId: currentDetailMod.id,
             summary: currentOriginalSummary,
             html: currentOriginalDesc,
-            targetLang: 'es'
+            targetLang: codigoDeTraduccion()
           })
         });
         const data = await res.json();
@@ -2474,6 +2511,7 @@ document.addEventListener('DOMContentLoaded', () => {
           currentTranslatedDesc = data.html || currentOriginalDesc;
           currentTranslatedSummary = data.summary || currentOriginalSummary;
           isTranslated = true;
+          idiomaDeLaTraduccion = codigoDeTraduccion();
           detailHtmlBody.innerHTML = sanitizarHtmlCurseforge(currentTranslatedDesc);
           if (heroSummaryEl) heroSummaryEl.textContent = currentTranslatedSummary;
           updateTranslateButtonUI(false, true);
@@ -2599,13 +2637,15 @@ document.addEventListener('DOMContentLoaded', () => {
       fetch(`/api/mod/${modId}/translation`)
         .then(r => r.json())
         .then(tData => {
-          if (tData.translation && tData.translation.es) {
-            currentTranslatedDesc = tData.translation.es.html || '';
-            currentTranslatedSummary = tData.translation.es.summary || '';
+          const cacheTraducido = tData && tData.translation ? tData.translation[codigoDeTraduccion()] : null;
+          if (cacheTraducido) {
+            currentTranslatedDesc = cacheTraducido.html || '';
+            currentTranslatedSummary = cacheTraducido.summary || '';
           }
         })
         .catch(() => {});
 
+      aplicarVisibilidadTraductor();
       renderDetailHero(mod, findInstalledAddon(mod));
 
       // 2. Fetch Description (K8: el HTML de CurseForge se sanea antes de pintarlo)
@@ -3829,6 +3869,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 5. Ficha abierta
     if (cfDetailView && cfDetailView.style.display !== 'none' && currentDetailMod) {
+      // Si la traducción en pantalla es de otro idioma, se vuelve al original: el botón
+      // ofrece ahora el idioma nuevo (25-10-2026).
+      if (isTranslated && idiomaDeLaTraduccion && idiomaDeLaTraduccion !== codigoDeTraduccion()) {
+        isTranslated = false;
+        currentTranslatedDesc = '';
+        currentTranslatedSummary = '';
+        idiomaDeLaTraduccion = '';
+      }
       renderDetailHero(currentDetailMod, findInstalledAddon(currentDetailMod));
       renderDetailGallery(currentDetailMod);
       if (lastDetailFiles.length) renderDetailFiles(lastDetailFiles, lastDetailAddonName);

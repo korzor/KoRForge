@@ -411,14 +411,18 @@ function createSplash() {
 }
 
 // --- Textos de la bandeja del sistema (interfaz nativa) -------------------
-// Las etiquetas del menú de la bandeja también existen en los cinco idiomas
+// Las etiquetas del menú de la bandeja también existen en todos los idiomas
 // (docs/REGLAS-IDIOMAS.md). El idioma lo manda la ventana al arrancar y al cambiarlo.
 const TRAY_TEXTS = {
   en: { open: '⚡ Open KoRForge', close: 'Close KoRForge', tooltip: 'KoRForge - WoW Forever Addon Forge' },
   es: { open: '⚡ Abrir KoRForge', close: 'Cerrar KoRForge', tooltip: 'KoRForge - Forja de Addons de WoW Forever' },
   gl: { open: '⚡ Abrir KoRForge', close: 'Pechar KoRForge', tooltip: 'KoRForge - Forxa de Addons de WoW Forever' },
   fr: { open: '⚡ Ouvrir KoRForge', close: 'Fermer KoRForge', tooltip: 'KoRForge - Forge d’Addons pour WoW Forever' },
-  it: { open: '⚡ Apri KoRForge', close: 'Chiudi KoRForge', tooltip: 'KoRForge - Fucina di Addon per WoW Forever' }
+  it: { open: '⚡ Apri KoRForge', close: 'Chiudi KoRForge', tooltip: 'KoRForge - Fucina di Addon per WoW Forever' },
+  ru: { open: '⚡ Открыть KoRForge', close: 'Закрыть KoRForge', tooltip: 'KoRForge - Кузница аддонов для WoW Forever' },
+  zh: { open: '⚡ 打开 KoRForge', close: '关闭 KoRForge', tooltip: 'KoRForge - WoW Forever 插件工坊' },
+  ko: { open: '⚡ KoRForge 열기', close: 'KoRForge 닫기', tooltip: 'KoRForge - WoW Forever 애드온 공방' },
+  ja: { open: '⚡ KoRForge を開く', close: 'KoRForge を閉じる', tooltip: 'KoRForge - WoW Forever アドオン工房' }
 };
 
 let trayLang = TRAY_TEXTS[loadConfigSync().language] ? loadConfigSync().language : 'en';

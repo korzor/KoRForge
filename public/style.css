@@ -1781,6 +1781,14 @@ input:checked + .slider:before {
   flex-shrink: 0;
 }
 
+/* En Favoritos e Instalados el desplegable de orden va a la IZQUIERDA del buscador (dueño,
+   25-10-2026). Se colocan con «order» para no duplicar la barra en el HTML: las flechas de
+   navegación (orden 0) quedan las primeras, luego el desplegable, luego el buscador. */
+.cf-top-toolbar > .sort-lista-wrap { order: 1; }
+.cf-top-toolbar > .cf-search-input-wrap { order: 2; }
+.cf-top-toolbar > .cf-sort-wrap { order: 3; }
+.cf-top-toolbar > .cf-toolbar-btns { order: 4; }
+
 /* Barra de navegación y búsqueda COMPARTIDA por todas las pestañas (dueño, 25-10-2026): va entre la
    barra superior y el cuerpo, empieza en la izquierda del todo (a la altura del panel lateral) y su
    fondo es el banner. */
@@ -1797,7 +1805,7 @@ input:checked + .slider:before {
 }
 
 /* El orden solo tiene sentido en «Buscar Addons»; en Noticias la derecha es «Actualizar». */
-body:not([data-tab="search"]) .cf-sort-wrap {
+body:not([data-tab="search"]) #cfSortWrap {
   display: none;
 }
 
@@ -1805,16 +1813,20 @@ body[data-tab="news"] #btnCfSearch {
   display: none;
 }
 
-/* Orden de la lista (Favoritos e Instalados): mismo sitio que el del catálogo, pero con sus opciones. */
-.sort-lista-wrap {
+/* Orden de la lista (Favoritos e Instalados): a la izquierda del buscador (dueño, 25-10-2026)
+   y con el ancho justo de su contenido: ni un píxel de más. Se ancla al id para ganar al recuadro
+   compartido de abajo (.cf-sort-wrap, .sort-lista-wrap), que si no lo deja visible en todas las
+   pestañas. */
+.sort-lista-wrap,
+.cf-top-toolbar > #sortListaWrap {
   display: none;
-  align-items: center;
-  gap: 8px;
-  height: 100%;
+  width: max-content;
+  max-width: max-content;
+  flex: 0 0 auto;
 }
 
-body[data-tab="favorites"] .sort-lista-wrap,
-body[data-tab="addons"] .sort-lista-wrap {
+body[data-tab="favorites"] .cf-top-toolbar > #sortListaWrap,
+body[data-tab="addons"] .cf-top-toolbar > #sortListaWrap {
   display: flex;
 }
 
@@ -1921,7 +1933,8 @@ body:not([data-tab="news"]) .btn-news-refresh {
   color: var(--c-fff);
 }
 
-.cf-sort-wrap {
+.cf-sort-wrap,
+.sort-lista-wrap {
   display: flex;
   align-items: center;
   gap: 8px;

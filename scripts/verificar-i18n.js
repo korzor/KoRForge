@@ -134,6 +134,7 @@ const VOID_TAGS = new Set(['meta', 'link', 'img', 'input', 'br', 'hr', 'source',
 const TEXT_ALLOWLIST = [
   'ORFORGE',
   'English (Default)', 'Español', 'Galego', 'Français', 'Italiano',
+  'Русский', '中文', '한국어', '日本語',
   'https://github.com/...'
 ];
 const TITLE_ALLOWLIST_IDS = new Set([]);
@@ -433,7 +434,7 @@ function checkNativos(translations) {
     }
   }
 
-  if (!problems.length) ok('interfaz nativa (bandeja y actualizador) en los cinco idiomas');
+  if (!problems.length) ok('interfaz nativa (bandeja y actualizador) en todos los idiomas');
 }
 
 // ---------------------------------------------------------------- Main

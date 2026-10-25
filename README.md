@@ -170,8 +170,8 @@ mientras juegas.
 - 💾 **Bóveda WTF:** copias completas de `WTF/SavedVariables` y macros, restaurables en un clic.
 - 🔁 **Autoactualizador silencioso:** avisa desde GitHub Releases, descarga en segundo plano y se
   reinicia sola al terminar, sin ventanas ni asistentes.
-- 🌍 **Cinco idiomas:** Español, English, Galego, Français, Italiano. Todo cambia al instante, incluidos
-  tooltips, filtros y el menú de la bandeja.
+- 🌍 **Nueve idiomas:** Español, English, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語.
+  Todo cambia al instante, incluidos tooltips, filtros y el menú de la bandeja.
 - 👀 **Reconoce lo que ya tienes:** lee tu carpeta `Interface\AddOns`, así que los addons instalados a
   mano o con otra herramienta aparecen como instalados.
 

@@ -498,30 +498,51 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
   if (!/export/i.test(txtExport)) out.problemas.push('el boton de exportar no se llama Exportar');
   if (!/import/i.test(txtImport)) out.problemas.push('el boton de importar no se llama Importar');
 
-  /* Orden de la lista en Favoritos: «Nombre (Z - A)» tiene que poner Questie primero. */
+  /* Orden de la lista en Favoritos: tiene que haber «Nombre (A - Z)» y NADA de Z-A ni de autor
+     (dueño, 25-10-2026), y el desplegable va a la izquierda del buscador con el ancho justo. */
   document.querySelector('.nav-item[data-tab="favorites"]').click();
   await sleep(900);
   const sel = document.getElementById('sortLista');
   if (!sel) out.problemas.push('no existe el desplegable de orden de la lista');
   else {
+    const opciones = [...sel.options].map((o) => o.value);
+    out.pasos.push('opciones del orden en Favoritos: ' + JSON.stringify(opciones));
+    if (!opciones.includes('name_az')) out.problemas.push('el orden de Favoritos no ofrece Nombre (A - Z)');
+    if (opciones.includes('name_za')) out.problemas.push('el orden de Favoritos sigue ofreciendo Z - A');
+    if (opciones.includes('author')) out.problemas.push('el orden de Favoritos sigue ofreciendo filtrar por autor');
+
     const nombres = () => [...document.querySelectorAll('#favoritesTabGrid .cf-card .cf-title')].map(t => t.textContent.trim());
     const antes = nombres();
     sel.value = 'name_az';
     sel.dispatchEvent(new Event('change', { bubbles: true }));
     await sleep(600);
     const az = nombres();
-    sel.value = 'name_za';
-    sel.dispatchEvent(new Event('change', { bubbles: true }));
-    await sleep(600);
-    const za = nombres();
-    out.pasos.push('orden en Favoritos: ' + JSON.stringify(antes) + ' | A-Z: ' + JSON.stringify(az) + ' | Z-A: ' + JSON.stringify(za));
-    if (!az.length || !za.length) out.problemas.push('el orden de la lista dejo la lista vacia');
+    out.pasos.push('orden en Favoritos: ' + JSON.stringify(antes) + ' | A-Z: ' + JSON.stringify(az));
+    if (!az.length) out.problemas.push('el orden de la lista dejo la lista vacia');
     else {
       const esperadoAz = az.slice().sort((a, b) => a.localeCompare(b));
-      const esperadoZa = za.slice().sort((a, b) => b.localeCompare(a));
       if (JSON.stringify(az) !== JSON.stringify(esperadoAz)) out.problemas.push('el orden «Nombre (A - Z)» no ordeno las tarjetas: ' + JSON.stringify(az));
-      if (JSON.stringify(za) !== JSON.stringify(esperadoZa)) out.problemas.push('el orden «Nombre (Z - A)» no ordeno las tarjetas: ' + JSON.stringify(za));
     }
+
+    /* El desplegable, a la izquierda del buscador y del ancho de su contenido. */
+    const cajaOrden = document.getElementById('sortListaWrap');
+    const cajaBuscar = document.querySelector('.cf-search-input-wrap');
+    if (!cajaOrden || !cajaBuscar) out.problemas.push('no encuentro el desplegable o el buscador de la barra');
+    else {
+      const rOrden = cajaOrden.getBoundingClientRect();
+      const rBuscar = cajaBuscar.getBoundingClientRect();
+      out.pasos.push('desplegable: izq=' + Math.round(rOrden.left) + ' ancho=' + Math.round(rOrden.width)
+        + ' | buscador izq=' + Math.round(rBuscar.left) + ' ancho=' + Math.round(rBuscar.width));
+      if (rOrden.right > rBuscar.left + 1) out.problemas.push('el desplegable de orden no esta a la izquierda del buscador');
+      const anchoContenido = [...cajaOrden.children].reduce((total, hijo) => {
+        const estilo = getComputedStyle(hijo);
+        return total + hijo.getBoundingClientRect().width + parseFloat(estilo.marginLeft || 0) + parseFloat(estilo.marginRight || 0);
+      }, 0) + 8; /* separacion entre la etiqueta y el desplegable */
+      if (rOrden.width > anchoContenido + 40) {
+        out.problemas.push('el recuadro del orden es mas largo que su contenido (' + Math.round(rOrden.width) + ' vs ' + Math.round(anchoContenido) + ')');
+      }
+    }
+
     sel.value = 'added';
     sel.dispatchEvent(new Event('change', { bubbles: true }));
     await sleep(400);
