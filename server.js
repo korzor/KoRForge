@@ -646,7 +646,10 @@ app.post('/api/favorites/toggle', (req, res) => {
       downloadCount: mod.downloadCount || 0,
       dateModified: mod.dateModified || '',
       sourceUrl: mod.sourceUrl || '',
-      categories: mod.categories || []
+      categories: mod.categories || [],
+      /* Cuándo se guardó: sirve para «Recién añadidos» en Favoritos (dueño, 25-10-2026). Los que ya
+         estaban guardados no lo tienen; ahí se usa su posición en la lista. */
+      agregadoEn: Date.now()
     });
     isFavorite = true;
   }
