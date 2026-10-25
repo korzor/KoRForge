@@ -329,8 +329,25 @@ const CHECK_PANEL_LATERAL = `(async () => {
   return out;
 })()`;
 
-async function main() {
-  console.log('Sonda de interfaz de KoRForge\n');
+/* La barra superior lleva el banner del dueño de fondo, detrás del logo y de los botones
+   (dueño, 25-10-2026), y el fichero tiene que existir y servirse. */
+const CHECK_BANNER = `(async () => {
+  const out = { pasos: [], problemas: [] };
+  const barra = document.querySelector('.app-topbar');
+  if (!barra) { out.problemas.push('no encuentro la barra superior'); return out; }
+  const estilo = getComputedStyle(barra);
+  const fondo = estilo.backgroundImage || '';
+  out.pasos.push('fondo de la barra: ' + JSON.stringify(fondo.slice(0, 160)));
+  out.pasos.push('background-size: ' + estilo.backgroundSize + ' | position: ' + estilo.backgroundPosition);
+  if (!/topbar-grifon\\.jpg/.test(fondo)) out.problemas.push('la barra superior no lleva el banner topbar-grifon.jpg');
+  if (!/cover/.test(estilo.backgroundSize)) out.problemas.push('el banner no se ajusta con cover: ' + estilo.backgroundSize);
+  const r = await fetch('/topbar-grifon.jpg', { method: 'GET' });
+  out.pasos.push('el fichero se sirve: HTTP ' + r.status + ' (' + (r.headers.get('content-type') || '') + ')');
+  if (r.status !== 200) out.problemas.push('el banner topbar-grifon.jpg no se sirve');
+  return out;
+})()`;
+
+async function main() {  console.log('Sonda de interfaz de KoRForge\n');
   const server = await startStaticServer();
   const { child, tmpDir } = startElectron();
   let cdp = null;
@@ -397,14 +414,19 @@ async function main() {
     for (const p of r3.pasos) console.log('   Â· ' + p);
     for (const p of r3.problemas) console.error('   ! ' + p);
 
+    const r4 = await cdp.evaluate(CHECK_BANNER);
+    console.log('\n4) Banner del grifón en la barra superior');
+    for (const p of r4.pasos) console.log('   Â· ' + p);
+    for (const p of r4.problemas) console.error('   ! ' + p);
+
     if (log.deletes.length) console.log('\nDELETE de prueba: ' + log.deletes.join(' | '));
 
-    const problemas = [...r1.problemas, ...r2.problemas, ...r3.problemas];
+    const problemas = [...r1.problemas, ...r2.problemas, ...r3.problemas, ...r4.problemas];
     if (problemas.length) {
       console.error(`\nERRORES: ${problemas.length}`);
       process.exitCode = 1;
     } else {
-      console.log('\nOK: desinstalar y Boveda con modal, estados vacios centrados y buscador flexible.');
+      console.log('\nOK: desinstalar y Boveda con modal, estados vacios centrados, buscador flexible, panel lateral a la altura de Filtros y banner en la barra superior.');
     }
   } finally {
     cleanup();

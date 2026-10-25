@@ -88,7 +88,16 @@ body.is-maximized .app-shell {
   align-items: center;
   justify-content: space-between;
   padding: 0 148px 0 10px;
-  background: var(--bg-surface);
+  /* Banner del dueño (25-10-2026): la imagen del grifón de fondo de toda la barra, detrás del logo y
+     de los botones. Encima lleva un velo oscuro (el dibujo es oscuro, pero así el nombre en dorado y
+     las píldoras del juego se leen siempre). Es una prueba: si cansa, se quita en una línea. */
+  background-color: var(--bg-surface);
+  background-image:
+    linear-gradient(90deg, rgba(8, 10, 14, 0.86) 0%, rgba(8, 10, 14, 0.30) 42%, rgba(8, 10, 14, 0.34) 68%, rgba(8, 10, 14, 0.72) 100%),
+    url('topbar-grifon.jpg');
+  background-size: cover, cover;
+  background-position: center, center 34%;
+  background-repeat: no-repeat, no-repeat;
   border-bottom: none;
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
