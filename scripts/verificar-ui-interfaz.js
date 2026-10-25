@@ -105,7 +105,16 @@ function startStaticServer() {
       if (url.pathname === '/api/backups') {
         return json({ success: true, backups: emptyMode ? [] : [{ fileName: 'WTF-2026-10-20.zip', date: '20-10-2026', sizeMb: 12 }] });
       }
-      if (url.pathname === '/api/favorites') return json({ success: true, favorites: [] });
+      if (url.pathname === '/api/favorites') {
+        /* Dos favoritos: hacen falta para comprobar que la barra de arriba filtra la lista. */
+        return json({
+          success: true,
+          favorites: [
+            { id: 11, name: 'Details', slug: 'details', summary: 'Medidor de dano', author: 'Tercioo', iconUrl: '', categories: [], sourceUrl: '', version: '1.2.3', downloadCount: 1, dateModified: NOW },
+            { id: 12, name: 'Questie', slug: 'questie', summary: 'Ayuda de misiones', author: 'Questie', iconUrl: '', categories: [], sourceUrl: '', version: '2.0.0', downloadCount: 2, dateModified: NOW }
+          ]
+        });
+      }
       if (url.pathname === '/api/mod/1') return json({ success: true, mod: { id: 1, name: 'Details', author: 'x', summary: '', downloadCount: 1, dateModified: NOW, dateCreated: NOW, version: '1.2.3', iconUrl: '', screenshots: [] } });
       if (url.pathname === '/api/mod/1/files') return json({ success: true, files: [] });
       if (url.pathname === '/api/mod/1/description') return json({ success: true, html: '<p>x</p>' });
@@ -230,20 +239,20 @@ const CHECK_UNINSTALL = `(async () => {
   await sleep(500);
   if (visible(modal())) out.problemas.push('el modal no se cerro al cancelar');
 
-  // 4. Buscador flexible pegado a los filtros
-  const box = document.querySelector('.toolbar .search-box');
-  const toolbar = document.querySelector('#pane-addons .toolbar');
-  if (box && toolbar) {
-    const bw = box.getBoundingClientRect().width;
-    const tw = toolbar.getBoundingClientRect().width;
-    const pills = document.querySelector('#pane-addons .filter-pills');
-    const pw = pills ? pills.getBoundingClientRect().width : 0;
-    const ratio = bw / Math.max(1, tw - pw);
-    out.pasos.push('buscador: ' + Math.round(bw) + 'px de ' + Math.round(tw) + 'px (pills ' + Math.round(pw) + 'px, ratio ' + ratio.toFixed(2) + ')');
-    if (ratio < 0.75) out.problemas.push('el buscador no ocupa el ancho libre (ratio ' + ratio.toFixed(2) + ')');
-    if (getComputedStyle(box).maxWidth !== 'none') out.problemas.push('el buscador sigue con max-width: ' + getComputedStyle(box).maxWidth);
+  // 4. El buscador de la barra compartida ocupa el ancho libre (pegado a los botones de la derecha)
+  const cajaBusqueda = document.querySelector('.app-toolbar-row .cf-search-input-wrap');
+  const barraCompartida = document.querySelector('.app-toolbar-row .cf-top-toolbar');
+  if (cajaBusqueda && barraCompartida) {
+    const bw = cajaBusqueda.getBoundingClientRect().width;
+    const tw = barraCompartida.getBoundingClientRect().width;
+    const resto = document.querySelector('.app-toolbar-row .cf-sort-wrap');
+    const rw = resto ? resto.getBoundingClientRect().width : 0;
+    const ratio = bw / Math.max(1, tw - rw);
+    out.pasos.push('buscador de la barra: ' + Math.round(bw) + 'px de ' + Math.round(tw) + 'px (controles ' + Math.round(rw) + 'px, ratio ' + ratio.toFixed(2) + ')');
+    if (ratio < 0.6) out.problemas.push('el buscador de la barra no ocupa el ancho libre (ratio ' + ratio.toFixed(2) + ')');
+    if (getComputedStyle(cajaBusqueda).maxWidth !== 'none') out.problemas.push('el buscador sigue con max-width: ' + getComputedStyle(cajaBusqueda).maxWidth);
   } else {
-    out.problemas.push('no encuentro el buscador o el toolbar de Mis Addons');
+    out.problemas.push('no encuentro el buscador de la barra compartida');
   }
 
   // 5. La Boveda WTF pregunta con modal (restaurar)
@@ -364,8 +373,10 @@ const CHECK_BANNER = `(async () => {
   if (hueco < 0 || hueco > 12) out.problemas.push('el borde inferior del banner no queda casi pegado al boton Buscar Addons (hueco ' + Math.round(hueco) + ' px)');
   if (banner.bottom < toolbar.getBoundingClientRect().bottom) out.problemas.push('el banner no llega por detras de la barra de busqueda');
   if (getComputedStyle(barra).backgroundImage !== 'none') out.problemas.push('la barra superior sigue pintando su propio fondo (tapa el banner)');
-  if (!/rgba\\(0, 0, 0, 0\\) 60px/.test(getComputedStyle(sidebar).backgroundImage)) {
-    out.problemas.push('el panel lateral no deja ver el banner arriba: ' + getComputedStyle(sidebar).backgroundImage.slice(0, 90));
+  const fondoSidebar = getComputedStyle(sidebar).backgroundImage;
+  /* Arriba tiene que ser transparente (para que se vea el banner) y luego la superficie del panel. */
+  if (!/rgba\\(0, 0, 0, 0\\) 0px/.test(fondoSidebar) || fondoSidebar.indexOf('rgba(0, 0, 0, 0)') > fondoSidebar.indexOf('rgb(15, 20, 28)')) {
+    out.problemas.push('el panel lateral no deja ver el banner arriba: ' + fondoSidebar.slice(0, 90));
   }
 
   const r = await fetch('/topbar-grifon.jpg');
@@ -398,6 +409,60 @@ const CHECK_BANNER = `(async () => {
     if (brillo < 520) out.problemas.push('los botones de ventana siguen muy apagados (brillo ' + brillo + ')');
     if (/rgba\\(0, 0, 0, 0\\)/.test(eW.backgroundColor)) out.problemas.push('los botones de ventana no tienen fondo propio');
   }
+  return out;
+})()`;
+
+/* La barra de navegación y búsqueda es la MISMA en todas las pestañas (dueño, 25-10-2026): empieza a
+   la izquierda del todo (a la altura del panel lateral y de la K de KoRForge), no cambia de sitio al
+   cambiar de pestaña y las pestañas ya no llevan sus títulos grandes. Además, en Favoritos la barra
+   filtra la lista. */
+const CHECK_BARRA_COMPARTIDA = `(async () => {
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+  const out = { pasos: [], problemas: [] };
+  const barra = document.querySelector('.app-toolbar-row');
+  if (!barra) { out.problemas.push('no existe la barra compartida .app-toolbar-row'); return out; }
+  const situacion = () => { const r = barra.getBoundingClientRect(); return { izq: Math.round(r.left), ancho: Math.round(r.width), top: Math.round(r.top), alto: Math.round(r.height) }; };
+
+  const nav = document.querySelector('.nav-menu .nav-item[data-tab="search"]').getBoundingClientRect();
+  const marca = document.querySelector('.brand .app-brand-icon') ? document.querySelector('.brand .app-brand-icon').getBoundingClientRect() : nav;
+  const s0 = situacion();
+  out.pasos.push('barra: izq=' + s0.izq + ' ancho=' + s0.ancho + ' top=' + s0.top);
+  out.pasos.push('referencia (boton lateral izq=' + Math.round(nav.left) + ', logo izq=' + Math.round(marca.left) + ')');
+  if (Math.abs(s0.izq - marca.left) > 14 && Math.abs(s0.izq - nav.left) > 14) {
+    out.problemas.push('la barra no empieza a la izquierda como el panel lateral/logo (izq ' + s0.izq + ')');
+  }
+
+  const pestanas = ['favorites', 'addons', 'backups', 'news', 'search'];
+  for (const t of pestanas) {
+    const boton = document.querySelector('.nav-item[data-tab="' + t + '"]');
+    if (!boton) { out.problemas.push('no hay boton de la pestaña ' + t); continue; }
+    boton.click();
+    await sleep(700);
+    const s = situacion();
+    const titulo = document.querySelector('#pane-' + t + ' .page-title');
+    out.pasos.push('pestaña ' + t + ': barra izq=' + s.izq + ' top=' + s.top + ' | titulo grande=' + (titulo ? JSON.stringify(titulo.textContent.trim()) : 'ninguno'));
+    if (s.izq !== s0.izq || s.top !== s0.top) out.problemas.push('la barra se mueve al cambiar a la pestaña ' + t + ' (izq ' + s.izq + ', top ' + s.top + ')');
+    if (barra.offsetParent === null) out.problemas.push('la barra no se ve en la pestaña ' + t);
+    if (titulo) out.problemas.push('la pestaña ' + t + ' sigue con el título grande');
+  }
+
+  /* En Favoritos, escribir en la barra filtra la lista. */
+  const campo = document.getElementById('cfSearchInput');
+  const botonFav = document.querySelector('.nav-item[data-tab="favorites"]');
+  botonFav.click();
+  await sleep(700);
+  const antes = document.querySelectorAll('#favoritesTabGrid .cf-card').length;
+  campo.value = 'zzzznoexiste';
+  campo.dispatchEvent(new Event('input', { bubbles: true }));
+  await sleep(500);
+  const despues = document.querySelectorAll('#favoritesTabGrid .cf-card').length;
+  out.pasos.push('filtro desde la barra en Favoritos: tarjetas ' + antes + ' -> ' + despues + ' con ' + JSON.stringify(campo.value));
+  if (!(despues <= antes)) out.problemas.push('la barra no filtra la lista de Favoritos');
+  campo.value = '';
+  campo.dispatchEvent(new Event('input', { bubbles: true }));
+  await sleep(300);
+  document.querySelector('.nav-item[data-tab="search"]').click();
+  await sleep(400);
   return out;
 })()`;
 
@@ -473,9 +538,14 @@ async function main() {  console.log('Sonda de interfaz de KoRForge\n');
     for (const p of r4.pasos) console.log('   Â· ' + p);
     for (const p of r4.problemas) console.error('   ! ' + p);
 
+    const r5 = await cdp.evaluate(CHECK_BARRA_COMPARTIDA);
+    console.log('\n5) Barra de búsqueda compartida en todas las pestañas');
+    for (const p of r5.pasos) console.log('   Â· ' + p);
+    for (const p of r5.problemas) console.error('   ! ' + p);
+
     if (log.deletes.length) console.log('\nDELETE de prueba: ' + log.deletes.join(' | '));
 
-    const problemas = [...r1.problemas, ...r2.problemas, ...r3.problemas, ...r4.problemas];
+    const problemas = [...r1.problemas, ...r2.problemas, ...r3.problemas, ...r4.problemas, ...r5.problemas];
     if (problemas.length) {
       console.error(`\nERRORES: ${problemas.length}`);
       process.exitCode = 1;

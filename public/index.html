@@ -74,6 +74,46 @@
       </button>
     </header>
 
+    <!-- Barra de navegación y búsqueda COMPARTIDA (dueño, 25-10-2026): es la misma en todas las
+         pestañas y empieza a la izquierda del todo, a la altura del panel lateral. En «Buscar Addons»
+         busca en el catálogo; en Favoritos e Instalados filtra esa lista. -->
+    <div class="app-toolbar-row">
+      <div class="cf-top-toolbar">
+        <div class="browser-nav-bar toolbar-nav">
+          <button class="nav-control-btn" id="btnNavBack" data-i18n-title="nav_back_hint" disabled>
+            <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="nav-control-btn" id="btnNavForward" data-i18n-title="nav_forward_hint" disabled>
+            <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="nav-control-btn" id="btnNavReload" data-i18n-title="nav_reload_hint">
+            <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="cf-search-input-wrap">
+          <span class="cf-search-icon">🔍</span>
+          <input type="text" id="cfSearchInput" data-i18n-placeholder="catalog_search_placeholder" data-i18n-aria-label="aria_search">
+          <button class="cf-clear-search-btn" id="btnClearSearchText" data-i18n-title="clear_search_hint" style="display:none;">✕</button>
+        </div>
+
+        <div class="cf-sort-wrap">
+          <span class="sort-label" data-i18n="sort_label">Sort:</span>
+          <select id="cfSortSelect" class="cf-select">
+            <option value="2|desc" data-i18n="sort_popularity">Popularity (Trending)</option>
+            <option value="6|desc" data-i18n="sort_downloads">Total downloads</option>
+            <option value="1|desc" id="optRelevance" data-i18n="sort_featured">Featured</option>
+            <option value="3|desc" data-i18n="sort_updated">Recently updated</option>
+            <option value="4|asc" data-i18n="sort_name_az">Name (A - Z)</option>
+            <option value="4|desc" data-i18n="sort_name_za">Name (Z - A)</option>
+          </select>
+        </div>
+
+        <div class="cf-toolbar-btns">
+          <button class="btn btn-primary" id="btnCfSearch" data-i18n="btn_search">Search</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Body Layout -->
     <div class="app-body">
 
@@ -128,28 +168,24 @@
 
         <!-- View: Mis Addons -->
         <section class="tab-pane" id="pane-addons">
-          <div class="content-header">
-            <div>
-              <h1 class="page-title" data-i18n="addons_title">My Installed Addons</h1>
-              <p class="page-subtitle" id="addonsSubtitle" data-i18n-skip>Addons detected live in your game folder.</p>
-            </div>
-            <div class="header-actions">
-              <button class="btn btn-secondary" id="btnExportProfile" data-i18n-title="addons_share_pack_hint">
-                <span data-i18n="addons_share_pack">📤 Share Pack</span>
-              </button>
-              <button class="btn btn-secondary" id="btnImportProfile" data-i18n-title="addons_load_pack_hint">
-                <span data-i18n="addons_load_pack">📥 Load Pack</span>
-              </button>
-              <button class="btn btn-gold" id="btnCheckAddonUpdates" data-i18n-title="addons_check_updates_hint">
-                <span data-i18n="addons_check_updates">⚡ Check for Updates</span>
-              </button>
-              <button class="btn btn-secondary" id="btnOpenAddonsFolder" data-i18n-title="addons_open_folder_hint">
-                <span data-i18n="addons_open_folder">📁 Open Folder</span>
-              </button>
-              <button class="btn btn-primary" id="btnScanAddons" data-i18n-title="addons_rescan_hint">
-                <span data-i18n="addons_rescan">🔍 Rescan</span>
-              </button>
-            </div>
+          <!-- Sin títulos: la barra de navegación y búsqueda de arriba ya encabeza todas las pestañas
+               igual que en «Buscar Addons» (dueño, 25-10-2026). -->
+          <div class="pane-actions">
+            <button class="btn btn-secondary" id="btnExportProfile" data-i18n-title="addons_share_pack_hint">
+              <span data-i18n="addons_share_pack">📤 Share Pack</span>
+            </button>
+            <button class="btn btn-secondary" id="btnImportProfile" data-i18n-title="addons_load_pack_hint">
+              <span data-i18n="addons_load_pack">📥 Load Pack</span>
+            </button>
+            <button class="btn btn-gold" id="btnCheckAddonUpdates" data-i18n-title="addons_check_updates_hint">
+              <span data-i18n="addons_check_updates">⚡ Check for Updates</span>
+            </button>
+            <button class="btn btn-secondary" id="btnOpenAddonsFolder" data-i18n-title="addons_open_folder_hint">
+              <span data-i18n="addons_open_folder">📁 Open Folder</span>
+            </button>
+            <button class="btn btn-primary" id="btnScanAddons" data-i18n-title="addons_rescan_hint">
+              <span data-i18n="addons_rescan">🔍 Rescan</span>
+            </button>
           </div>
 
           <!-- Banner dinámico de actualizaciones masivas (El Botón Mágico) -->
@@ -167,10 +203,9 @@
           </div>
 
           <div class="toolbar">
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="searchInput" data-i18n-placeholder="addons_filter_placeholder" data-i18n-aria-label="aria_search">
-            </div>
+            <!-- El buscador es el de la barra de arriba; este campo se queda oculto para no perder
+                 el filtro de la pestaña. -->
+            <input type="hidden" id="searchInput">
             <div class="filter-pills">
               <button class="pill active" data-filter="all" data-i18n="filter_all">All</button>
               <button class="pill" data-filter="enabled" data-i18n="filter_enabled">Active</button>
@@ -186,24 +221,16 @@
 
         <!-- View: Addons Favoritos -->
         <section class="tab-pane" id="pane-favorites">
-          <div class="content-header">
-            <div>
-              <h2 class="page-title" data-i18n="favorites_title">Favorite Addons</h2>
-              <p class="page-subtitle" data-i18n="favorites_subtitle">Your saved addon collection, always at hand and up to date.</p>
-            </div>
-            <div class="header-actions">
-              <button class="btn btn-secondary" id="btnExploreFromFav" data-i18n="favorites_explore_btn">
-                ⚡ Browse Catalog
-              </button>
-            </div>
+          <!-- Sin títulos: la barra de arriba es la misma que en «Buscar Addons» (dueño, 25-10-2026). -->
+          <div class="pane-actions">
+            <button class="btn btn-secondary" id="btnExploreFromFav" data-i18n="favorites_explore_btn">
+              ⚡ Browse Catalog
+            </button>
           </div>
 
-          <div class="toolbar">
-            <div class="search-box">
-              <span class="search-icon">🔍</span>
-              <input type="text" id="favSearchInput" data-i18n-placeholder="favorites_search_placeholder" data-i18n-aria-label="aria_search">
-            </div>
-          </div>
+          <!-- El buscador es el de la barra de arriba; este campo se queda oculto para no perder
+               el filtro de los favoritos. -->
+          <input type="hidden" id="favSearchInput">
 
           <div class="cf-results-grid" id="favoritesTabGrid">
             <!-- Populated by app.js -->
@@ -213,14 +240,8 @@
         <!-- View: Noticias de Blizzard (dueño, 24-10-2026). Las noticias son las de la versión del
              cliente elegido en la barra de arriba. -->
         <section class="tab-pane" id="pane-news">
-          <div class="content-header">
-            <div>
-              <h2 class="page-title" data-i18n="news_title">Blizzard News</h2>
-              <p class="page-subtitle" id="newsSubtitle" data-i18n-skip></p>
-            </div>
-            <div class="header-actions">
-              <button class="btn btn-secondary" id="btnRefreshNews" data-i18n="news_refresh">🔄 Refresh</button>
-            </div>
+          <div class="pane-actions">
+            <button class="btn btn-secondary" id="btnRefreshNews" data-i18n="news_refresh">🔄 Refresh</button>
           </div>
 
           <div class="news-list" id="newsList">
@@ -230,47 +251,6 @@
 
         <!-- View: Explorador de Addons -->
         <section class="tab-pane active" id="pane-search">
-
-          <!-- Barra de búsqueda FIJA del panel (dueño, 20-10-2026): vive FUERA de #cfCatalogLayout
-               para que siga viéndose también dentro de la ficha de un addon. -->
-          <div class="cf-top-toolbar">
-            <!-- Navegación (atrás / adelante / recargar) a la IZQUIERDA de la barra de búsqueda,
-                 al mismo alto que ella. Sustituye al botón «Volver al catálogo». -->
-            <div class="browser-nav-bar toolbar-nav">
-              <button class="nav-control-btn" id="btnNavBack" data-i18n-title="nav_back_hint" disabled>
-                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="nav-control-btn" id="btnNavForward" data-i18n-title="nav_forward_hint" disabled>
-                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-              <button class="nav-control-btn" id="btnNavReload" data-i18n-title="nav_reload_hint">
-                <svg viewBox="0 0 24 24"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              </button>
-            </div>
-            <div class="cf-search-input-wrap">
-              <span class="cf-search-icon">🔍</span>
-              <input type="text" id="cfSearchInput" data-i18n-placeholder="catalog_search_placeholder" data-i18n-aria-label="aria_search">
-              <button class="cf-clear-search-btn" id="btnClearSearchText" data-i18n-title="clear_search_hint" style="display:none;">✕</button>
-            </div>
-
-            <div class="cf-sort-wrap">
-              <span class="sort-label" data-i18n="sort_label">Sort:</span>
-              <select id="cfSortSelect" class="cf-select">
-                <option value="2|desc" data-i18n="sort_popularity">Popularity (Trending)</option>
-                <option value="6|desc" data-i18n="sort_downloads">Total downloads</option>
-                <option value="1|desc" id="optRelevance" data-i18n="sort_featured">Featured</option>
-                <option value="3|desc" data-i18n="sort_updated">Recently updated</option>
-                <option value="4|asc" data-i18n="sort_name_az">Name (A - Z)</option>
-                <option value="4|desc" data-i18n="sort_name_za">Name (Z - A)</option>
-              </select>
-            </div>
-
-            <div class="cf-toolbar-btns">
-              <button class="btn btn-primary" id="btnCfSearch" data-i18n="btn_search">
-                Search
-              </button>
-            </div>
-          </div>
 
           <!-- Subview 1: Catalog & Search Grid -->
           <div class="cf-layout" id="cfCatalogLayout">
@@ -521,11 +501,8 @@
 
         <!-- View: Bóveda WTF -->
         <section class="tab-pane" id="pane-backups">
-          <div class="content-header">
-            <div>
-              <h2 class="page-title" data-i18n="vault_title">Configuration Vault (WTF)</h2>
-              <p class="page-subtitle" id="vaultSubtitle" data-i18n-skip>Clean snapshots of your macros, bars and interface profiles.</p>
-            </div>
+          <!-- Sin títulos: la barra de arriba ya encabeza la pestaña (dueño, 25-10-2026). -->
+          <div class="pane-actions">
             <button class="btn btn-gold" id="btnCreateBackup" data-i18n="vault_create">
               💾 Create New Backup Now
             </button>

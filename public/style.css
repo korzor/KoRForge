@@ -79,7 +79,7 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  height: 134px;
+  height: 138px;
   z-index: 0;
   pointer-events: none;
   border-top-left-radius: 16px;
@@ -593,13 +593,13 @@ body.is-maximized .app-body {
   min-width: fit-content;
   /* El trozo de arriba es transparente para que se vea el banner del grifón (dueño, 25-10-2026): el
      corte está a 60 px, justo donde acaba el banner (barra 76 + 60 = 136). */
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 60px, var(--bg-surface) 60px);
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 10px, var(--bg-surface) 10px);
   border-right: none;
   border-bottom-left-radius: 16px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 66px 8px 14px 8px;
+  padding: 18px 8px 14px 8px;
   flex-shrink: 0;
 }
 
@@ -1776,8 +1776,31 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 10px;
+  margin-bottom: 0;
   flex-shrink: 0;
+}
+
+/* Barra de navegación y búsqueda COMPARTIDA por todas las pestañas (dueño, 25-10-2026): va entre la
+   barra superior y el cuerpo, empieza en la izquierda del todo (a la altura del panel lateral) y su
+   fondo es el banner. */
+.app-toolbar-row {
+  position: relative;
+  z-index: 40;
+  padding: 6px 10px 8px 10px;
+  flex-shrink: 0;
+}
+
+.app-toolbar-row .cf-top-toolbar {
+  width: 100%;
+}
+
+/* Botones de cada pestaña (los que antes iban en la cabecera con título). */
+.pane-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
 }
 
 .cf-search-input-wrap {
@@ -3944,7 +3967,7 @@ textarea:focus {
   .app-content { padding: 12px 8px; }
   /* Aquí el contenido lleva 12 px arriba en vez de 14: el panel lateral baja 2 px para seguir
      alineado con la palabra «Filtros» (dueño, 25-10-2026). */
-  .app-sidebar { padding-top: 64px; }
+  .app-sidebar { padding-top: 16px; }
 }
 @media (max-width: 1024px) {
   .app-topbar { padding-right: 108px; }

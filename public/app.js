@@ -239,6 +239,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const gamesManagementList = document.getElementById('gamesManagementList');
   let currentGamesData = {};
   let currentActiveGame = 'forever';
+  /* Texto que hay escrito en la barra de búsqueda compartida cuando estás en «Buscar Addons». */
+  let textoCatalogo = '';
 
   const GAME_FLAVOR_MAP = {
     forever: { id: '88568', name: 'WoW Forever' },
@@ -542,6 +544,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const targetPane = document.getElementById(`pane-${tabId}`);
     if (targetNav) targetNav.classList.add('active');
     if (targetPane) targetPane.classList.add('active');
+
+    /* La barra de arriba es compartida: se le pone el texto de la pestaña que se abre. */
+    sincronizarBarraConPestana(tabId);
 
     const current = addressBarFor(tabId);
     setAddressBar(current.icon, current.text);
@@ -1747,17 +1752,68 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Search Input Clear Button & Dynamic Label
   const optRelevance = document.getElementById('optRelevance');
-  cfSearchInput?.addEventListener('input', () => {
-    const hasText = cfSearchInput.value.trim().length > 0;
-    btnClearSearchText.style.display = hasText ? 'block' : 'none';
-    if (optRelevance) {
-      optRelevance.textContent = hasText ? T('sort_best_match') : T('sort_featured');
+
+  /* La barra de búsqueda es la MISMA en todas las pestañas (dueño, 25-10-2026): en «Buscar Addons»
+     busca en el catálogo y en Favoritos / Mis addons filtra esa lista. Los campos de esas pestañas
+     siguen existiendo (ocultos) para no tocar su lógica: aquí se les pasa el texto y se avisa. */
+  function filtrarPestanaConLaBarra(texto) {
+    const pestana = document.body.dataset.tab || 'search';
+    if (pestana === 'favorites') {
+      if (favSearchInput) {
+        favSearchInput.value = texto;
+        renderFavoritesTab(texto);
+      }
+      return true;
     }
+    if (pestana === 'addons') {
+      const campo = document.getElementById('searchInput');
+      if (campo) {
+        campo.value = texto;
+        campo.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+      return true;
+    }
+    return false;
+  }
+
+  cfSearchInput?.addEventListener('input', () => {
+    const texto = cfSearchInput.value;
+    btnClearSearchText.style.display = texto.trim() ? 'block' : 'none';
+    if (optRelevance) {
+      optRelevance.textContent = texto.trim() ? T('sort_best_match') : T('sort_featured');
+    }
+    if (!filtrarPestanaConLaBarra(texto)) textoCatalogo = texto;
   });
+
+  /**
+   * Al cambiar de pestaña, la barra muestra el texto que toca: el del catálogo cuando vuelves a
+   * «Buscar Addons», y el filtro que tuviera esa pestaña (normalmente vacío) en las demás.
+   */
+  function sincronizarBarraConPestana(tabId) {
+    document.body.dataset.tab = tabId;
+    if (!cfSearchInput) return;
+    if (tabId === 'search') {
+      cfSearchInput.value = textoCatalogo;
+    } else if (tabId === 'favorites') {
+      cfSearchInput.value = favSearchInput ? favSearchInput.value : '';
+    } else if (tabId === 'addons') {
+      const campo = document.getElementById('searchInput');
+      cfSearchInput.value = campo ? campo.value : '';
+    } else {
+      cfSearchInput.value = '';
+    }
+    if (btnClearSearchText) btnClearSearchText.style.display = cfSearchInput.value.trim() ? 'block' : 'none';
+    if (optRelevance) {
+      optRelevance.textContent = (tabId === 'search' && cfSearchInput.value.trim()) ? T('sort_best_match') : T('sort_featured');
+    }
+  }
 
   btnClearSearchText?.addEventListener('click', () => {
     cfSearchInput.value = '';
     btnClearSearchText.style.display = 'none';
+    /* Si estás filtrando una pestaña, la ✕ vacía ese filtro y no cambia de pestaña. */
+    if (filtrarPestanaConLaBarra('')) return;
+    textoCatalogo = '';
     triggerCurseForgeSearch();
   });
 
@@ -1786,6 +1842,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const { activeFlavor, categories } = getActiveFilters();
     const query = cfSearchInput.value.trim();
+    /* Lo que se busca en el catálogo es también lo que la barra compartida tiene que enseñar cuando
+       vuelvas a esta pestaña (dueño, 25-10-2026). */
+    textoCatalogo = cfSearchInput.value;
 
     // Parse Sort Field and Order: "2|desc", "4|asc", etc.
     const sortVal = cfSortSelect.value || '2|desc';

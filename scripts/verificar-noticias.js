@@ -344,9 +344,13 @@ class Cdp {
         if (!resumen || !resumen.textContent.trim()) fallo('la tarjeta no lleva resumen');
       }
 
-      const subtitulo = (document.getElementById('newsSubtitle') || {}).textContent || '';
-      out.pasos.push('subtitulo: ' + JSON.stringify(subtitulo));
-      if (!/WoW Forever/.test(subtitulo)) fallo('el subtitulo no dice el cliente activo');
+      /* La pestaña ya no lleva título propio (dueño, 25-10-2026): la encabeza la barra compartida,
+         la misma que en «Buscar Addons». */
+      const barra = document.querySelector('.app-toolbar-row');
+      const tituloPane = document.querySelector('#pane-news .page-title');
+      out.pasos.push('barra compartida en Noticias: ' + !!(barra && barra.offsetParent !== null) + ' | titulo propio: ' + (tituloPane ? 'SI' : 'ninguno'));
+      if (!barra || barra.offsetParent === null) fallo('la barra compartida no se ve en Noticias');
+      if (tituloPane) fallo('la pestaña Noticias sigue con titulo propio');
 
       /* Actualizar vuelve a pedir. */
       document.getElementById('btnRefreshNews').click();
