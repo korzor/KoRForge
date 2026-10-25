@@ -557,7 +557,23 @@ async function main() {  console.log('Sonda de interfaz de KoRForge\n');
     }
     await sleep(900);
 
-    const r1 = await cdp.evaluate(CHECK_UNINSTALL);
+  
+  const r0 = await cdp.evaluate(`(() => {
+    const out = { pasos: [], problemas: [] };
+    const sel = document.querySelector('.cf-sort-wrap');
+    const buscador = document.getElementById('cfSearchInput');
+    out.pasos.push('al arrancar: pestaña activa=' + document.body.dataset.tab + ' | desplegable visible=' + !!(sel && sel.offsetParent !== null));
+    if (document.body.dataset.tab !== 'search') out.problemas.push('al arrancar la app no está marcada como Buscar Addons');
+    if (!sel || sel.offsetParent === null) out.problemas.push('al arrancar NO sale el desplegable de orden junto al botón Buscar');
+    if (getComputedStyle(sel).display === 'none') out.problemas.push('el desplegable está oculto por CSS al arrancar');
+    if (!buscador) out.problemas.push('no hay buscador en la barra');
+    return out;
+  })()`);
+  console.log('\n0) Arranque de la app');
+  for (const p of r0.pasos) console.log('   Â· ' + p);
+  for (const p of r0.problemas) console.error('   ! ' + p);
+
+  const r1 = await cdp.evaluate(CHECK_UNINSTALL);
     console.log('\n1) Desinstalar y Boveda con modal');
     for (const p of r1.pasos) console.log('   Â· ' + p);
     for (const p of r1.problemas) console.error('   ! ' + p);
@@ -594,7 +610,7 @@ async function main() {  console.log('Sonda de interfaz de KoRForge\n');
 
     if (log.deletes.length) console.log('\nDELETE de prueba: ' + log.deletes.join(' | '));
 
-    const problemas = [...r1.problemas, ...r2.problemas, ...r3.problemas, ...r4.problemas, ...r5.problemas];
+    const problemas = [...r0.problemas, ...r1.problemas, ...r2.problemas, ...r3.problemas, ...r4.problemas, ...r5.problemas];
     if (problemas.length) {
       console.error(`\nERRORES: ${problemas.length}`);
       process.exitCode = 1;

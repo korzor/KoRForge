@@ -3703,6 +3703,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // App Initialization
   async function initApp() {
     pushNavState({ type: 'tab', tabId: 'search' });
+    /* La app arranca en «Buscar Addons»: la barra compartida tiene que saberlo desde el principio
+       para enseñar el desplegable de orden (dueño, 25-10-2026). */
+    sincronizarBarraConPestana('search');
     try {
       await loadConfig();
     } catch (err) {
