@@ -185,18 +185,18 @@ class Cdp {
     /* La app arranca en otra pestaña: hay que entrar en «Mis Addons» para que el buscador se vea
        (un input oculto no coge el foco, y sin foco el portapapeles no tiene dónde actuar). */
     const entrar = await cdp.evaluate(`(async () => {
-      const boton = document.querySelector('.nav-item[data-tab="addons"]');
+      const boton = document.querySelector('.nav-item[data-tab="search"]');
       if (!boton) return 'no hay boton de addons';
       boton.click();
       await new Promise(r => setTimeout(r, 1200));
-      const inp = document.getElementById('searchInput');
+      const inp = document.getElementById('cfSearchInput');
       return JSON.stringify({ visible: !!(inp && inp.offsetParent !== null), pane: !!document.querySelector('#pane-addons') });
     })()`);
     apuntes.push('entrada a Mis Addons: ' + entrar);
 
     const foco = await cdp.evaluate(`(async () => {
-      const inp = document.getElementById('searchInput');
-      if (!inp) return { error: 'no hay #searchInput' };
+      const inp = document.getElementById('cfSearchInput');
+      if (!inp) return { error: 'no hay #cfSearchInput' };
       inp.focus();
       await new Promise(r => setTimeout(r, 150));
       const st = getComputedStyle(inp);
@@ -212,7 +212,7 @@ class Cdp {
     const menu = await cdp.evaluate(`(async () => {
       const sleep = (ms) => new Promise(r => setTimeout(r, ms));
       const out = { pasos: [], problemas: [] };
-      const inp = document.getElementById('searchInput');
+      const inp = document.getElementById('cfSearchInput');
       const caja = () => document.getElementById('korforge-menu-contextual');
       const abrir = async (el) => {
         const r = el.getBoundingClientRect();
@@ -265,7 +265,7 @@ class Cdp {
       out.pasos.push('escape: antes=' + abiertoAntes + ' despues=' + abiertoDespues);
       if (!abiertoAntes || abiertoDespues) out.problemas.push('Escape no cerro el menu');
 
-      const zona = document.querySelector('#pane-addons') || document.querySelector('.app-main') || document.body;
+      const zona = document.querySelector('.tab-pane.active') || document.querySelector('.app-content') || document.body;
       const parrafo = document.createElement('p');
       parrafo.id = 'texto-de-prueba';
       /* En la app el texto de la ficha es seleccionable desde el cambio del 24-10; aquí se fuerza
