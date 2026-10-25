@@ -730,6 +730,35 @@ ipcMain.on('window-minimize', () => {
   }
 });
 
+/*
+ * Arrastre de la ventana desde la barra superior (dueño, 25-10-2026).
+ *
+ * POR QUÉ ASÍ: la ventana no tiene marco y es transparente, y el arrastre nativo de las regiones
+ * `-webkit-app-region: drag` no es fiable en ese caso. Aquí lo mueve el proceso principal a partir
+ * de la posición del cursor de pantalla: la página solo avisa de cuándo empieza y de cada movimiento.
+ */
+let arrastreVentana = null;
+
+ipcMain.on('korforge:arrastre-inicio', () => {
+  if (!win || win.isDestroyed() || win.isMaximized() || win.isFullScreen()) {
+    arrastreVentana = null;
+    return;
+  }
+  arrastreVentana = { cursor: screen.getCursorScreenPoint(), bounds: win.getBounds() };
+});
+
+ipcMain.on('korforge:arrastre-mover', () => {
+  if (!arrastreVentana || !win || win.isDestroyed()) return;
+  const p = screen.getCursorScreenPoint();
+  const x = Math.round(arrastreVentana.bounds.x + (p.x - arrastreVentana.cursor.x));
+  const y = Math.round(arrastreVentana.bounds.y + (p.y - arrastreVentana.cursor.y));
+  win.setPosition(x, y);
+});
+
+ipcMain.on('korforge:arrastre-fin', () => {
+  arrastreVentana = null;
+});
+
 ipcMain.on('window-maximize', () => {
   if (!win) return;
   toggleMaximize();

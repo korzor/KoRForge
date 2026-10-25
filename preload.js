@@ -12,6 +12,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getAppVersion: () => ipcRenderer.invoke('app-version'),
   onMaximizedChange: (callback) => ipcRenderer.on('window-maximized-change', (_, isMax) => callback(isMax)),
   openExternal: (url) => ipcRenderer.send('open-external', url),
+
+  /**
+   * Arrastrar la ventana desde la barra superior (dueño, 25-10-2026): la ventana no tiene marco, así
+   * que el movimiento lo hace el proceso principal. La página solo dice cuándo empieza, cada
+   * movimiento y cuándo suelta.
+   */
+  moverVentana: {
+    iniciar: () => ipcRenderer.send('korforge:arrastre-inicio'),
+    mover: () => ipcRenderer.send('korforge:arrastre-mover'),
+    fin: () => ipcRenderer.send('korforge:arrastre-fin'),
+  },
   // Traduce la interfaz nativa (bandeja del sistema) al idioma elegido en la app
   setLanguage: (lang) => ipcRenderer.send('korforge:set-language', lang),
 

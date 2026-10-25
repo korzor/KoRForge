@@ -132,7 +132,8 @@ body.is-maximized .app-shell {
   position: relative;
   z-index: 50;
   overflow: visible;
-  -webkit-app-region: drag; /* Window is draggable from header */
+  /* El arrastre y el doble clic los lleva la página (public/app.js) con el proceso principal. */
+  -webkit-app-region: no-drag;
 }
 
 body.is-maximized .app-topbar {
@@ -289,7 +290,7 @@ body.is-maximized .win-btn.win-max .icon-restore {
   margin-left: 0;
   overflow: visible;
   border-radius: 8px;
-  -webkit-app-region: drag;
+  -webkit-app-region: no-drag;
   transform: translateY(5px);
 }
 
@@ -3941,7 +3942,7 @@ body:not([data-tab="news"]) .btn-news-refresh {
    el navegador marca `:focus-visible` también al pinchar con el ratón, así que salía un cuadrado
    alrededor del buscador al hacer clic. Los campos llevan su propio realce (abajo) y el anillo se
    queda para lo que sí se maneja con el teclado: botones, enlaces, pestañas, selects. */
-:focus-visible:not(input):not(textarea) {
+:focus-visible:not(input):not(textarea):not(select) {
   outline: 2px solid var(--accent-gold);
   outline-offset: 2px;
 }
@@ -3961,6 +3962,13 @@ input[type="text"]:focus,
 input[type="search"]:focus,
 textarea:focus {
   outline: none;
+}
+
+/* Los desplegables tampoco: al pinchar salía un cuadrado alrededor (dueño, 25-10-2026). */
+select:focus,
+select:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 /* K-D6: el brand es ahora un div con role="button"; se le da foco visible como a cualquier botón. */

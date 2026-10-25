@@ -98,6 +98,33 @@ document.addEventListener('DOMContentLoaded', () => {
     showToast(T('toast_no_path', { juego: activo.name || String(currentActiveGame || '') }), 'warning');
   }
 
+  /* ------------------------------------------------------------------
+   * Barra superior como barra de título de Windows (dueño, 25-10-2026):
+   * doble clic maximiza / restaura y, apretando y arrastrando, la ventana se mueve.
+   * Todo lo que sea un botón, campo y demás sigue a lo suyo.
+   * ------------------------------------------------------------------ */
+  (function barraDeTitulo() {
+    const barra = document.querySelector('.app-topbar');
+    if (!barra) return;
+    const esInteractivo = (el) => !!(el && el.closest && el.closest('button, a, input, select, textarea, label, .switch, .brand'));
+
+    barra.addEventListener('mousedown', (ev) => {
+      if (ev.button !== 0 || esInteractivo(ev.target)) return;
+      const mover = window.electronAPI && window.electronAPI.moverVentana;
+      if (!mover) return;
+      ev.preventDefault();
+      mover.iniciar();
+      const alMover = () => mover.mover();
+      const alSoltar = () => {
+        mover.fin();
+        document.removeEventListener('mousemove', alMover);
+        document.removeEventListener('mouseup', alSoltar);
+      };
+      document.addEventListener('mousemove', alMover);
+      document.addEventListener('mouseup', alSoltar);
+    });
+  })();
+
   // Navigation & Shell
   const navItems = document.querySelectorAll('.nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
