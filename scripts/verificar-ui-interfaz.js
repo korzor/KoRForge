@@ -354,6 +354,11 @@ const CHECK_BANNER = `(async () => {
   out.pasos.push('primer boton del panel lateral: top=' + Math.round(nav.top) + ' | hueco banner-boton=' + Math.round(nav.top - banner.bottom) + ' px');
   out.pasos.push('barra de busqueda: top=' + Math.round(toolbar.getBoundingClientRect().top) + ' bottom=' + Math.round(toolbar.getBoundingClientRect().bottom) + ' | fondo=' + getComputedStyle(toolbar).backgroundColor);
   if (!/topbar-grifon\\.jpg/.test(estiloBanner.backgroundImage)) out.problemas.push('la capa del banner no lleva topbar-grifon.jpg');
+  /* Encuadre arriba: se ve la parte alta del dibujo (dueño, 25-10-2026). */
+  out.pasos.push('encuadre de la imagen: ' + estiloBanner.backgroundPosition);
+  if (!/50% 0%|center top|top/.test(estiloBanner.backgroundPosition)) {
+    out.problemas.push('el banner no esta encuadrado por arriba: ' + estiloBanner.backgroundPosition);
+  }
   if (banner.alto < 110) out.problemas.push('el banner no baja lo suficiente (alto ' + Math.round(banner.alto) + ' px)');
   const hueco = nav.top - banner.bottom;
   if (hueco < 0 || hueco > 12) out.problemas.push('el borde inferior del banner no queda casi pegado al boton Buscar Addons (hueco ' + Math.round(hueco) + ' px)');

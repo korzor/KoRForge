@@ -89,7 +89,9 @@ html, body {
     linear-gradient(90deg, rgba(8, 10, 14, 0.86) 0%, rgba(8, 10, 14, 0.28) 42%, rgba(8, 10, 14, 0.32) 68%, rgba(8, 10, 14, 0.72) 100%),
     url('topbar-grifon.jpg');
   background-size: cover, cover;
-  background-position: center, center 58%;
+  /* Encuadre ARRIBA (dueño, 25-10-2026): la franja que se ve es la parte alta del dibujo; lo que se
+     recorta es lo de abajo. Para enseñar otra franja: center 10%, center 20%… */
+  background-position: center, center top;
   background-repeat: no-repeat, no-repeat;
 }
 
