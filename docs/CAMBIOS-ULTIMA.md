@@ -2,9 +2,9 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.28 - La barra de búsqueda es la misma en todas las pestañas
+# Titulo: KoRForge v1.3.29 - Todo alineado: el panel lateral es una tarjeta como el de filtros
 
-- La barra de arriba (atrás, adelante, refrescar y buscador) ahora es una sola para toda la app: empieza a la izquierda del todo, a la altura del panel lateral, y no se mueve al cambiar de pestaña.
-- En Buscar Addons busca en el catálogo; en Favoritos e Instalados filtra esa lista sin tocar el orden de los botones.
-- Fuera los títulos grandes de Favoritos, Instalados, Bóveda WTF y Noticias: esos botones bajan a una fila justo debajo de la barra.
-- Se incluye lo de la 1.3.27: el banner del grifón encuadrado por la parte de arriba.
+- El panel lateral de los botones ahora es una tarjeta igual que el de filtros: mismo borde, mismo redondeo y el mismo alto, arrancando y terminando a su altura.
+- Línea divisoria de lado a lado entre la imagen del grifón y el resto de la app.
+- La barra de búsqueda y sus botones bajan 16 píxeles: quedan justo encima de la línea, sin pegarse al techo.
+- Fuera la leyenda que había encima de las tarjetas («Addons destacados (WoW Forever)», «Resultados para…», «Mis favoritos guardados»): las tarjetas empiezan directamente.
