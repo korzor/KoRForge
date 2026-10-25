@@ -1,10 +1,8 @@
-# Cambios de la ultima version (los lee scripts/publish-korforge-release.js)
+﻿# Cambios de la ultima version (los lee scripts/publish-korforge-release.js)
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.26 - El banner baja, y se ven mejor los clientes y los botones de ventana
+# Titulo: KoRForge v1.3.27 - El banner enseña la parte de arriba del dibujo
 
-- El banner del grifón ocupa ahora toda la zona superior: baja hasta casi tocar el botón Buscar Addons y pasa por detrás de la barra de búsqueda, de sus botones y de los desplegables.
-- Los botones de los juegos que no están activos se ven de verdad: fondo suave, borde cálido y sombra, sin quitarle protagonismo al activo, que va más dorado.
-- Los botones de minimizar, maximizar y cerrar tienen trazo claro y su propio fondo oscuro, para que se vean sobre el dibujo.
-- Se incluye lo de la 1.3.25: el banner del grifón como fondo de la parte superior.
+- El encuadre del grifón pasa a la parte alta de la imagen: en la franja se ve el trozo de arriba y lo que se recorta es lo de abajo.
+- Se incluye lo de la 1.3.26: el banner bajando hasta los botones del panel lateral, los clientes inactivos más visibles y los botones de ventana más claros.
