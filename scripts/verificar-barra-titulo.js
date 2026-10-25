@@ -111,7 +111,8 @@ class Cdp {
   /* Contratos del código. */
   const mainJs = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
   comprobar('main.js escucha korforge:arrastre-inicio', mainJs.includes("ipcMain.on('korforge:arrastre-inicio'"));
-  comprobar('main.js mueve la ventana en korforge:arrastre-mover', mainJs.includes("ipcMain.on('korforge:arrastre-mover'") && mainJs.includes('win.setPosition'));
+  comprobar('main.js mueve la ventana con setBounds (no setPosition)', mainJs.includes("ipcMain.on('korforge:arrastre-mover'") && /win\.setBounds\(\{ x, y, width/.test(mainJs));
+  comprobar('main.js no arrastra con setPosition (agrandaba la ventana al 125 %)', !/win\.setPosition\(x, y\)/.test(mainJs));
   const preload = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
   comprobar('preload expone moverVentana', preload.includes('moverVentana') && preload.includes('arrastre-inicio'));
   const css = fs.readFileSync(path.join(PUBLIC_DIR, 'style.css'), 'utf8');
@@ -133,10 +134,10 @@ class Cdp {
     `app.commandLine.appendSwitch('remote-debugging-port', '${CDP_PORT}');`,
     'app.disableHardwareAcceleration();',
     `const contadores = ${JSON.stringify(contadores)};`,
-    'const c = { inicios: 0, movimientos: 0, fines: 0, maximizados: 0 };',
+    'const c = { inicios: 0, movimientos: 0, fines: 0, maximizados: 0, tamanos: null };',
     "const apuntar = () => { try { fs.writeFileSync(contadores, JSON.stringify(c)); } catch (_) {} };",
     "ipcMain.on('korforge:arrastre-inicio', () => { c.inicios += 1; apuntar(); });",
-    "ipcMain.on('korforge:arrastre-mover', () => { c.movimientos += 1; apuntar(); });",
+    "ipcMain.on('korforge:arrastre-mover', () => { c.movimientos += 1; if (win) { const b = win.getBounds(); win.setBounds({ x: b.x + 10, y: b.y + 5, width: b.width, height: b.height }); c.tamanos = [b.width, b.height]; } apuntar(); });",
     "ipcMain.on('korforge:arrastre-fin', () => { c.fines += 1; apuntar(); });",
     "ipcMain.on('window-maximize', () => { c.maximizados += 1; apuntar(); });",
     "ipcMain.handle('korforge:portapapeles-hay-texto', () => false);",
@@ -195,7 +196,8 @@ class Cdp {
       await cdp.send('Input.dispatchMouseEvent', Object.assign({ type: tipo, x, y, button: tipo === 'mouseMoved' ? 'none' : 'left', buttons: tipo === 'mouseReleased' ? 0 : 1, clickCount: 1 }, extra));
     };
 
-    /* 1. Arrastre: apretar en la zona vacía, mover y soltar. */
+    /* 1. Arrastre: apretar en la zona vacía, mover y soltar. El tamaño NO debe cambiar. */
+    const tamInicial = await cdp.evaluate('JSON.stringify([innerWidth, innerHeight])');
     await raton('mousePressed', p.hueco.x, p.hueco.y);
     await sleep(80);
     for (let i = 1; i <= 4; i++) { await raton('mouseMoved', p.hueco.x + i * 10, p.hueco.y + i * 5); await sleep(40); }
@@ -205,6 +207,9 @@ class Cdp {
     apuntes.push('tras arrastrar: ' + JSON.stringify(trasArrastre));
     comprobar('arrastrar en zona vacía avisa al proceso principal', trasArrastre.inicios >= 1 && trasArrastre.movimientos >= 1, JSON.stringify(trasArrastre));
     comprobar('al soltar se termina el arrastre', trasArrastre.fines >= 1);
+    const tamFinal = await cdp.evaluate('JSON.stringify([innerWidth, innerHeight])');
+    apuntes.push('tamaño de la ventana: ' + tamInicial + ' -> ' + tamFinal);
+    comprobar('la ventana no se agranda al arrastrar', tamInicial === tamFinal, tamInicial + ' -> ' + tamFinal);
 
     /* 2. Doble clic en la misma zona vacía → maximizar / restaurar. */
     await cdp.evaluate('window.__dbl = 0; document.querySelector(".app-topbar").addEventListener("dblclick", () => { window.__dbl += 1; });');

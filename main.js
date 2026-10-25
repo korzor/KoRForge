@@ -752,7 +752,10 @@ ipcMain.on('korforge:arrastre-mover', () => {
   const p = screen.getCursorScreenPoint();
   const x = Math.round(arrastreVentana.bounds.x + (p.x - arrastreVentana.cursor.x));
   const y = Math.round(arrastreVentana.bounds.y + (p.y - arrastreVentana.cursor.y));
-  win.setPosition(x, y);
+  /* setBounds CON EL TAMAÑO FIJO. Con setPosition, en pantallas al 125 % (y con ventana sin marco) la
+     ventana se iba agrandando sola a cada movimiento: el redondeo de DIP a píxeles físicos se comía
+     un píxel por paso (dueño, 25-10-2026: «la ventana crece hasta que suelto»). */
+  win.setBounds({ x, y, width: arrastreVentana.bounds.width, height: arrastreVentana.bounds.height });
 });
 
 ipcMain.on('korforge:arrastre-fin', () => {
