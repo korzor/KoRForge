@@ -1805,6 +1805,19 @@ body[data-tab="news"] #btnCfSearch {
   display: none;
 }
 
+/* Orden de la lista (Favoritos e Instalados): mismo sitio que el del catálogo, pero con sus opciones. */
+.sort-lista-wrap {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  height: 100%;
+}
+
+body[data-tab="favorites"] .sort-lista-wrap,
+body[data-tab="addons"] .sort-lista-wrap {
+  display: flex;
+}
+
 body:not([data-tab="news"]) .btn-news-refresh {
   display: none;
 }

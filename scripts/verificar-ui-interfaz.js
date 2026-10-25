@@ -459,6 +459,7 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     /* El desplegable de orden solo tiene sentido en el catálogo; en Noticias el sitio es de «Actualizar». */
     const ver = (sel) => { const el = document.querySelector(sel); return !!(el && el.offsetParent !== null); };
     const hayOrden = ver('.cf-sort-wrap');
+    const hayOrdenLista = ver('#sortListaWrap');
     const hayBuscar = ver('#btnCfSearch');
     const hayActualizar = ver('#btnRefreshNews');
     out.pasos.push('pestaña ' + t + ': barra izq=' + s.izq + ' top=' + s.top + ' | orden=' + hayOrden + ' buscar=' + hayBuscar + ' actualizar=' + hayActualizar);
@@ -466,6 +467,8 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     if (barra.offsetParent === null) out.problemas.push('la barra no se ve en la pestaña ' + t);
     if (titulo) out.problemas.push('la pestaña ' + t + ' sigue con el título grande');
     if (hayOrden !== (t === 'search')) out.problemas.push('el desplegable de orden no cuadra en la pestaña ' + t);
+    const tocaOrdenLista = (t === 'favorites' || t === 'addons');
+    if (hayOrdenLista !== tocaOrdenLista) out.problemas.push('el desplegable de orden de la lista no cuadra en la pestaña ' + t);
     if (hayActualizar !== (t === 'news')) out.problemas.push('el botón Actualizar no cuadra en la pestaña ' + t);
     if (hayBuscar === (t === 'news')) out.problemas.push('el botón Buscar no cuadra en la pestaña ' + t);
   }
@@ -494,6 +497,35 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
   out.pasos.push('botones del pack: ' + JSON.stringify(txtExport.trim()) + ' / ' + JSON.stringify(txtImport.trim()));
   if (!/export/i.test(txtExport)) out.problemas.push('el boton de exportar no se llama Exportar');
   if (!/import/i.test(txtImport)) out.problemas.push('el boton de importar no se llama Importar');
+
+  /* Orden de la lista en Favoritos: «Nombre (Z - A)» tiene que poner Questie primero. */
+  document.querySelector('.nav-item[data-tab="favorites"]').click();
+  await sleep(900);
+  const sel = document.getElementById('sortLista');
+  if (!sel) out.problemas.push('no existe el desplegable de orden de la lista');
+  else {
+    const nombres = () => [...document.querySelectorAll('#favoritesTabGrid .cf-card .cf-title')].map(t => t.textContent.trim());
+    const antes = nombres();
+    sel.value = 'name_az';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(600);
+    const az = nombres();
+    sel.value = 'name_za';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(600);
+    const za = nombres();
+    out.pasos.push('orden en Favoritos: ' + JSON.stringify(antes) + ' | A-Z: ' + JSON.stringify(az) + ' | Z-A: ' + JSON.stringify(za));
+    if (!az.length || !za.length) out.problemas.push('el orden de la lista dejo la lista vacia');
+    else {
+      const esperadoAz = az.slice().sort((a, b) => a.localeCompare(b));
+      const esperadoZa = za.slice().sort((a, b) => b.localeCompare(a));
+      if (JSON.stringify(az) !== JSON.stringify(esperadoAz)) out.problemas.push('el orden «Nombre (A - Z)» no ordeno las tarjetas: ' + JSON.stringify(az));
+      if (JSON.stringify(za) !== JSON.stringify(esperadoZa)) out.problemas.push('el orden «Nombre (Z - A)» no ordeno las tarjetas: ' + JSON.stringify(za));
+    }
+    sel.value = 'added';
+    sel.dispatchEvent(new Event('change', { bubbles: true }));
+    await sleep(400);
+  }
 
   /* En Favoritos, escribir en la barra filtra la lista. */
   const campo = document.getElementById('cfSearchInput');

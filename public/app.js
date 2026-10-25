@@ -125,6 +125,138 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   })();
 
+  /* ==========================================================================
+   * Orden de las listas de Favoritos e Instalados (dueño, 25-10-2026).
+   *
+   * En el sitio donde el catálogo lleva su desplegable de orden, Favoritos e Instalados llevan el
+   * suyo, con las opciones que tienen sentido en cada lista. La elección se recuerda en localStorage.
+   * ========================================================================== */
+  const sortLista = document.getElementById('sortLista');
+  const OPCIONES_ORDEN = {
+    favorites: ['added', 'name_az', 'name_za', 'author', 'downloads', 'updated'],
+    addons: ['name_az', 'name_za', 'version', 'updates', 'state', 'problems'],
+  };
+  const CLAVE_ORDEN = {
+    added: 'sort_added',
+    name_az: 'sort_name_az',
+    name_za: 'sort_name_za',
+    author: 'sort_author',
+    downloads: 'sort_downloads',
+    updated: 'sort_updated',
+    version: 'sort_version',
+    updates: 'sort_updates',
+    state: 'sort_state',
+    problems: 'sort_problems',
+  };
+  const ordenLista = {
+    favorites: localStorage.getItem('korforge:orden:favorites') || 'added',
+    addons: localStorage.getItem('korforge:orden:addons') || 'name_az',
+  };
+
+  function pestanaConOrden() {
+    return document.body.dataset.tab === 'addons' ? 'addons' : 'favorites';
+  }
+
+  /** Rellena el desplegable con las opciones de la pestaña y marca la que toca. */
+  function rellenarOpcionesOrden() {
+    if (!sortLista) return;
+    const p = pestanaConOrden();
+    if (!OPCIONES_ORDEN[p].includes(ordenLista[p])) ordenLista[p] = OPCIONES_ORDEN[p][0];
+    sortLista.innerHTML = '';
+    OPCIONES_ORDEN[p].forEach((valor) => {
+      const op = document.createElement('option');
+      op.value = valor;
+      op.textContent = T(CLAVE_ORDEN[valor] || valor);
+      sortLista.appendChild(op);
+    });
+    sortLista.value = ordenLista[p];
+  }
+
+  function comparar(a, b) {
+    return String(a || '').localeCompare(String(b || ''), LOCALE(), { sensitivity: 'base', numeric: true });
+  }
+
+  /** Ordena la lista de favoritos según lo elegido. */
+  function ordenarFavoritos(lista) {
+    const copia = lista.slice();
+    switch (ordenLista.favorites) {
+      case 'name_az': return copia.sort((a, b) => comparar(a.name, b.name));
+      case 'name_za': return copia.sort((a, b) => comparar(b.name, a.name));
+      case 'author': return copia.sort((a, b) => comparar(a.author, b.author) || comparar(a.name, b.name));
+      case 'downloads': return copia.sort((a, b) => (Number(b.downloadCount) || 0) - (Number(a.downloadCount) || 0) || comparar(a.name, b.name));
+      case 'updated': return copia.sort((a, b) => String(b.dateModified || '').localeCompare(String(a.dateModified || '')) || comparar(a.name, b.name));
+      case 'added':
+      default:
+        /* Los más nuevos primero: por la marca 'agregadoEn' y, si no la tiene (favoritos antiguos),
+           por su posición en la lista (los últimos en añadirse van al final). */
+        return copia
+          .map((f, i) => ({ f, i }))
+          .sort((x, y) => {
+            const fx = Number(x.f.agregadoEn) || 0;
+            const fy = Number(y.f.agregadoEn) || 0;
+            if (fx !== fy) return fy - fx;
+            return y.i - x.i;
+          })
+          .map((o) => o.f);
+    }
+  }
+
+  /** ¿Tiene este addon alguna actualización disponible? */
+  function addonConActualizacion(addon) {
+    return (availableAddonUpdates || []).some((u) => (addon.modId && u.modId === addon.modId) || u.folderName === addon.folderName);
+  }
+
+  /** ¿Tiene este addon algún problema (dependencias o compatibilidad)? */
+  function addonConProblemas(addon) {
+    const estado = addon.compatibility && addon.compatibility.status;
+    return !!addon.hasMissingDeps || (Array.isArray(addon.missingDependencies) && addon.missingDependencies.length > 0)
+      || estado === 'warning' || estado === 'incompatible';
+  }
+
+  function compararVersiones(a, b) {
+    const trozos = (v) => String(v || '').split(/[^0-9]+/).filter(Boolean).map(Number);
+    const va = trozos(a);
+    const vb = trozos(b);
+    for (let i = 0; i < Math.max(va.length, vb.length); i += 1) {
+      const d = (vb[i] || 0) - (va[i] || 0);
+      if (d !== 0) return d;
+    }
+    return 0;
+  }
+
+  /** Ordena la lista de addons instalados según lo elegido. */
+  function ordenarInstalados(lista) {
+    const copia = lista.slice();
+    switch (ordenLista.addons) {
+      case 'name_za': return copia.sort((a, b) => comparar(b.title, a.title));
+      case 'version': return copia.sort((a, b) => compararVersiones(a.version, b.version) || comparar(a.title, b.title));
+      case 'updates': return copia.sort((a, b) => (addonConActualizacion(b) ? 1 : 0) - (addonConActualizacion(a) ? 1 : 0) || comparar(a.title, b.title));
+      case 'state': return copia.sort((a, b) => (b.enabled ? 1 : 0) - (a.enabled ? 1 : 0) || comparar(a.title, b.title));
+      case 'problems': return copia.sort((a, b) => (addonConProblemas(b) ? 1 : 0) - (addonConProblemas(a) ? 1 : 0) || comparar(a.title, b.title));
+      case 'name_az':
+      default:
+        return copia.sort((a, b) => comparar(a.title, b.title));
+    }
+  }
+
+  /** Vuelve a pintar la lista de la pestaña en la que estás, con el orden nuevo. */
+  function aplicarOrdenDeLista() {
+    const p = pestanaConOrden();
+    if (p === 'addons') {
+      const pill = document.querySelector('.filter-pills .pill.active');
+      renderInstalledAddons(pill ? pill.getAttribute('data-filter') : 'all', document.getElementById('searchInput')?.value || '');
+    } else {
+      renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
+    }
+  }
+
+  sortLista?.addEventListener('change', () => {
+    const p = pestanaConOrden();
+    ordenLista[p] = sortLista.value;
+    try { localStorage.setItem('korforge:orden:' + p, sortLista.value); } catch (_) { /* nada */ }
+    aplicarOrdenDeLista();
+  });
+
   // Navigation & Shell
   const navItems = document.querySelectorAll('.nav-item');
   const tabPanes = document.querySelectorAll('.tab-pane');
@@ -574,6 +706,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /* La barra de arriba es compartida: se le pone el texto de la pestaña que se abre. */
     sincronizarBarraConPestana(tabId);
+    rellenarOpcionesOrden();
 
     const current = addressBarFor(tabId);
     setAddressBar(current.icon, current.text);
@@ -1148,7 +1281,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    renderCatalogCards(filtered, favoritesTabGrid);
+    renderCatalogCards(ordenarFavoritos(filtered), favoritesTabGrid);
   }
 
   favSearchInput?.addEventListener('input', () => {
@@ -1439,7 +1572,8 @@ document.addEventListener('DOMContentLoaded', () => {
       return true;
     });
 
-    if (filtered.length === 0) {
+    const listaOrdenada = ordenarInstalados(filtered);
+    if (listaOrdenada.length === 0) {
       addonsGrid.innerHTML = `
         <div class="empty-state">
           <img class="empty-icon empty-icon-img" src="icon-installed.png" alt="" aria-hidden="true">
@@ -1461,7 +1595,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    filtered.forEach(addon => {
+    listaOrdenada.forEach(addon => {
       const addonIcon = getInstalledAddonIcon(addon);
       const card = document.createElement('div');
       card.className = `cf-card installed-addon-card ${addon.enabled ? 'is-enabled' : 'is-disabled'}`;
@@ -3671,6 +3805,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const filter = activePill ? activePill.getAttribute('data-filter') : 'all';
     if (addonsGrid) renderInstalledAddons(filter, document.getElementById('searchInput')?.value || '');
     if (favoritesTabGrid) renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
+    rellenarOpcionesOrden();
     if (gamesManagementList && Object.keys(currentGamesData).length) {
       renderGamesManagement(currentGamesData, currentActiveGame);
     }
