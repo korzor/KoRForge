@@ -329,21 +329,70 @@ const CHECK_PANEL_LATERAL = `(async () => {
   return out;
 })()`;
 
-/* La barra superior lleva el banner del dueño de fondo, detrás del logo y de los botones
-   (dueño, 25-10-2026), y el fichero tiene que existir y servirse. */
+/* La zona superior lleva el banner del dueño de fondo (dueño, 25-10-2026): la capa `.app-banner` baja
+   hasta casi tocar los botones del panel lateral y va por detrás de la barra de búsqueda; la barra y
+   el panel lateral son transparentes arriba para dejar verlo. Además se comprueba que las píldoras de
+   juego (activa e inactivas) y los botones de ventana se ven. */
 const CHECK_BANNER = `(async () => {
   const out = { pasos: [], problemas: [] };
+  const caja = (sel) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { el, top: r.top, bottom: r.bottom, alto: r.height };
+  };
+  const banner = caja('.app-banner');
   const barra = document.querySelector('.app-topbar');
-  if (!barra) { out.problemas.push('no encuentro la barra superior'); return out; }
-  const estilo = getComputedStyle(barra);
-  const fondo = estilo.backgroundImage || '';
-  out.pasos.push('fondo de la barra: ' + JSON.stringify(fondo.slice(0, 160)));
-  out.pasos.push('background-size: ' + estilo.backgroundSize + ' | position: ' + estilo.backgroundPosition);
-  if (!/topbar-grifon\\.jpg/.test(fondo)) out.problemas.push('la barra superior no lleva el banner topbar-grifon.jpg');
-  if (!/cover/.test(estilo.backgroundSize)) out.problemas.push('el banner no se ajusta con cover: ' + estilo.backgroundSize);
-  const r = await fetch('/topbar-grifon.jpg', { method: 'GET' });
-  out.pasos.push('el fichero se sirve: HTTP ' + r.status + ' (' + (r.headers.get('content-type') || '') + ')');
+  const nav = caja('.nav-menu .nav-item[data-tab="search"]');
+  const toolbar = document.querySelector('.cf-top-toolbar');
+  const sidebar = document.querySelector('.app-sidebar');
+  if (!banner) { out.problemas.push('no existe la capa .app-banner'); return out; }
+  if (!barra || !nav || !toolbar || !sidebar) { out.problemas.push('faltan elementos de la zona superior'); return out; }
+
+  const estiloBanner = getComputedStyle(banner.el);
+  out.pasos.push('banner: top=' + Math.round(banner.top) + ' bottom=' + Math.round(banner.bottom) + ' alto=' + Math.round(banner.alto));
+  out.pasos.push('primer boton del panel lateral: top=' + Math.round(nav.top) + ' | hueco banner-boton=' + Math.round(nav.top - banner.bottom) + ' px');
+  out.pasos.push('barra de busqueda: top=' + Math.round(toolbar.getBoundingClientRect().top) + ' bottom=' + Math.round(toolbar.getBoundingClientRect().bottom) + ' | fondo=' + getComputedStyle(toolbar).backgroundColor);
+  if (!/topbar-grifon\\.jpg/.test(estiloBanner.backgroundImage)) out.problemas.push('la capa del banner no lleva topbar-grifon.jpg');
+  if (banner.alto < 110) out.problemas.push('el banner no baja lo suficiente (alto ' + Math.round(banner.alto) + ' px)');
+  const hueco = nav.top - banner.bottom;
+  if (hueco < 0 || hueco > 12) out.problemas.push('el borde inferior del banner no queda casi pegado al boton Buscar Addons (hueco ' + Math.round(hueco) + ' px)');
+  if (banner.bottom < toolbar.getBoundingClientRect().bottom) out.problemas.push('el banner no llega por detras de la barra de busqueda');
+  if (getComputedStyle(barra).backgroundImage !== 'none') out.problemas.push('la barra superior sigue pintando su propio fondo (tapa el banner)');
+  if (!/rgba\\(0, 0, 0, 0\\) 60px/.test(getComputedStyle(sidebar).backgroundImage)) {
+    out.problemas.push('el panel lateral no deja ver el banner arriba: ' + getComputedStyle(sidebar).backgroundImage.slice(0, 90));
+  }
+
+  const r = await fetch('/topbar-grifon.jpg');
+  out.pasos.push('el fichero se sirve: HTTP ' + r.status);
   if (r.status !== 200) out.problemas.push('el banner topbar-grifon.jpg no se sirve');
+
+  /* Píldoras: la activa en dorado y las inactivas también visibles. */
+  const activa = document.querySelector('.game-version-pill.active');
+  const inactiva = document.querySelector('.game-version-pill:not(.active)');
+  const eA = activa ? getComputedStyle(activa) : null;
+  const eI = inactiva ? getComputedStyle(inactiva) : null;
+  out.pasos.push('pildora activa: borde=' + (eA ? eA.borderTopColor : '-') + ' fondo=' + (eA ? eA.backgroundImage.slice(0, 46) : '-'));
+  out.pasos.push('pildora inactiva: borde=' + (eI ? eI.borderTopColor : '-') + ' fondo=' + (eI ? eI.backgroundColor : '-'));
+  if (!eA || !/251, 191, 36/.test(eA.borderTopColor)) out.problemas.push('la pildora activa no tiene el borde dorado');
+  if (!eI) out.problemas.push('no hay pildoras inactivas');
+  else {
+    const alphaFondo = Number((eI.backgroundColor.match(/[\\d.]+\\)$/) || ['0)'])[0].replace(')', ''));
+    const alphaBorde = Number((eI.borderTopColor.match(/[\\d.]+\\)$/) || ['0)'])[0].replace(')', ''));
+    if (!(alphaFondo >= 0.06)) out.problemas.push('la pildora inactiva casi no tiene fondo (alpha ' + alphaFondo + ')');
+    if (!(alphaBorde >= 0.2)) out.problemas.push('la pildora inactiva casi no tiene borde (alpha ' + alphaBorde + ')');
+  }
+
+  /* Botones de ventana: trazo claro y fondo propio para que se vean sobre el banner. */
+  const win = document.querySelector('.win-btn');
+  if (!win) out.problemas.push('no hay botones de ventana');
+  else {
+    const eW = getComputedStyle(win);
+    const brillo = Number((eW.color.match(/(\\d+), (\\d+), (\\d+)/) || [])[1] || 0) + Number((eW.color.match(/(\\d+), (\\d+), (\\d+)/) || [])[2] || 0) + Number((eW.color.match(/(\\d+), (\\d+), (\\d+)/) || [])[3] || 0);
+    out.pasos.push('boton de ventana: color=' + eW.color + ' fondo=' + eW.backgroundColor + ' brillo=' + brillo);
+    if (brillo < 520) out.problemas.push('los botones de ventana siguen muy apagados (brillo ' + brillo + ')');
+    if (/rgba\\(0, 0, 0, 0\\)/.test(eW.backgroundColor)) out.problemas.push('los botones de ventana no tienen fondo propio');
+  }
   return out;
 })()`;
 

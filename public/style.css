@@ -64,8 +64,38 @@ html, body {
               var(--bg-base);
   border-radius: 16px;
   overflow: hidden;
+  position: relative;
   border: 3px solid rgba(245, 158, 11, 0.75);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 0 18px rgba(245, 158, 11, 0.25);
+}
+
+/* ===== Banner del grifón (dueño, 25-10-2026) =============================================
+   Capa de fondo de toda la zona superior: empieza en el borde de la ventana y baja hasta casi tocar
+   los botones del panel lateral, pasando por detrás del logo, de las píldoras de juego, de los
+   botones de ventana y de la barra de búsqueda con sus botones y desplegables. El velo oscuro de
+   encima es lo que mantiene legible el nombre en dorado. */
+.app-banner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 134px;
+  z-index: 0;
+  pointer-events: none;
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  background-color: var(--bg-surface);
+  background-image:
+    linear-gradient(90deg, rgba(8, 10, 14, 0.86) 0%, rgba(8, 10, 14, 0.28) 42%, rgba(8, 10, 14, 0.32) 68%, rgba(8, 10, 14, 0.72) 100%),
+    url('topbar-grifon.jpg');
+  background-size: cover, cover;
+  background-position: center, center 58%;
+  background-repeat: no-repeat, no-repeat;
+}
+
+body.is-maximized .app-banner {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 body.is-maximized {
@@ -88,16 +118,9 @@ body.is-maximized .app-shell {
   align-items: center;
   justify-content: space-between;
   padding: 0 148px 0 10px;
-  /* Banner del dueño (25-10-2026): la imagen del grifón de fondo de toda la barra, detrás del logo y
-     de los botones. Encima lleva un velo oscuro (el dibujo es oscuro, pero así el nombre en dorado y
-     las píldoras del juego se leen siempre). Es una prueba: si cansa, se quita en una línea. */
-  background-color: var(--bg-surface);
-  background-image:
-    linear-gradient(90deg, rgba(8, 10, 14, 0.86) 0%, rgba(8, 10, 14, 0.30) 42%, rgba(8, 10, 14, 0.34) 68%, rgba(8, 10, 14, 0.72) 100%),
-    url('topbar-grifon.jpg');
-  background-size: cover, cover;
-  background-position: center, center 34%;
-  background-repeat: no-repeat, no-repeat;
+  /* Transparente a propósito: el fondo lo pone `.app-banner`, que baja más abajo que la barra
+     (detrás de la barra de búsqueda). Dueño, 25-10-2026. */
+  background: transparent;
   border-bottom: none;
   border-top-left-radius: 16px;
   border-top-right-radius: 16px;
@@ -197,12 +220,17 @@ body.is-maximized .app-topbar {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
+  /* Más visibles sobre el banner del grifón (dueño, 25-10-2026): fondo propio y trazo claro. */
+  background: rgba(8, 10, 14, 0.34);
   border: none;
-  color: var(--text-faint);
+  color: rgba(226, 232, 240, 0.92);
   cursor: pointer;
   transition: all 0.15s ease;
   border-radius: 0;
+}
+
+.win-btn svg {
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.85));
 }
 
 .win-btn svg {
@@ -211,7 +239,7 @@ body.is-maximized .app-topbar {
 }
 
 .win-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.18);
   color: var(--c-fff);
 }
 
@@ -374,8 +402,11 @@ body.is-maximized .win-btn.win-max .icon-restore {
      Sin etiqueta de versión dentro, el relleno lateral se ajusta: el pill es solo el logo. */
   padding: 0 10px;
   height: 58px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Los clientes que NO están activos también tienen que verse (dueño, 25-10-2026): un poco de
+     superficie, borde cálido y sombra, para que el banner no se los coma. */
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.30);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
   border-radius: 9px;
   color: var(--text-muted);
   font-family: var(--font-display);
@@ -407,8 +438,9 @@ body.is-maximized .win-btn.win-max .icon-restore {
 }
 
 /* Con el juego activo el logo va a plena luz; apagado, apenas atenuado. */
+/* Con el juego activo el logo va a plena luz; apagado, un poco atenuado (pero visible). */
 .game-version-pill:not(.active) .pill-logo {
-  opacity: 0.85;
+  opacity: 0.92;
 }
 
 .game-version-pill:hover .pill-logo,
@@ -428,17 +460,17 @@ body.is-maximized .win-btn.win-max .icon-restore {
 }
 
 .game-version-pill:hover {
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(251, 191, 36, 0.60);
   color: var(--c-fff);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.30);
 }
 
 .game-version-pill.active {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.08) 100%);
-  border-color: var(--accent-gold);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.26) 0%, rgba(217, 119, 6, 0.14) 100%);
+  border-color: var(--c-fbbf24);
   color: var(--c-fff);
-  box-shadow: 0 0 14px var(--accent-gold-glow), inset 0 0 10px rgba(245, 158, 11, 0.1);
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.45), inset 0 0 12px rgba(245, 158, 11, 0.12);
 }
 
 .game-version-pill.active .pill-badge {
@@ -543,6 +575,9 @@ body.is-maximized .win-btn.win-max .icon-restore {
   overflow: hidden;
   border-bottom-left-radius: 16px;
   border-bottom-right-radius: 16px;
+  /* Por encima de la capa del banner (dueño, 25-10-2026). */
+  position: relative;
+  z-index: 1;
 }
 
 body.is-maximized .app-body {
@@ -554,7 +589,9 @@ body.is-maximized .app-body {
 .app-sidebar {
   width: max-content;
   min-width: fit-content;
-  background: var(--bg-surface);
+  /* El trozo de arriba es transparente para que se vea el banner del grifón (dueño, 25-10-2026): el
+     corte está a 60 px, justo donde acaba el banner (barra 76 + 60 = 136). */
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0) 0, rgba(0, 0, 0, 0) 60px, var(--bg-surface) 60px);
   border-right: none;
   border-bottom-left-radius: 16px;
   display: flex;
@@ -3674,7 +3711,7 @@ input:checked + .slider:before {
 
 /* --- Cliente sin carpeta: el logo se apaga y no se puede pulsar (dueño, 21-10-2026) ---------- */
 .game-version-pill.is-sin-carpeta {
-  opacity: 0.32;
+  opacity: 0.42;
   cursor: not-allowed;
   filter: grayscale(1);
 }
