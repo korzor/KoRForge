@@ -2,7 +2,8 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.3.24 - Los botones del panel lateral, a la altura de «Filtros»
+# Titulo: KoRForge v1.3.25 - El banner del grifón de fondo en la barra superior
 
-- Los botones del panel lateral (Buscar, Favoritos, Instalados, Bóveda, Noticias y Ajustes) bajan para quedar a la altura de la palabra «Filtros» del panel de búsqueda, como pidió el dueño.
-- La alineación se mantiene al cambiar el tamaño de la ventana, y una sonda avisa si algún día se descuadra.
+- La barra de arriba lleva de fondo el banner del grifón, detrás del logo y de todos los botones, con un velo oscuro para que el nombre y las píldoras del juego se sigan leyendo.
+- Es una prueba: si cansa a la vista o se quiere otro recorte (solo detrás del logo, más oscuro o más claro), se ajusta en un momento.
+- Se incluye lo de la 1.3.24: los botones del panel lateral a la altura de la palabra «Filtros».
