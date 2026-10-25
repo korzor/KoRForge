@@ -35,6 +35,7 @@ const CONFIG = {
 const ADDON = { folderName: 'Details', actualName: 'Details', title: 'Details', version: '1.2.3', enabled: true, notes: '', modId: 1, hasMissingDeps: false, compatibility: null, missingDependencies: [], dependencies: [] };
 
 function startStaticServer() {
+  global.__buscadas = 0;
   const server = http.createServer((req, res) => {
     const url = new URL(req.url, `http://127.0.0.1:${HTTP_PORT}`);
     const json = (payload) => {
@@ -44,7 +45,8 @@ function startStaticServer() {
     if (url.pathname.startsWith('/api/')) {
       if (url.pathname === '/api/config') return json(CONFIG);
       if (url.pathname === '/api/addons') return json({ success: true, addons: [ADDON] });
-      if (url.pathname === '/api/search') return json({ success: true, results: [] });
+      if (url.pathname === '/api/__buscadas') return json({ buscadas: global.__buscadas || 0 });
+      if (url.pathname === '/api/search') { global.__buscadas = (global.__buscadas || 0) + 1; return json({ success: true, results: [] }); }
       if (url.pathname === '/api/favorites') return json({ success: true, favorites: [] });
       if (url.pathname === '/api/backups') return json({ success: true, backups: [] });
       if (url.pathname === '/api/mod/1') return json({ success: true, mod: { id: 1, name: 'Details', author: 'x', summary: 'Resumen de prueba', downloadCount: 1, dateModified: NOW, dateCreated: NOW, version: '1.2.3', iconUrl: '', screenshots: [] } });
@@ -180,6 +182,7 @@ class Cdp {
     await new Promise((ok, mal) => { ws.addEventListener('open', ok, { once: true }); ws.addEventListener('error', mal, { once: true }); });
     cdp = new Cdp(ws);
     await cdp.send('Runtime.enable');
+    await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: 'window.__buscadasSonda = 0;' });
     await sleep(3000);
 
     /* La app arranca en otra pestaña: hay que entrar en «Mis Addons» para que el buscador se vea
@@ -256,6 +259,20 @@ class Cdp {
       await sleep(450);
       out.pasos.push('tras copiar+pegar: ' + JSON.stringify(inp.value));
       if (inp.value !== 'hola') out.problemas.push('copiar y pegar no devolvio el texto: ' + JSON.stringify(inp.value));
+
+      /* «Pegar y buscar»: además de pegar, tiene que buscar (dueño, 25-10-2026). */
+      inp.value = '';
+      inp.focus();
+      inp.setSelectionRange(0, 0);
+      document.body.dataset.tab = 'search';
+      const buscadasAntes = (await (await fetch('/api/__buscadas')).json()).buscadas;
+      await abrir(inp);
+      if (!pulsar('Pegar y buscar')) out.problemas.push('no pude pulsar Pegar y buscar');
+      await sleep(1200);
+      const buscadasDespues = (await (await fetch('/api/__buscadas')).json()).buscadas;
+      out.pasos.push('tras pegar y buscar: valor=' + JSON.stringify(inp.value) + ' | busquedas al servidor: ' + buscadasAntes + ' -> ' + buscadasDespues);
+      if (inp.value !== 'hola') out.problemas.push('pegar y buscar no pego el texto: ' + JSON.stringify(inp.value));
+      if (!(buscadasDespues > buscadasAntes)) out.problemas.push('pegar y buscar no lanzo la busqueda');
 
       await abrir(inp);
       const abiertoAntes = !!caja() && !caja().hidden;

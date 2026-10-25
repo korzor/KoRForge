@@ -105,11 +105,22 @@
       else if (nombre === 'pegar') puente.pegar();
       else if (nombre === 'seleccionar') puente.seleccionarTodo();
       else if (nombre === 'pegarbuscar') {
+        /* «Pegar Y BUSCAR» (dueño, 25-10-2026: «solo pega, no busca»): el pegat del sistema es
+           asíncrono, así que se espera a que el valor cambie, y entonces se avisa al campo (filtro en
+           vivo de las pestañas) y se le manda un Enter, que es lo que lanza la búsqueda del catálogo. */
+        var valorAntes = campo ? campo.value : '';
         puente.pegar();
-        /* El campo suele escuchar 'input' (buscador en vivo): se le avisa tras pegar. */
-        setTimeout(function () {
+        var intentos = 0;
+        var avisarAlCampo = function () {
+          intentos += 1;
+          if (!campo) return;
+          if (campo.value === valorAntes && intentos < 20) { setTimeout(avisarAlCampo, 30); return; }
           try { campo.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) { /* nada */ }
-        }, 0);
+          try {
+            campo.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }));
+          } catch (e) { /* nada */ }
+        };
+        setTimeout(avisarAlCampo, 30);
       }
     } catch (e) { /* el menú nunca rompe la página */ }
   }
