@@ -1781,12 +1781,13 @@ input:checked + .slider:before {
   flex-shrink: 0;
 }
 
-/* En Favoritos e Instalados el desplegable de orden va a la IZQUIERDA del buscador (dueño,
-   25-10-2026). Se colocan con «order» para no duplicar la barra en el HTML: las flechas de
-   navegación (orden 0) quedan las primeras, luego el desplegable, luego el buscador. */
+/* Los dos desplegables de orden van a la IZQUIERDA del buscador (dueño, 25-10-2026): el del
+   catálogo en «Buscar Addons» y el de la lista en Favoritos e Instalados. Se colocan con «order»
+   para no duplicar la barra en el HTML: las flechas de navegación (orden 0) quedan las primeras,
+   luego el desplegable, luego el buscador. */
 .cf-top-toolbar > .sort-lista-wrap { order: 1; }
+.cf-top-toolbar > .cf-sort-wrap { order: 1; }
 .cf-top-toolbar > .cf-search-input-wrap { order: 2; }
-.cf-top-toolbar > .cf-sort-wrap { order: 3; }
 .cf-top-toolbar > .cf-toolbar-btns { order: 4; }
 
 /* Barra de navegación y búsqueda COMPARTIDA por todas las pestañas (dueño, 25-10-2026): va entre la

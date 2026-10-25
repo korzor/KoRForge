@@ -473,6 +473,24 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     if (hayBuscar === (t === 'news')) out.problemas.push('el botón Buscar no cuadra en la pestaña ' + t);
   }
 
+  /* El desplegable del catálogo, a la IZQUIERDA del buscador (dueño, 25-10-2026). Se mide ya en
+     «Buscar Addons», que es la última pestaña del recorrido de arriba. */
+  const cajaOrdenCatalogo = document.querySelector('.app-toolbar-row .cf-sort-wrap');
+  const cajaBuscarArriba = document.querySelector('.app-toolbar-row .cf-search-input-wrap');
+  if (cajaOrdenCatalogo && cajaBuscarArriba && document.body.dataset.tab === 'search') {
+    const rOrden = cajaOrdenCatalogo.getBoundingClientRect();
+    const rBuscar = cajaBuscarArriba.getBoundingClientRect();
+    out.pasos.push('orden del catálogo: izq=' + Math.round(rOrden.left) + ' ancho=' + Math.round(rOrden.width)
+      + ' | buscador izq=' + Math.round(rBuscar.left) + ' ancho=' + Math.round(rBuscar.width));
+    if (rOrden.right > rBuscar.left + 1) out.problemas.push('el desplegable del catálogo no esta a la izquierda del buscador');
+    const hijos = [...cajaOrdenCatalogo.children].reduce((total, hijo) => total + hijo.getBoundingClientRect().width, 0);
+    if (rOrden.width > hijos + 60) {
+      out.problemas.push('el recuadro del orden del catalogo es mas largo que su contenido (' + Math.round(rOrden.width) + ' vs ' + Math.round(hijos) + ')');
+    }
+  } else {
+    out.problemas.push('no encuentro el desplegable del catálogo o el buscador para medirlos');
+  }
+
   /* Botones de navegación: aunque estén desactivados tienen que verse. Se prueba con una copia del
      botón en estado desactivado (el de verdad se activa en cuanto navegas). */
   const navOriginal = document.getElementById('btnNavReload');
