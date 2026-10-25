@@ -2,7 +2,7 @@
 # Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
 # Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
 
-# Titulo: KoRForge v1.4.4 - Arreglado el arrastre (la ventana crecía) y el botón «Necesito café!»
+# Titulo: KoRForge v1.4.5 - Los errores de la app quedan apuntados en el registro
 
-- Al arrastrar la ventana desde la barra superior ya no se agranda: se mueve con el tamaño fijo. El fallo venía del redondeo de pantalla al 125 %, que se comía un píxel en cada movimiento.
-- El botón de apoyo se llama ya «Necesito café!», más corto que «Invítame a un café».
+- Si algo falla dentro de la ventana, ahora queda escrito en boot.log (con el fichero y la linea) en vez de quedarse sin rastro: así se puede arreglar de verdad.
+- El arranque de la página ya no puede sacar errores sueltos por un descuido: se recogen todos.
