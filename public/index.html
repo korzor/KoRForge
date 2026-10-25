@@ -110,6 +110,11 @@
 
         <div class="cf-toolbar-btns">
           <button class="btn btn-primary" id="btnCfSearch" data-i18n="btn_search">Search</button>
+          <!-- En Noticias el sitio lo ocupa «Actualizar» (dueño, 25-10-2026). -->
+          <button class="btn-news-refresh" id="btnRefreshNews" data-i18n-title="news_refresh_hint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span data-i18n="news_refresh">🔄 Refresh</span>
+          </button>
         </div>
       </div>
     </div>
@@ -221,13 +226,7 @@
 
         <!-- View: Addons Favoritos -->
         <section class="tab-pane" id="pane-favorites">
-          <!-- Sin títulos: la barra de arriba es la misma que en «Buscar Addons» (dueño, 25-10-2026). -->
-          <div class="pane-actions">
-            <button class="btn btn-secondary" id="btnExploreFromFav" data-i18n="favorites_explore_btn">
-              ⚡ Browse Catalog
-            </button>
-          </div>
-
+          <!-- Sin títulos ni botón de «Explorar catálogo»: ya está el panel lateral (dueño, 25-10-2026). -->
           <!-- El buscador es el de la barra de arriba; este campo se queda oculto para no perder
                el filtro de los favoritos. -->
           <input type="hidden" id="favSearchInput">
@@ -238,12 +237,8 @@
         </section>
 
         <!-- View: Noticias de Blizzard (dueño, 24-10-2026). Las noticias son las de la versión del
-             cliente elegido en la barra de arriba. -->
+             cliente elegido en la barra de arriba. El botón de actualizar vive en la barra. -->
         <section class="tab-pane" id="pane-news">
-          <div class="pane-actions">
-            <button class="btn btn-secondary" id="btnRefreshNews" data-i18n="news_refresh">🔄 Refresh</button>
-          </div>
-
           <div class="news-list" id="newsList">
             <!-- Populated by app.js -->
           </div>

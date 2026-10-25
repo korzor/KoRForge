@@ -456,11 +456,44 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     await sleep(700);
     const s = situacion();
     const titulo = document.querySelector('#pane-' + t + ' .page-title');
-    out.pasos.push('pestaña ' + t + ': barra izq=' + s.izq + ' top=' + s.top + ' | titulo grande=' + (titulo ? JSON.stringify(titulo.textContent.trim()) : 'ninguno'));
+    /* El desplegable de orden solo tiene sentido en el catálogo; en Noticias el sitio es de «Actualizar». */
+    const ver = (sel) => { const el = document.querySelector(sel); return !!(el && el.offsetParent !== null); };
+    const hayOrden = ver('.cf-sort-wrap');
+    const hayBuscar = ver('#btnCfSearch');
+    const hayActualizar = ver('#btnRefreshNews');
+    out.pasos.push('pestaña ' + t + ': barra izq=' + s.izq + ' top=' + s.top + ' | orden=' + hayOrden + ' buscar=' + hayBuscar + ' actualizar=' + hayActualizar);
     if (s.izq !== s0.izq || s.top !== s0.top) out.problemas.push('la barra se mueve al cambiar a la pestaña ' + t + ' (izq ' + s.izq + ', top ' + s.top + ')');
     if (barra.offsetParent === null) out.problemas.push('la barra no se ve en la pestaña ' + t);
     if (titulo) out.problemas.push('la pestaña ' + t + ' sigue con el título grande');
+    if (hayOrden !== (t === 'search')) out.problemas.push('el desplegable de orden no cuadra en la pestaña ' + t);
+    if (hayActualizar !== (t === 'news')) out.problemas.push('el botón Actualizar no cuadra en la pestaña ' + t);
+    if (hayBuscar === (t === 'news')) out.problemas.push('el botón Buscar no cuadra en la pestaña ' + t);
   }
+
+  /* Botones de navegación: aunque estén desactivados tienen que verse. Se prueba con una copia del
+     botón en estado desactivado (el de verdad se activa en cuanto navegas). */
+  const navOriginal = document.getElementById('btnNavReload');
+  if (!navOriginal) out.problemas.push('no encuentro el boton de navegacion Recargar');
+  else {
+    const copia = navOriginal.cloneNode(true);
+    copia.id = 'btnNavPruebaDesactivado';
+    copia.disabled = true;
+    navOriginal.parentNode.appendChild(copia);
+    await sleep(320);
+    const op = Number(getComputedStyle(copia).opacity);
+    copia.remove();
+    out.pasos.push('boton de navegacion desactivado: opacidad=' + op);
+    if (op < 0.4) out.problemas.push('los botones de navegacion desactivados estan demasiado apagados (' + op + ')');
+  }
+
+  /* Instalados: los botones del pack se llaman Exportar / Importar (o Export / Import en inglés). */
+  document.querySelector('.nav-item[data-tab="addons"]').click();
+  await sleep(700);
+  const txtExport = (document.getElementById('btnExportProfile') || {}).textContent || '';
+  const txtImport = (document.getElementById('btnImportProfile') || {}).textContent || '';
+  out.pasos.push('botones del pack: ' + JSON.stringify(txtExport.trim()) + ' / ' + JSON.stringify(txtImport.trim()));
+  if (!/export/i.test(txtExport)) out.problemas.push('el boton de exportar no se llama Exportar');
+  if (!/import/i.test(txtImport)) out.problemas.push('el boton de importar no se llama Importar');
 
   /* En Favoritos, escribir en la barra filtra la lista. */
   const campo = document.getElementById('cfSearchInput');

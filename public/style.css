@@ -79,7 +79,7 @@ html, body {
   top: 0;
   left: 0;
   right: 0;
-  height: 140px;
+  height: 126px;
   z-index: 0;
   pointer-events: none;
   /* Línea divisoria entre la imagen y el resto de la app (dueño, 25-10-2026): de lado a lado. */
@@ -373,11 +373,12 @@ body.is-maximized .win-btn.win-max .icon-restore {
 }
 
 .nav-control-btn:disabled {
-  opacity: 0.25;
+  /* Un poco más visibles aunque estén apagados: se tiene que saber que están ahí. */
+  opacity: 0.55;
   cursor: not-allowed;
   pointer-events: none;
-  border-color: transparent;
-  background: transparent;
+  border-color: rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 /* Game Version Filters in Title Bar (Filling towards the right) */
@@ -1785,13 +1786,68 @@ input:checked + .slider:before {
 .app-toolbar-row {
   position: relative;
   z-index: 40;
-  /* 22 px arriba: la barra baja 16 px y queda 8 px por encima de la línea divisoria (dueño, 25-10-2026). */
-  padding: 22px 10px 8px 10px;
+  /* 8 px de aire arriba y abajo dentro de la portada (dueño, 25-10-2026). */
+  padding: 8px 10px 8px 10px;
   flex-shrink: 0;
 }
 
 .app-toolbar-row .cf-top-toolbar {
   width: 100%;
+}
+
+/* El orden solo tiene sentido en «Buscar Addons»; en Noticias la derecha es «Actualizar». */
+body:not([data-tab="search"]) .cf-sort-wrap {
+  display: none;
+}
+
+body[data-tab="news"] #btnCfSearch {
+  display: none;
+}
+
+body:not([data-tab="news"]) .btn-news-refresh {
+  display: none;
+}
+
+/* Botón «Actualizar» de Noticias: dorado, con su icono y su brillo (dueño: «hazlo más bonito»). */
+.btn-news-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: 1px solid rgba(251, 191, 36, 0.55);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.30) 0%, rgba(217, 119, 6, 0.16) 100%);
+  color: var(--c-fff);
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: all 0.15s ease;
+}
+
+.btn-news-refresh svg {
+  width: 17px;
+  height: 17px;
+  transition: transform 0.25s ease;
+}
+
+.btn-news-refresh:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.44) 0%, rgba(217, 119, 6, 0.26) 100%);
+  border-color: var(--c-fbbf24);
+  transform: translateY(-1px);
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.btn-news-refresh:hover svg {
+  transform: rotate(180deg);
+}
+
+.btn-news-refresh:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
 }
 
 /* Botones de cada pestaña (los que antes iban en la cabecera con título). */

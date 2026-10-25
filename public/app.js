@@ -1142,6 +1142,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const newsList = document.getElementById('newsList');
   const newsSubtitle = document.getElementById('newsSubtitle');
   const btnRefreshNews = document.getElementById('btnRefreshNews');
+  const etiquetaBotonNoticias = btnRefreshNews ? btnRefreshNews.querySelector('[data-i18n="news_refresh"]') : null;
+
+  /** Cambia solo el texto del botón de Noticias (el icono del SVG se queda donde está). */
+  function ponerEtiquetaNoticias(clave) {
+    if (etiquetaBotonNoticias) etiquetaBotonNoticias.textContent = T(clave);
+  }
   let ultimasNoticias = [];
   let cargandoNoticias = false;
 
@@ -1173,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (newsSubtitle) newsSubtitle.textContent = T('news_subtitle', { game: gameLabel(currentActiveGame) });
     if (btnRefreshNews) {
       btnRefreshNews.disabled = true;
-      btnRefreshNews.textContent = T('news_refreshing');
+      ponerEtiquetaNoticias('news_refreshing');
     }
     if (!ultimasNoticias.length) {
       newsList.innerHTML = '';
@@ -1219,7 +1225,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cargandoNoticias = false;
       if (btnRefreshNews) {
         btnRefreshNews.disabled = false;
-        btnRefreshNews.textContent = T('news_refresh');
+        ponerEtiquetaNoticias('news_refresh');
       }
     }
   }
