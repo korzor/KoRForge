@@ -45,3 +45,37 @@ contextBridge.exposeInMainWorld('electronAPI', {
     copiarTexto: (texto) => ipcRenderer.invoke('korforge:copiar-texto', texto),
   },
 });
+
+/**
+ * Errores de la PÁGINA (dueño, 25-10-2026: salía un cartel de «JavaScript error» al arrancar y no
+ * sabíamos de dónde venía). La página no puede escribir en el log de la app, así que manda el error
+ * al proceso principal, que lo apunta en boot.log. No se enseña nada al usuario.
+ */
+function avisarError(datos) {
+  try {
+    ipcRenderer.send('korforge:error-pagina', {
+      mensaje: String((datos && datos.mensaje) || ''),
+      detalle: String((datos && datos.detalle) || ''),
+      archivo: String((datos && datos.archivo) || ''),
+      linea: Number((datos && datos.linea) || 0),
+    });
+  } catch (_) { /* nunca rompe la página */ }
+}
+
+try {
+  window.addEventListener('error', (ev) => {
+    avisarError({
+      mensaje: ev && ev.message,
+      detalle: ev && ev.error && ev.error.stack,
+      archivo: ev && ev.filename,
+      linea: ev && ev.lineno,
+    });
+  });
+  window.addEventListener('unhandledrejection', (ev) => {
+    const razon = ev && ev.reason;
+    avisarError({
+      mensaje: (razon && razon.message) || String(razon),
+      detalle: (razon && razon.stack) || '',
+    });
+  });
+} catch (_) { /* nada */ }

@@ -592,10 +592,19 @@ function createWindow() {
   });
 
 
-  // Forward Renderer console logs to Node stdout for debugging
-  win.webContents.on('console-message', (event, level, message, line, sourceId) => {
-    const levelStr = level === 2 ? 'WARN' : level === 3 ? 'ERROR' : 'LOG';
-    console.log(`[Renderer ${levelStr}] ${message} (${path.basename(sourceId || '')}:${line})`);
+  /* Consola de la página: a stdout y, si es un aviso o un error, también a boot.log (dueño,
+     25-10-2026: salía un cartel de «JavaScript error» al arrancar y no quedaba rastro en el log). */
+  win.webContents.on('console-message', (evento, nivelODetalle, mensaje, linea, fuente) => {
+    try {
+      const esDetalle = nivelODetalle && typeof nivelODetalle === 'object' && nivelODetalle.message;
+      const nivel = esDetalle ? String(nivelODetalle.level || '') : String(nivelODetalle);
+      const texto = esDetalle ? nivelODetalle.message : mensaje;
+      const origen = path.basename((esDetalle ? nivelODetalle.sourceId : fuente) || '');
+      const numLinea = esDetalle ? nivelODetalle.lineNumber : linea;
+      const etiqueta = (nivel === '2' || nivel === 'warning') ? 'WARN' : (nivel === '3' || nivel === 'error') ? 'ERROR' : 'LOG';
+      console.log(`[Renderer ${etiqueta}] ${texto} (${origen}:${numLinea})`);
+      if (etiqueta !== 'LOG') logBoot(`[Renderer ${etiqueta}] ${texto} (${origen}:${numLinea})`);
+    } catch (_) { /* nada */ }
   });
 
   /* K7 (auditoría 22-10-2026): la ventana principal solo navega a la UI local; lo externo se abre
@@ -804,6 +813,14 @@ ipcMain.handle('app-version', () => {
   } catch (_) {
     return '';
   }
+});
+
+/* Errores de la página (ver preload.js): al log, nunca un cartel al usuario. */
+ipcMain.on('korforge:error-pagina', (evento, datos) => {
+  try {
+    const d = datos || {};
+    logBoot('[ERROR PAGINA] ' + (d.mensaje || '?') + (d.archivo ? ' @ ' + d.archivo + ':' + d.linea : '') + (d.detalle ? '\n' + d.detalle : ''));
+  } catch (_) { /* nada */ }
 });
 
 ipcMain.on('open-external', (e, url) => {
