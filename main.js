@@ -740,22 +740,37 @@ ipcMain.on('window-minimize', () => {
 let arrastreVentana = null;
 
 ipcMain.on('korforge:arrastre-inicio', () => {
-  if (!win || win.isDestroyed() || win.isMaximized() || win.isFullScreen()) {
+  /* Nada de esto puede soltar una excepción: si el proceso principal escupe un error, Electron lo
+     enseña en un cartel y el dueño se queda sin app (dueño, 25-10-2026). */
+  try {
+    if (!win || win.isDestroyed() || win.isMaximized() || win.isFullScreen()) {
+      arrastreVentana = null;
+      return;
+    }
+    const bounds = win.getBounds();
+    if (!bounds || !Number.isFinite(bounds.width) || !Number.isFinite(bounds.height)) { arrastreVentana = null; return; }
+    arrastreVentana = { cursor: screen.getCursorScreenPoint(), bounds };
+  } catch (err) {
+    console.error('[KoRForge] arrastre (inicio):', err && err.message);
     arrastreVentana = null;
-    return;
   }
-  arrastreVentana = { cursor: screen.getCursorScreenPoint(), bounds: win.getBounds() };
 });
 
 ipcMain.on('korforge:arrastre-mover', () => {
   if (!arrastreVentana || !win || win.isDestroyed()) return;
-  const p = screen.getCursorScreenPoint();
-  const x = Math.round(arrastreVentana.bounds.x + (p.x - arrastreVentana.cursor.x));
-  const y = Math.round(arrastreVentana.bounds.y + (p.y - arrastreVentana.cursor.y));
-  /* setBounds CON EL TAMAÑO FIJO. Con setPosition, en pantallas al 125 % (y con ventana sin marco) la
-     ventana se iba agrandando sola a cada movimiento: el redondeo de DIP a píxeles físicos se comía
-     un píxel por paso (dueño, 25-10-2026: «la ventana crece hasta que suelto»). */
-  win.setBounds({ x, y, width: arrastreVentana.bounds.width, height: arrastreVentana.bounds.height });
+  try {
+    const p = screen.getCursorScreenPoint();
+    const x = Math.round(arrastreVentana.bounds.x + (p.x - arrastreVentana.cursor.x));
+    const y = Math.round(arrastreVentana.bounds.y + (p.y - arrastreVentana.cursor.y));
+    if (!Number.isFinite(x) || !Number.isFinite(y)) return;
+    /* setBounds CON EL TAMAÑO FIJO. Con setPosition, en pantallas al 125 % (y con ventana sin marco)
+       la ventana se iba agrandando sola a cada movimiento: el redondeo de DIP a píxeles físicos se
+       comía un píxel por paso (dueño, 25-10-2026: «la ventana crece hasta que suelto»). */
+    win.setBounds({ x, y, width: arrastreVentana.bounds.width, height: arrastreVentana.bounds.height });
+  } catch (err) {
+    console.error('[KoRForge] arrastre (mover):', err && err.message);
+    arrastreVentana = null;
+  }
 });
 
 ipcMain.on('korforge:arrastre-fin', () => {
