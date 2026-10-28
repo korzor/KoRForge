@@ -1,9 +1,6 @@
-# Cambios de la ultima version (los lee scripts/publish-korforge-release.js)
-# Formato: una linea por cambio empezando por '- '. La primera se usa como descripcion corta en la web.
-# Las lineas que empiezan por '#' se ignoran, salvo '# Titulo: ...', que fija el titulo de la tarjeta.
+# Titulo: 1.4.12 - Suite de estabilidad, checklist pre-release y pipeline maestro
 
-# Titulo: KoRForge v1.4.8 - El orden tambien junto al buscador
-
-- En Buscar Addons el desplegable de orden (populares, descargas, nombre...) pasa a la izquierda de la barra de busqueda, igual que en Favoritos e Instalados.
-- Asi las tres pestañas comparten la misma barra: primero el desplegable de orden, luego el buscador y a la derecha el boton de buscar.
-- El recuadro del orden mide solo lo que mide su contenido.
+- Pipeline de release automatizado y blindado contra builds sin clave o sin verificación.
+- Checklist exhaustivo de smoke-tests pre-lanzamiento (`docs/CHECKLIST-SMOKE.md`).
+- Corrección y verificación de compatibilidad de dependencias de empaquetado para Windows y Linux (toolsets AppImage FUSE embebido).
+- Restauración y consolidación íntegra del entorno unificado en `P:\KoRForge`.

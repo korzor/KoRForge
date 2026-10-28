@@ -53,3 +53,10 @@ modules/_cfkey.generated.js
 docs/*
 !docs/CAMBIOS-ULTIMA.md
 scripts/prueba-linux-wsl.sh
+
+# Exclusivos de la carpeta interna P:\KoRForge
+LEEME.md
+backup/
+tarjeta-prueba/
+scripts/recrear-repo-publico.js
+scripts/build-linux-appimage.sh
