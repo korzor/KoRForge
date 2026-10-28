@@ -1,4 +1,4 @@
-# Ventana del instalador de KoRForge: TODO el proceso pasa aqui.
+﻿# Ventana del instalador de KoRForge: TODO el proceso pasa aqui.
 #
 # POR QUE EXISTE (dueno, 24-10-2026): *"el instalador no te permite elegir ruta de instalacion...
 # me parece mal"* y *"ya que tenemos la ventana hecha del progreso, no podriamos hacer que todo el
