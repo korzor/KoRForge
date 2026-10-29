@@ -102,7 +102,7 @@ $panelColor = [System.Drawing.Color]::FromArgb(16, 23, 34)
 $textoColor = [System.Drawing.Color]::FromArgb(226, 232, 240)
 $tenueColor = [System.Drawing.Color]::FromArgb(148, 163, 184)
 
-function Camino-Redondeado([int]$w, [int]$h, [int]$r) {
+function global:Camino-Redondeado([int]$w, [int]$h, [int]$r) {
   $camino = New-Object System.Drawing.Drawing2D.GraphicsPath
   $diam = $r * 2
   if ($diam -lt 4) { $diam = 4 }
@@ -131,6 +131,7 @@ $form.Region = New-Object System.Drawing.Region((Camino-Redondeado $ancho $alto 
 
 $form.Add_Paint({
   param($emisor, $ev)
+  try {
   $g = $ev.Graphics
   $g.SmoothingMode = [System.Drawing.Drawing2D.SmoothingMode]::AntiAlias
   $w = $emisor.ClientSize.Width
@@ -155,6 +156,7 @@ $form.Add_Paint({
   $plumaFina.Dispose()
   $interior.Dispose()
   $matriz.Dispose()
+  } catch {}
 })
 
 # --- Arte de la marca, arriba y entero ---------------------------------------------------------
