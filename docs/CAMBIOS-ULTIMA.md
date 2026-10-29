@@ -1,5 +1,7 @@
-# Titulo: 1.4.14 - Modularización de UI y compilación Linux AppImage
+# Titulo: 1.5.0 - Copia de seguridad .kfg todo en uno, búsqueda instantánea y correcciones UI
 
-- Modularización y desacoplamiento de arquitectura UI: el subsistema de noticias y foros se desacopla a `public/noticias-ui.js` y la lógica de ordenación de listas a `public/orden-listas-ui.js`, mejorando rendimiento y mantenibilidad.
-- Soporte oficial y compilación multiplataforma para Linux: generación del paquete autónomo AppImage (`KoRForge-1.4.14-Linux.AppImage`) con toolset FUSE interno compatible con Ubuntu 26.04+ sin dependencias externas.
-- Integración automatizada del pipeline de empaquetado seguro para Windows (`.exe`) y Linux (`.AppImage`) con verificación de integridad SHA-256.
+- Exportación e importación de paquetes .kfg: empaqueta en un único archivo autónomo todos tus addons instalados, tus favoritos y tu configuración WTF para restaurar en 1 clic.
+- Búsqueda instantánea reactivada en el catálogo: la app busca automáticamente según escribes a partir de 2 letras con control de tiempo de espera.
+- Reparación del subsistema de Noticias y foros oficiales: visualización de imágenes respetando maquetación y fechas relativas localizadas.
+- Corrección de localización en desplegables de ordenación: visualización limpia de opciones en los 9 idiomas soportados.
+- Unificación visual de la estrella de favoritos: diseño SVG dorado idéntico en las tarjetas de Mis Addons, Catálogo y Favoritos.

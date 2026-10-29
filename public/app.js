@@ -1,4 +1,4 @@
-﻿// KoRForge Client Application Logic
+// KoRForge Client Application Logic
 
 /*
  * K1 (auditoría 22-10-2026): el API local exige el token de sesión. main.js carga la ventana con
@@ -39,6 +39,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const fmtDateTime = (value) => (window.I18N ? window.I18N.fmtDateTime(value) : '');
   const fmtNumber = (value) => (window.I18N ? window.I18N.fmtNumber(value) : String(value || 0));
   const relDate = (value) => (window.I18N ? window.I18N.relativeDate(value) : '');
+  window.T = T;
+  window.LOCALE = LOCALE;
+  window.fmtDate = fmtDate;
+  window.fmtDateTime = fmtDateTime;
+  window.fmtNumber = fmtNumber;
+  window.relDate = relDate;
 
   // K8 (CSP): fallback de imágenes rotas sin handlers inline (script-src 'self' los bloquearía).
   document.addEventListener('error', (e) => {
@@ -1366,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="installed-card-actions">
               ${updateInfo ? `<button class="btn-card-update-action btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_action_hint', { name: addon.title, version: updateInfo.newVersion })}">${T('card_btn_update')}</button>` : ''}
               <button class="installed-btn-action btn-addon-fav ${esFavorito ? 'is-fav' : ''}" data-folder="${addon.folderName}" title="${esFavorito ? T('card_fav_remove_hint') : T('detail_fav_add')}">
-                <span class="fav-star">${esFavorito ? '★' : '☆'}</span>
+                <svg class="fav-star-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               </button>
               <button class="installed-btn-action btn-addon-share" data-folder="${addon.folderName}" title="${T('card_share_hint')}" aria-label="${T('card_share_hint')}">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -1659,13 +1665,24 @@ document.addEventListener('DOMContentLoaded', () => {
     return false;
   }
 
+    let timerBusquedaInstantanea = null;
   cfSearchInput?.addEventListener('input', () => {
     const texto = cfSearchInput.value;
     btnClearSearchText.style.display = texto.trim() ? 'block' : 'none';
     if (optRelevance) {
       optRelevance.textContent = texto.trim() ? T('sort_best_match') : T('sort_featured');
     }
-    if (!filtrarPestanaConLaBarra(texto)) textoCatalogo = texto;
+    const enOtra = filtrarPestanaConLaBarra(texto);
+    if (!enOtra) {
+      textoCatalogo = texto;
+      clearTimeout(timerBusquedaInstantanea);
+      const limpio = texto.trim();
+      if (limpio.length >= 2 || limpio.length === 0) {
+        timerBusquedaInstantanea = setTimeout(() => {
+          triggerCurseForgeSearch();
+        }, 380);
+      }
+    }
   });
 
   /**
@@ -3428,6 +3445,167 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  const btnExportKfgArchive = document.getElementById('btnExportKfgArchive');
+  btnExportKfgArchive?.addEventListener('click', async () => {
+    try {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      const fecha = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+      const defaultName = `KoRForge-${currentActiveGame}-${fecha}.kfg`;
+      const title = exportProfileTitle ? exportProfileTitle.value.trim() : '';
+
+      let savePath = null;
+      if (window.electronAPI && typeof window.electronAPI.guardarArchivoKfg === 'function') {
+        savePath = await window.electronAPI.guardarArchivoKfg(defaultName);
+        if (!savePath) return;
+      }
+
+      const params = new URLSearchParams({ gameId: currentActiveGame, title });
+      if (savePath) params.set('destino', savePath);
+
+      if (savePath) {
+        const res = await fetch(`/api/profiles/export-kfg?${params.toString()}`);
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Error');
+        showToast(T('toast_kfg_exported'), 'success');
+        closeExportModal();
+      } else {
+        const url = `/api/profiles/export-kfg?${params.toString()}`;
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = defaultName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        showToast(T('toast_kfg_exported'), 'success');
+        closeExportModal();
+      }
+    } catch (err) {
+      showToast(T('toast_pack_error', { message: err.message }), 'error');
+    }
+  });
+
+  const btnSelectKfgArchive = document.getElementById('btnSelectKfgArchive');
+  const kfgFileInput = document.getElementById('kfgFileInput');
+  const btnRestoreKfgConfirm = document.getElementById('btnRestoreKfgConfirm');
+  let currentKfgSelection = null;
+
+  async function procesarArchivoKfg(filePath, fileBase64) {
+    if (importProgressWrap) importProgressWrap.style.display = 'block';
+    if (importProgressFill) importProgressFill.style.width = '30%';
+    if (importProgressInfo) importProgressInfo.textContent = T('pack_kfg_restoring');
+
+    try {
+      const res = await fetch('/api/profiles/analyze-kfg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ filePath, fileBase64 })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Error al analizar .kfg');
+
+      currentKfgSelection = { filePath, fileBase64, analysis: data.analysis };
+
+      if (importInputPhase) importInputPhase.style.display = 'none';
+      const importKfgSection = document.getElementById('importKfgSection');
+      if (importKfgSection) importKfgSection.style.display = 'none';
+      if (importProgressWrap) importProgressWrap.style.display = 'none';
+      if (importAnalysisPhase) importAnalysisPhase.style.display = 'block';
+      if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'none';
+
+      if (profileAnalysisSummary) {
+        profileAnalysisSummary.innerHTML = `
+          <strong>📦 ${data.analysis.title}</strong> (${data.analysis.gameName})<br>
+          <span style="font-size: 0.82rem; opacity: 0.9;">
+            ${T('pack_summary_total', { total: data.analysis.addonsCount })} |
+            ⭐ ${data.analysis.favoritesCount} favoritos |
+            💾 ${data.analysis.hasWtf ? 'WTF incluido' : 'Sin WTF'}
+          </span>
+        `;
+      }
+
+      if (profileMissingList) {
+        profileMissingList.innerHTML = `
+          <div style="padding: 10px; background: rgba(245, 158, 11, 0.08); border-radius: 6px; margin-bottom: 8px;">
+            <p style="font-size: 0.84rem; color: #f1f5f9; margin-bottom: 6px;">
+              <strong>${data.analysis.addonsCount} addons listos para restaurar:</strong>
+            </p>
+            <div style="max-height: 140px; overflow-y: auto; font-size: 0.78rem; color: #cbd5e1; line-height: 1.5;">
+              ${(data.analysis.addons || []).join(', ')}
+            </div>
+            ${data.analysis.hasWtf ? '<p style="font-size: 0.78rem; color: #4ade80; margin-top: 6px;">✓ WTF SavedVariables ready</p>' : ''}
+          </div>
+        `;
+      }
+
+      if (btnRestoreKfgConfirm) {
+        btnRestoreKfgConfirm.style.display = 'inline-flex';
+        btnRestoreKfgConfirm.disabled = false;
+      }
+    } catch (err) {
+      if (importProgressWrap) importProgressWrap.style.display = 'none';
+      showToast(err.message, 'error');
+    }
+  }
+
+  btnSelectKfgArchive?.addEventListener('click', async () => {
+    if (window.electronAPI && typeof window.electronAPI.seleccionarArchivoKfg === 'function') {
+      const selected = await window.electronAPI.seleccionarArchivoKfg();
+      if (selected) {
+        await procesarArchivoKfg(selected, null);
+        return;
+      }
+    }
+    kfgFileInput?.click();
+  });
+
+  kfgFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = String(reader.result).split(',')[1];
+      await procesarArchivoKfg(null, base64);
+    };
+    reader.readAsDataURL(file);
+  });
+
+  btnRestoreKfgConfirm?.addEventListener('click', async () => {
+    if (!currentKfgSelection) return;
+    btnRestoreKfgConfirm.disabled = true;
+    if (importProgressWrap) importProgressWrap.style.display = 'block';
+    if (importProgressFill) importProgressFill.style.width = '40%';
+    if (importProgressInfo) importProgressInfo.textContent = T('pack_kfg_restoring');
+
+    try {
+      const res = await fetch('/api/profiles/restore-kfg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          filePath: currentKfgSelection.filePath,
+          fileBase64: currentKfgSelection.fileBase64,
+          gameId: currentActiveGame
+        })
+      });
+      const data = await res.json();
+      if (!data.success) throw new Error(data.error || 'Error al restaurar paquete');
+
+      if (importProgressFill) importProgressFill.style.width = '100%';
+      showToast(T('toast_kfg_restored'), 'success');
+
+      setTimeout(async () => {
+        closeImportModal();
+        await loadInstalledAddons();
+        await loadFavorites();
+      }, 900);
+    } catch (err) {
+      showToast(err.message, 'error');
+      btnRestoreKfgConfirm.disabled = false;
+      if (importProgressWrap) importProgressWrap.style.display = 'none';
+    }
+  });
+
+
   btnImportProfile?.addEventListener('click', () => {
     if (importProfileInput) importProfileInput.value = '';
     if (importInputPhase) importInputPhase.style.display = 'block';
@@ -3435,6 +3613,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnInstallMissingAddons) btnInstallMissingAddons.style.display = 'none';
     if (importProgressWrap) importProgressWrap.style.display = 'none';
     currentAnalyzedProfile = null;
+    const importKfgSection = document.getElementById('importKfgSection');
+    if (importKfgSection) importKfgSection.style.display = 'block';
+    if (btnRestoreKfgConfirm) {
+      btnRestoreKfgConfirm.style.display = 'none';
+      btnRestoreKfgConfirm.disabled = false;
+    }
+    currentKfgSelection = null;
     if (importProfileModal) abrirModalDialogo(importProfileModal);
   });
 

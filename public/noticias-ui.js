@@ -158,30 +158,29 @@ window.KorforgeNoticias = (() => {
       tarjeta.className = 'news-card';
       tarjeta.tabIndex = 0;
 
-      if (noticia.imagen && urlDeNoticia(noticia.imagen)) {
-        const cajaImg = document.createElement('div');
-        cajaImg.className = 'news-card-image';
+      const imagen = urlDeNoticia(noticia.imagen);
+      if (imagen) {
         const img = document.createElement('img');
-        img.src = noticia.imagen;
+        img.className = 'news-card-img';
+        img.src = imagen;
         img.alt = '';
         img.loading = 'lazy';
-        cajaImg.appendChild(img);
-        tarjeta.appendChild(cajaImg);
+        tarjeta.appendChild(img);
       }
 
       const cuerpo = document.createElement('div');
       cuerpo.className = 'news-card-body';
 
       const fila = document.createElement('div');
-      fila.className = 'news-card-meta';
+      fila.className = 'news-card-top';
 
       const etiqueta = document.createElement('span');
       etiqueta.className = `news-tag news-tag-${noticia.tipo || 'announcement'}`;
       etiqueta.textContent = etiquetaDeNoticia(noticia.tipo);
       const fecha = document.createElement('span');
       fecha.className = 'news-date';
-      const rel = typeof window.relDate === 'function' ? window.relDate(noticia.fecha) : '';
-      const fmt = typeof window.fmtDate === 'function' ? window.fmtDate(noticia.fecha, { day: 'numeric', month: 'numeric', year: 'numeric' }) : noticia.fecha;
+      const rel = window.I18N ? window.I18N.relativeDate(noticia.fecha) : '';
+      const fmt = window.I18N ? window.I18N.fmtDate(noticia.fecha, { day: 'numeric', month: 'numeric', year: 'numeric' }) : '';
       fecha.textContent = rel || fmt || '';
       fila.appendChild(etiqueta);
       fila.appendChild(fecha);
@@ -204,7 +203,7 @@ window.KorforgeNoticias = (() => {
         const abrir = document.createElement('button');
         abrir.type = 'button';
         abrir.className = 'btn btn-secondary btn-sm news-open';
-        abrir.textContent = window.T ? window.T('news_open') : 'Abrir';
+        abrir.textContent = window.T ? window.T('news_open') : (window.I18N ? window.I18N.t('news_open') : 'Abrir');
         abrir.addEventListener('click', (ev) => {
           ev.stopPropagation();
           abrirNoticia(noticia);

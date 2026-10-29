@@ -1018,6 +1018,28 @@ body.is-maximized .app-sidebar {
 }
 
 /* Estrella de favorito en las tarjetas de «Mis addons» (dueño, 21-10-2026). */
+.installed-btn-action.btn-addon-fav .fav-star-icon {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), fill 0.2s, stroke 0.2s;
+}
+
+.installed-btn-action.btn-addon-fav:hover .fav-star-icon {
+  transform: scale(1.1);
+  color: var(--accent-gold);
+}
+
+.installed-btn-action.btn-addon-fav.is-fav .fav-star-icon {
+  fill: var(--accent-gold);
+  stroke: var(--accent-gold);
+  color: var(--accent-gold);
+}
+
 .installed-btn-action.btn-addon-fav .fav-star {
   font-size: 1rem;
   line-height: 1;

@@ -41,11 +41,15 @@ window.KorforgeOrden = (() => {
   }
 
   function getLocale() {
-    return typeof window.LOCALE === 'function' ? window.LOCALE() : 'es';
+    if (typeof window.LOCALE === 'function') return window.LOCALE();
+    if (window.I18N && typeof window.I18N.getLocale === 'function') return window.I18N.getLocale();
+    return 'es';
   }
 
-  function getT(k) {
-    return typeof window.T === 'function' ? window.T(k) : k;
+  function getT(k, vars) {
+    if (typeof window.T === 'function') return window.T(k, vars);
+    if (window.I18N && typeof window.I18N.t === 'function') return window.I18N.t(k, vars);
+    return k;
   }
 
   function comparar(a, b) {

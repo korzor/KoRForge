@@ -44,6 +44,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
      */
     copiarTexto: (texto) => ipcRenderer.invoke('korforge:copiar-texto', texto),
   },
+
+  // Seleccion y guardado nativo de paquetes KoRForge (.kfg)
+  seleccionarArchivoKfg: () => ipcRenderer.invoke('korforge:seleccionar-kfg'),
+  guardarArchivoKfg: (nombreSugerido) => ipcRenderer.invoke('korforge:guardar-kfg', nombreSugerido),
+  },
 });
 
 /**

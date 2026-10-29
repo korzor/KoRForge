@@ -770,6 +770,11 @@
           <h4 data-i18n="pack_code_label">Pack Code (copy and share via chat or Discord):</h4>
           <textarea id="exportProfileCode" readonly class="modal-textarea modal-textarea-code"></textarea>
         </div>
+        <div class="kfg-box-highlight" style="margin-top: 14px; padding: 12px 14px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px;">
+          <h4 style="font-size: 0.88rem; color: var(--accent-gold); margin-bottom: 4px;" data-i18n="pack_kfg_export_title">Full Package (.kfg)</h4>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;" data-i18n="pack_kfg_export_desc">Save all your installed addons, favorites, and the WTF folder in a single file ready to export and import.</p>
+          <button type="button" class="btn btn-gold btn-full" id="btnExportKfgArchive" data-i18n="pack_kfg_export_btn">Save .kfg file</button>
+        </div>
       </div>
       <div class="app-modal-footer">
         <button class="btn btn-secondary" id="btnDismissExport" data-i18n="pack_close">Close</button>
@@ -792,6 +797,12 @@
         <button class="btn-modal-close" id="btnCloseImportModal" data-i18n-title="pack_close">✕</button>
       </div>
       <div class="app-modal-body">
+        <div id="importKfgSection" style="margin-bottom: 16px; padding: 12px 14px; background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px;">
+          <h4 style="font-size: 0.88rem; color: var(--accent-gold); margin-bottom: 4px;" data-i18n="pack_kfg_import_title">Import full package (.kfg)</h4>
+          <p style="font-size: 0.78rem; color: var(--text-muted); margin-bottom: 10px;" data-i18n="pack_kfg_import_desc">Select a .kfg file to restore all your installed addons, WTF settings, and favorites.</p>
+          <button type="button" class="btn btn-gold btn-full" id="btnSelectKfgArchive" data-i18n="pack_kfg_select_btn">Select .kfg file</button>
+          <input type="file" id="kfgFileInput" accept=".kfg,.zip" style="display: none;">
+        </div>
         <div id="importInputPhase">
           <label class="modal-label" data-i18n="pack_input_label">Paste the pack code here (KORP-...):</label>
           <textarea id="importProfileInput" class="modal-textarea modal-textarea-short" data-i18n-placeholder="pack_input_placeholder"></textarea>
@@ -813,6 +824,7 @@
       <div class="app-modal-footer">
         <button class="btn btn-secondary" id="btnDismissImport" data-i18n="pack_cancel">Cancel</button>
         <button class="btn btn-gold" id="btnInstallMissingAddons" style="display: none;" data-i18n="pack_install_missing">⚡ Install Missing Addons</button>
+        <button class="btn btn-gold" id="btnRestoreKfgConfirm" style="display: none;" data-i18n="pack_kfg_restore_btn">⚡ Restore full package (.kfg)</button>
       </div>
     </div>
   </div>

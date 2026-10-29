@@ -17,6 +17,7 @@ const updater = require('./modules/updater');
 const registry = require('./modules/installedRegistry');
 const profiles = require('./modules/profiles');
 const nombresSeguros = require('./modules/nombresSeguros');
+const kfgPackage = require('./modules/kfgPackage');
 
 const app = express();
 /* K11 (auditoría 22-10-2026): el backend escucha en un puerto EFÍMERO (lo elige el sistema) y la
@@ -342,7 +343,7 @@ function respuestaSinRuta(res, gameId) {
 }
 
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
+app.use(express.json({ limit: '200mb' }));
 
 /* --- Perímetro del API local (auditoría 22-10-2026, K1) ----------------------
  * El servidor escucha solo en 127.0.0.1, pero un servidor local sin autenticación se alcanza
@@ -1322,6 +1323,132 @@ app.post('/api/app-updates/apply', (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+  }
+});
+
+// API: Exportar paquete completo .kfg (Addons + WTF + Favoritos)
+app.get('/api/profiles/export-kfg', (req, res) => {
+  try {
+    const gameId = req.query.gameId || config.activeGame || 'forever';
+    const addonsDir = getAddonsDir(gameId);
+    const wtfDir = getWtfDir(gameId);
+    const gameInfo = config.games[gameId] || { name: 'WoW Forever' };
+    const customTitle = req.query.title || '';
+    const favoritos = (config.favoritesByGame && config.favoritesByGame[gameId]) || [];
+    const installedList = registry.getInstalledAddons(gameId);
+
+    const { buffer, manifest } = kfgPackage.crearPaqueteKfg({
+      gameId,
+      gameName: gameInfo.name,
+      titulo: customTitle,
+      addonsDir,
+      wtfDir,
+      favoritos,
+      installedList,
+      versionApp: APP_VERSION,
+    });
+
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    const fecha = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    const filename = `KoRForge-${gameId}-${fecha}.kfg`;
+
+    if (req.query.destino && typeof req.query.destino === 'string') {
+      const dest = path.resolve(req.query.destino);
+      fs.writeFileSync(dest, buffer);
+      return res.json({ success: true, savedPath: dest, manifest });
+    }
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Length', buffer.length);
+    res.send(buffer);
+  } catch (err) {
+    console.error('[KoRForge] Error al exportar .kfg:', err);
+    res.status(500).json({ error: 'Error interno al exportar paquete', code: 'err_internal' });
+  }
+});
+
+// API: Analizar paquete .kfg
+app.post('/api/profiles/analyze-kfg', (req, res) => {
+  try {
+    const { filePath, fileBase64 } = req.body;
+    let input;
+    if (filePath && typeof filePath === 'string' && fs.existsSync(filePath)) {
+      input = filePath;
+    } else if (fileBase64 && typeof fileBase64 === 'string') {
+      input = Buffer.from(fileBase64, 'base64');
+    } else {
+      return res.status(400).json({ error: 'Archivo no proporcionado', code: 'err_invalid_input' });
+    }
+
+    const analysis = kfgPackage.analizarPaqueteKfg(input);
+    res.json({ success: true, analysis });
+  } catch (err) {
+    res.status(400).json({ error: err.message, code: 'err_invalid_kfg' });
+  }
+});
+
+// API: Restaurar paquete .kfg (Addons + WTF + Favoritos)
+app.post('/api/profiles/restore-kfg', (req, res) => {
+  try {
+    const { filePath, fileBase64, gameId, opciones } = req.body;
+    const targetGame = gameId || config.activeGame || 'forever';
+    const addonsDir = getAddonsDir(targetGame);
+    const wtfDir = getWtfDir(targetGame);
+
+    if (!addonsDir || !fs.existsSync(addonsDir)) {
+      return respuestaSinRuta(res, targetGame);
+    }
+
+    let input;
+    if (filePath && typeof filePath === 'string' && fs.existsSync(filePath)) {
+      input = filePath;
+    } else if (fileBase64 && typeof fileBase64 === 'string') {
+      input = Buffer.from(fileBase64, 'base64');
+    } else {
+      return res.status(400).json({ error: 'Archivo no proporcionado', code: 'err_invalid_input' });
+    }
+
+    const resultado = kfgPackage.restaurarPaqueteKfg({
+      ficheroOrBuffer: input,
+      addonsDir,
+      wtfDir,
+      crearBackupWtfPrevio: (wtfPath) => backup.createBackup(wtfPath, targetGame),
+      opciones: opciones || { incluirAddons: true, incluirWtf: true, incluirFavoritos: true },
+    });
+
+    if (resultado.favoritos && Array.isArray(resultado.favoritos) && resultado.favoritos.length > 0) {
+      if (!config.favoritesByGame) config.favoritesByGame = {};
+      if (!Array.isArray(config.favoritesByGame[targetGame])) config.favoritesByGame[targetGame] = [];
+      const listaFav = config.favoritesByGame[targetGame];
+      for (const f of resultado.favoritos) {
+        if (!f || !f.id) continue;
+        if (!listaFav.some((existente) => existente.id === f.id)) {
+          listaFav.push(f);
+        }
+      }
+      saveConfig();
+    }
+
+    if (resultado.installedData && Array.isArray(resultado.installedData)) {
+      for (const item of resultado.installedData) {
+        if (item && item.modId) {
+          registry.recordInstallation(targetGame, item);
+        }
+      }
+    }
+
+    res.json({
+      success: true,
+      addonsRestaurados: resultado.addonsRestaurados,
+      wtfRestaurado: resultado.wtfRestaurado,
+      favoritosRestaurados: (resultado.favoritos && resultado.favoritos.length) || 0,
+      analisis: resultado.analisis,
+    });
+  } catch (err) {
+    console.error('[KoRForge] Error al restaurar .kfg:', err);
+    res.status(500).json({ error: err.message || 'Error al restaurar', code: 'err_internal' });
   }
 });
 
