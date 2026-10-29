@@ -18,6 +18,7 @@ const registry = require('./modules/installedRegistry');
 const profiles = require('./modules/profiles');
 const nombresSeguros = require('./modules/nombresSeguros');
 const kfgPackage = require('./modules/kfgPackage');
+const wtfCleaner = require('./modules/wtfCleaner');
 
 const app = express();
 /* K11 (auditoría 22-10-2026): el backend escucha en un puerto EFÍMERO (lo elige el sistema) y la
@@ -1186,6 +1187,53 @@ app.delete('/api/backups/:fileName', (req, res) => {
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+  }
+});
+
+// API: WTF Cleaner & Analysis
+app.get('/api/wtf/analyze', (req, res) => {
+  try {
+    const gameId = req.query.gameId || config.activeGame || 'forever';
+    const wtfDir = getWtfDir(gameId);
+    const addonsDir = getAddonsDir(gameId);
+    const result = wtfCleaner.scanWtf(wtfDir, addonsDir, gameId);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Error interno al analizar WTF', code: 'err_wtf_analyze' });
+  }
+});
+
+app.post('/api/wtf/clean', (req, res) => {
+  try {
+    const { gameId, targetNames, allOrphans } = req.body;
+    const targetGame = gameId || config.activeGame || 'forever';
+    const wtfDir = getWtfDir(targetGame);
+    const addonsDir = getAddonsDir(targetGame);
+    if (!wtfDir) {
+      return res.status(400).json({ error: 'Ruta no configurada para este juego.', code: 'err_path_unavailable' });
+    }
+    const result = wtfCleaner.cleanWtf(wtfDir, addonsDir, targetGame, {
+      targetNames,
+      allOrphans: !!allOrphans,
+      createBackup: true
+    });
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: err.message || 'Error interno al limpiar WTF', code: 'err_wtf_clean' });
+  }
+});
+
+app.post('/api/wtf/dismiss-backup', (req, res) => {
+  try {
+    const { fileName, gameId } = req.body;
+    if (!fileName || !nombresSeguros.esNombreDeBackupValido(fileName)) {
+      return res.status(400).json({ error: 'Nombre de backup no válido', code: 'err_invalid_name' });
+    }
+    const targetGame = gameId || config.activeGame || 'forever';
+    const result = backup.deleteBackup(fileName, targetGame);
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ error: 'Error al descartar respaldo', code: 'err_backup_dismiss' });
   }
 });
 

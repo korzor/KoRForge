@@ -549,7 +549,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (cur.tabId === 'addons') loadInstalledAddons(true);
         else if (cur.tabId === 'search') triggerCurseForgeSearch();
         else if (cur.tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
-        else if (cur.tabId === 'backups') loadBackups();
+        else if (cur.tabId === 'backups') { loadBackups(); if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame); }
         else if (cur.tabId === 'news') cargarNoticias(true);
         else if (cur.tabId === 'settings') loadConfig();
       } else if (cur.type === 'detail') {
@@ -620,7 +620,7 @@ document.addEventListener('DOMContentLoaded', () => {
       showCatalogView();
       if (cfResultsGrid.children.length === 0) triggerCurseForgeSearch();
     }
-    if (tabId === 'backups') loadBackups();
+    if (tabId === 'backups') { loadBackups(); if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame); }
     if (tabId === 'news') cargarNoticias();
     if (tabId === 'settings') loadConfig();
   }
@@ -811,6 +811,7 @@ document.addEventListener('DOMContentLoaded', () => {
     await loadFavorites(currentActiveGame);
     renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     await loadBackups(currentActiveGame);
+    if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame, true);
 
     // Subtitulos de las pestanas
     const addonsSub = document.getElementById('addonsSubtitle');
@@ -2816,6 +2817,9 @@ document.addEventListener('DOMContentLoaded', () => {
            y las cuentas de Battle.net incluidas. Viene ya resumido del servidor. */
         const dentro = b.contenido;
         const fichas = [];
+        if (b.isPreClean) {
+          fichas.push(`<span class="backup-chip backup-chip-preclean">🛡️ ${T('vault_chip_preclean')}</span>`);
+        }
         if (dentro) {
           if (Number.isFinite(dentro.archivos)) {
             fichas.push(`<span class="backup-chip">📄 ${T('vault_files_count', { count: dentro.archivos })}</span>`);
@@ -2912,6 +2916,507 @@ document.addEventListener('DOMContentLoaded', () => {
       btnCreateBackup.disabled = false;
       btnCreateBackup.textContent = T('vault_create');
     }
+  });
+
+  // --- Limpiador de WTF ----------------------------------------------------
+  function escapeHtmlStr(str) {
+    return String(str || '').replace(/[&<>"']/g, function(m) {
+      if (m === '&') return '&amp;';
+      if (m === '<') return '&lt;';
+      if (m === '>') return '&gt;';
+      if (m === '"') return '&quot;';
+      return '&#39;';
+    });
+  }
+
+  const pillWtfCleaner = document.getElementById('pillWtfCleaner');
+  const pillWtfBackups = document.getElementById('pillWtfBackups');
+  const wtfCleanerView = document.getElementById('wtfCleanerView');
+  const wtfBackupsView = document.getElementById('wtfBackupsView');
+  const wtfCleanerActions = document.getElementById('wtfCleanerActions');
+  const wtfBackupsActions = document.getElementById('wtfBackupsActions');
+
+  const btnScanWtf = document.getElementById('btnScanWtf');
+  const btnCleanOrphans = document.getElementById('btnCleanOrphans');
+
+  const wtfCleanBanner = document.getElementById('wtfCleanBanner');
+  const wtfBannerTitle = document.getElementById('wtfBannerTitle');
+  const wtfBannerFile = document.getElementById('wtfBannerFile');
+  const btnDismissSafetyBackup = document.getElementById('btnDismissSafetyBackup');
+  const btnKeepSafetyBackup = document.getElementById('btnKeepSafetyBackup');
+
+  const wtfValReclaimable = document.getElementById('wtfValReclaimable');
+  const wtfDescReclaimable = document.getElementById('wtfDescReclaimable');
+  const wtfValActive = document.getElementById('wtfValActive');
+  const wtfDescActive = document.getElementById('wtfDescActive');
+  const wtfValDisabled = document.getElementById('wtfValDisabled');
+  const wtfDescDisabled = document.getElementById('wtfDescDisabled');
+  const wtfValTotal = document.getElementById('wtfValTotal');
+  const wtfDescTotal = document.getElementById('wtfDescTotal');
+  const wtfGroupsContainer = document.getElementById('wtfGroupsContainer');
+
+  let currentWtfScan = null;
+  let selectedOrphanKeys = new Set();
+  let pendingSafetyBackup = null;
+
+  function switchWtfSubView(view) {
+    if (view === 'cleaner') {
+      pillWtfCleaner?.classList.add('active');
+      pillWtfBackups?.classList.remove('active');
+      if (wtfCleanerView) wtfCleanerView.style.display = 'flex';
+      if (wtfBackupsView) wtfBackupsView.style.display = 'none';
+      if (wtfCleanerActions) wtfCleanerActions.style.display = 'flex';
+      if (wtfBackupsActions) wtfBackupsActions.style.display = 'none';
+      if (!currentWtfScan) loadWtfAnalysis(currentActiveGame);
+    } else {
+      pillWtfBackups?.classList.add('active');
+      pillWtfCleaner?.classList.remove('active');
+      if (wtfCleanerView) wtfCleanerView.style.display = 'none';
+      if (wtfBackupsView) wtfBackupsView.style.display = 'block';
+      if (wtfCleanerActions) wtfCleanerActions.style.display = 'none';
+      if (wtfBackupsActions) wtfBackupsActions.style.display = 'flex';
+      loadBackups(currentActiveGame);
+    }
+  }
+
+  pillWtfCleaner?.addEventListener('click', () => switchWtfSubView('cleaner'));
+  pillWtfBackups?.addEventListener('click', () => switchWtfSubView('backups'));
+
+  function updateCleanButtonState() {
+    if (!btnCleanOrphans) return;
+    if (!currentWtfScan || selectedOrphanKeys.size === 0) {
+      btnCleanOrphans.disabled = true;
+      btnCleanOrphans.textContent = T('wtf_btn_clean_orphans', { size: '0 KB' });
+      return;
+    }
+
+    let selectedBytes = 0;
+    for (const key of selectedOrphanKeys) {
+      const o = currentWtfScan.orphans.find(item => item.key === key);
+      if (o) selectedBytes += o.totalBytes;
+    }
+
+    const sizeText = selectedBytes < 1024 * 1024
+      ? (selectedBytes / 1024).toFixed(1) + ' KB'
+      : (selectedBytes / (1024 * 1024)).toFixed(2) + ' MB';
+
+    btnCleanOrphans.disabled = false;
+    btnCleanOrphans.textContent = T('wtf_btn_clean_orphans', { size: sizeText });
+  }
+
+  async function loadWtfAnalysis(gameId, silent = false) {
+    const g = gameId || currentActiveGame || 'forever';
+    if (!silent && btnScanWtf) {
+      btnScanWtf.disabled = true;
+      btnScanWtf.textContent = T('wtf_clean_analyzing');
+    }
+
+    try {
+      const res = await fetch(`/api/wtf/analyze?gameId=${encodeURIComponent(g)}`);
+      const data = await res.json();
+      currentWtfScan = data;
+
+      if (!data.exists) {
+        const zeroSize = (0).toFixed(1) + ' KB';
+        if (wtfValReclaimable) wtfValReclaimable.textContent = zeroSize;
+        if (wtfDescReclaimable) wtfDescReclaimable.textContent = '-';
+        if (wtfValActive) wtfValActive.textContent = zeroSize;
+        if (wtfDescActive) wtfDescActive.textContent = '-';
+        if (wtfValDisabled) wtfValDisabled.textContent = zeroSize;
+        if (wtfDescDisabled) wtfDescDisabled.textContent = '-';
+        if (wtfValTotal) wtfValTotal.textContent = zeroSize;
+        if (wtfDescTotal) wtfDescTotal.textContent = '-';
+
+        if (wtfGroupsContainer) {
+          wtfGroupsContainer.innerHTML = `
+            <div class="empty-state">
+              <img class="empty-icon empty-icon-img" src="icon-wtf-vault.png" alt="" aria-hidden="true">
+              <h3 class="empty-title">${T('wtf_empty_wtf_title', { game: gameLabel(g) })}</h3>
+              <p class="empty-desc">${T('wtf_empty_wtf_desc')}</p>
+            </div>
+          `;
+        }
+        selectedOrphanKeys.clear();
+        updateCleanButtonState();
+        return;
+      }
+
+      if (wtfValReclaimable) wtfValReclaimable.textContent = data.totals.orphanedSizeText;
+      if (wtfDescReclaimable) {
+        wtfDescReclaimable.textContent = T('wtf_stat_reclaimable_desc', {
+          addons: data.orphans.length,
+          files: data.totals.orphanedFiles
+        });
+      }
+
+      const recCard = document.querySelector('.metric-reclaimable');
+      if (recCard) {
+        if (data.orphans.length > 0) recCard.classList.add('has-orphans');
+        else recCard.classList.remove('has-orphans');
+      }
+
+      const activeFilesCount = data.active.reduce((acc, a) => acc + a.totalFiles, 0);
+      if (wtfValActive) wtfValActive.textContent = data.totals.activeSizeText;
+      if (wtfDescActive) {
+        wtfDescActive.textContent = T('wtf_stat_active_desc', {
+          addons: data.active.length,
+          files: activeFilesCount
+        });
+      }
+
+      const disabledFilesCount = data.disabled.reduce((acc, d) => acc + d.totalFiles, 0);
+      if (wtfValDisabled) wtfValDisabled.textContent = data.totals.disabledSizeText;
+      if (wtfDescDisabled) {
+        wtfDescDisabled.textContent = T('wtf_stat_disabled_desc', {
+          addons: data.disabled.length,
+          files: disabledFilesCount
+        });
+      }
+
+      if (wtfValTotal) wtfValTotal.textContent = data.totals.totalSizeText;
+      if (wtfDescTotal) {
+        wtfDescTotal.textContent = T('wtf_stat_total_desc', {
+          files: data.totals.totalFiles
+        });
+      }
+
+      selectedOrphanKeys = new Set(data.orphans.map(o => o.key));
+      updateCleanButtonState();
+      renderWtfGroups(data);
+    } catch (err) {
+      console.error('Error analizando WTF:', err);
+    } finally {
+      if (btnScanWtf) {
+        btnScanWtf.disabled = false;
+        btnScanWtf.textContent = T('wtf_btn_analyze');
+      }
+    }
+  }
+
+  function renderWtfGroups(data) {
+    if (!wtfGroupsContainer) return;
+    wtfGroupsContainer.innerHTML = '';
+
+    // 1. Grupo Huerfanos
+    const secOrphans = document.createElement('div');
+    secOrphans.className = 'wtf-group-section';
+
+    if (data.orphans.length === 0) {
+      secOrphans.innerHTML = `
+        <div class="empty-state" style="padding: 28px 16px;">
+          <h3 class="empty-title" style="color: #4ade80;">✓ ${T('wtf_no_orphans_title')}</h3>
+          <p class="empty-desc">${T('wtf_no_orphans_desc')}</p>
+        </div>
+      `;
+    } else {
+      const allSelected = data.orphans.every(o => selectedOrphanKeys.has(o.key));
+      secOrphans.innerHTML = `
+        <div class="wtf-section-header">
+          <div class="wtf-section-title-wrap">
+            <h3 class="wtf-section-title">🗑️ ${T('wtf_section_orphans')}</h3>
+            <span class="wtf-section-badge badge-orphans">${data.orphans.length} (${data.totals.orphanedSizeText})</span>
+          </div>
+          <div class="wtf-section-actions">
+            <label class="cf-checkbox-item" id="lblSelectAllOrphans">
+              <input type="checkbox" id="chkSelectAllOrphans" ${allSelected ? 'checked' : ''}>
+              <span class="cf-custom-box"></span>
+              <span class="cf-check-label">${T('wtf_select_all')}</span>
+            </label>
+          </div>
+        </div>
+        <div class="wtf-cards-list" id="wtfOrphansList"></div>
+      `;
+
+      const orphansList = secOrphans.querySelector('#wtfOrphansList');
+      data.orphans.forEach(o => {
+        const isChecked = selectedOrphanKeys.has(o.key);
+        const row = document.createElement('div');
+        row.className = 'wtf-addon-row-wrap';
+        row.innerHTML = `
+          <div class="wtf-addon-row">
+            <div class="wtf-addon-main">
+              <label class="cf-checkbox-item">
+                <input type="checkbox" class="chk-orphan-item" data-key="${encodeURIComponent(o.key)}" ${isChecked ? 'checked' : ''}>
+                <span class="cf-custom-box"></span>
+              </label>
+              <div class="wtf-addon-info">
+                <div class="wtf-addon-name-wrap">
+                  <span class="wtf-addon-name">${escapeHtmlStr(o.name)}</span>
+                  <span class="wtf-status-tag tag-orphan">${T('wtf_badge_orphan')}</span>
+                </div>
+                <div class="wtf-addon-meta">
+                  <span>📄 ${o.totalFiles}</span>
+                  ${o.accountsCount > 0 ? `<span>👤 ${escapeHtmlStr(o.accountsList.join(', '))}</span>` : ''}
+                  ${o.charactersCount > 0 ? `<span>⚔️ ${escapeHtmlStr(o.charactersList.join(', '))}</span>` : ''}
+                  <span>🕒 ${o.lastModified}</span>
+                </div>
+              </div>
+            </div>
+            <div class="wtf-addon-side">
+              <span class="wtf-addon-size">${o.sizeText}</span>
+              <button class="btn-toggle-files" data-files-toggle="${encodeURIComponent(o.key)}">
+                ${T('wtf_files_toggle', { count: o.totalFiles })}
+              </button>
+            </div>
+          </div>
+          <div class="wtf-addon-files-details" id="files-${encodeURIComponent(o.key)}" style="display: none;">
+            ${o.files.map(f => `
+              <div class="wtf-file-entry">
+                <span class="wtf-file-path" title="${escapeHtmlStr(f.rutaRelativa)}">${escapeHtmlStr(f.rutaRelativa)}</span>
+                <span class="wtf-file-size">${(f.tamano < 1024 ? f.tamano + ' B' : (f.tamano / 1024).toFixed(1) + ' KB')}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        orphansList.appendChild(row);
+      });
+
+      const chkAll = secOrphans.querySelector('#chkSelectAllOrphans');
+      chkAll?.addEventListener('change', (e) => {
+        const checked = e.target.checked;
+        data.orphans.forEach(o => {
+          if (checked) selectedOrphanKeys.add(o.key);
+          else selectedOrphanKeys.delete(o.key);
+        });
+        secOrphans.querySelectorAll('.chk-orphan-item').forEach(el => {
+          el.checked = checked;
+        });
+        updateCleanButtonState();
+      });
+
+      secOrphans.querySelectorAll('.chk-orphan-item').forEach(el => {
+        el.addEventListener('change', (e) => {
+          const key = decodeURIComponent(e.target.dataset.key);
+          if (e.target.checked) selectedOrphanKeys.add(key);
+          else selectedOrphanKeys.delete(key);
+          if (chkAll) {
+            chkAll.checked = data.orphans.every(o => selectedOrphanKeys.has(o.key));
+          }
+          updateCleanButtonState();
+        });
+      });
+    }
+    wtfGroupsContainer.appendChild(secOrphans);
+
+    // 2. Grupo Deshabilitados (Protegidos)
+    if (data.disabled.length > 0) {
+      const secDisabled = document.createElement('div');
+      secDisabled.className = 'wtf-group-section';
+      secDisabled.innerHTML = `
+        <div class="wtf-section-header">
+          <div class="wtf-section-title-wrap">
+            <h3 class="wtf-section-title">⏸️ ${T('wtf_section_disabled')}</h3>
+            <span class="wtf-section-badge badge-disabled">${data.disabled.length} (${data.totals.disabledSizeText})</span>
+          </div>
+          <div class="wtf-section-actions">
+            <span style="font-size: 0.72rem; color: var(--text-muted);">${T('wtf_note_disabled_protected')}</span>
+          </div>
+        </div>
+        <div class="wtf-cards-list" id="wtfDisabledList"></div>
+      `;
+
+      const disabledList = secDisabled.querySelector('#wtfDisabledList');
+      data.disabled.forEach(d => {
+        const row = document.createElement('div');
+        row.className = 'wtf-addon-row-wrap';
+        row.innerHTML = `
+          <div class="wtf-addon-row">
+            <div class="wtf-addon-main">
+              <span style="font-size: 1rem; color: var(--text-muted);">🔒</span>
+              <div class="wtf-addon-info">
+                <div class="wtf-addon-name-wrap">
+                  <span class="wtf-addon-name">${escapeHtmlStr(d.name)}</span>
+                  <span class="wtf-status-tag tag-disabled">${T('wtf_badge_disabled')}</span>
+                </div>
+                <div class="wtf-addon-meta">
+                  <span>📄 ${d.totalFiles}</span>
+                  ${d.accountsCount > 0 ? `<span>👤 ${escapeHtmlStr(d.accountsList.join(', '))}</span>` : ''}
+                  <span>🕒 ${d.lastModified}</span>
+                </div>
+              </div>
+            </div>
+            <div class="wtf-addon-side">
+              <span class="wtf-addon-size">${d.sizeText}</span>
+              <button class="btn-toggle-files" data-files-toggle="${encodeURIComponent(d.key)}">
+                ${T('wtf_files_toggle', { count: d.totalFiles })}
+              </button>
+            </div>
+          </div>
+          <div class="wtf-addon-files-details" id="files-${encodeURIComponent(d.key)}" style="display: none;">
+            ${d.files.map(f => `
+              <div class="wtf-file-entry">
+                <span class="wtf-file-path" title="${escapeHtmlStr(f.rutaRelativa)}">${escapeHtmlStr(f.rutaRelativa)}</span>
+                <span class="wtf-file-size">${(f.tamano < 1024 ? f.tamano + ' B' : (f.tamano / 1024).toFixed(1) + ' KB')}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        disabledList.appendChild(row);
+      });
+      wtfGroupsContainer.appendChild(secDisabled);
+    }
+
+    // 3. Grupo Activos
+    if (data.active.length > 0) {
+      const secActive = document.createElement('div');
+      secActive.className = 'wtf-group-section';
+      secActive.innerHTML = `
+        <div class="wtf-section-header">
+          <div class="wtf-section-title-wrap">
+            <h3 class="wtf-section-title">🛡️ ${T('wtf_section_active')}</h3>
+            <span class="wtf-section-badge badge-active">${data.active.length} (${data.totals.activeSizeText})</span>
+          </div>
+          <div class="wtf-section-actions">
+            <span style="font-size: 0.72rem; color: #86efac;">${T('wtf_note_active_protected')}</span>
+          </div>
+        </div>
+        <div class="wtf-cards-list" id="wtfActiveList"></div>
+      `;
+
+      const activeList = secActive.querySelector('#wtfActiveList');
+      data.active.forEach(a => {
+        const row = document.createElement('div');
+        row.className = 'wtf-addon-row-wrap';
+        row.innerHTML = `
+          <div class="wtf-addon-row">
+            <div class="wtf-addon-main">
+              <span style="font-size: 1rem; color: #4ade80;">🛡️</span>
+              <div class="wtf-addon-info">
+                <div class="wtf-addon-name-wrap">
+                  <span class="wtf-addon-name">${escapeHtmlStr(a.name)}</span>
+                  <span class="wtf-status-tag tag-active">${T('wtf_badge_active')}</span>
+                </div>
+                <div class="wtf-addon-meta">
+                  <span>📄 ${a.totalFiles}</span>
+                  ${a.accountsCount > 0 ? `<span>👤 ${escapeHtmlStr(a.accountsList.join(', '))}</span>` : ''}
+                  ${a.charactersCount > 0 ? `<span>⚔️ ${escapeHtmlStr(a.charactersList.join(', '))}</span>` : ''}
+                  <span>🕒 ${a.lastModified}</span>
+                </div>
+              </div>
+            </div>
+            <div class="wtf-addon-side">
+              <span class="wtf-addon-size">${a.sizeText}</span>
+              <button class="btn-toggle-files" data-files-toggle="${encodeURIComponent(a.key)}">
+                ${T('wtf_files_toggle', { count: a.totalFiles })}
+              </button>
+            </div>
+          </div>
+          <div class="wtf-addon-files-details" id="files-${encodeURIComponent(a.key)}" style="display: none;">
+            ${a.files.map(f => `
+              <div class="wtf-file-entry">
+                <span class="wtf-file-path" title="${escapeHtmlStr(f.rutaRelativa)}">${escapeHtmlStr(f.rutaRelativa)}</span>
+                <span class="wtf-file-size">${(f.tamano < 1024 ? f.tamano + ' B' : (f.tamano / 1024).toFixed(1) + ' KB')}</span>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        activeList.appendChild(row);
+      });
+      wtfGroupsContainer.appendChild(secActive);
+    }
+
+    wtfGroupsContainer.querySelectorAll('.btn-toggle-files').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const key = e.currentTarget.dataset.filesToggle;
+        const details = document.getElementById(`files-${key}`);
+        if (details) {
+          const isOpen = details.style.display !== 'none';
+          details.style.display = isOpen ? 'none' : 'flex';
+        }
+      });
+    });
+  }
+
+  btnScanWtf?.addEventListener('click', () => {
+    loadWtfAnalysis(currentActiveGame);
+  });
+
+  btnCleanOrphans?.addEventListener('click', async () => {
+    if (!currentWtfScan || selectedOrphanKeys.size === 0) return;
+
+    let selectedBytes = 0;
+    for (const key of selectedOrphanKeys) {
+      const o = currentWtfScan.orphans.find(item => item.key === key);
+      if (o) selectedBytes += o.totalBytes;
+    }
+
+    const sizeText = selectedBytes < 1024 * 1024
+      ? (selectedBytes / 1024).toFixed(1) + ' KB'
+      : (selectedBytes / (1024 * 1024)).toFixed(2) + ' MB';
+
+    const ok = await askConfirm({
+      title: T('wtf_confirm_clean_title'),
+      mensaje: T('wtf_confirm_clean_msg', { count: selectedOrphanKeys.size, size: sizeText }),
+      okLabel: T('modal_continue')
+    });
+    if (!ok) return;
+
+    btnCleanOrphans.disabled = true;
+    btnCleanOrphans.textContent = T('wtf_clean_in_progress');
+
+    try {
+      const res = await fetch('/api/wtf/clean', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gameId: currentActiveGame,
+          targetNames: [...selectedOrphanKeys]
+        })
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || 'Error');
+      }
+
+      showToast(T('wtf_toast_cleaned', { size: data.deletedSizeText, count: data.deletedFilesCount }));
+
+      if (data.backup && wtfCleanBanner) {
+        pendingSafetyBackup = data.backup;
+        if (wtfBannerTitle) {
+          wtfBannerTitle.textContent = T('wtf_clean_success', {
+            size: data.deletedSizeText,
+            count: data.deletedFilesCount
+          });
+        }
+        if (wtfBannerFile) {
+          wtfBannerFile.textContent = T('wtf_clean_backup_note', { file: data.backup.fileName });
+        }
+        wtfCleanBanner.style.display = 'flex';
+      }
+
+      await loadWtfAnalysis(currentActiveGame, true);
+      loadBackups(currentActiveGame);
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      updateCleanButtonState();
+    }
+  });
+
+  btnDismissSafetyBackup?.addEventListener('click', async () => {
+    if (!pendingSafetyBackup) return;
+    try {
+      await fetch('/api/wtf/dismiss-backup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: pendingSafetyBackup.fileName,
+          gameId: currentActiveGame
+        })
+      });
+      showToast(T('wtf_toast_backup_discarded'));
+      if (wtfCleanBanner) wtfCleanBanner.style.display = 'none';
+      pendingSafetyBackup = null;
+      loadBackups(currentActiveGame);
+    } catch (err) {
+      console.error('Error descartando backup:', err);
+    }
+  });
+
+  btnKeepSafetyBackup?.addEventListener('click', () => {
+    if (wtfCleanBanner) wtfCleanBanner.style.display = 'none';
+    pendingSafetyBackup = null;
   });
 
   // App Update System (GitHub Releases)

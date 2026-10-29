@@ -505,14 +505,81 @@
         <!-- View: Bóveda WTF -->
         <section class="tab-pane" id="pane-backups">
           <!-- Sin títulos: la barra de arriba ya encabeza la pestaña (dueño, 25-10-2026). -->
-          <div class="pane-actions">
-            <button class="btn btn-gold" id="btnCreateBackup" data-i18n="vault_create">
-              💾 Create New Backup Now
-            </button>
+          <div class="wtf-toolbar">
+            <div class="filter-pills">
+              <button class="pill active" id="pillWtfCleaner" data-wtf-view="cleaner" data-i18n="wtf_tab_cleaner">WTF Cleaner</button>
+              <button class="pill" id="pillWtfBackups" data-wtf-view="backups" data-i18n="wtf_tab_backups">WTF Backups</button>
+            </div>
+            <div class="pane-actions" id="wtfCleanerActions">
+              <button class="btn btn-secondary" id="btnScanWtf" data-i18n="wtf_btn_analyze">
+                Scan WTF
+              </button>
+              <button class="btn btn-danger" id="btnCleanOrphans" data-i18n="wtf_btn_clean_orphans" disabled>
+                Clean Selected (0 KB)
+              </button>
+            </div>
+            <div class="pane-actions" id="wtfBackupsActions" style="display: none;">
+              <button class="btn btn-gold" id="btnCreateBackup" data-i18n="vault_create">
+                💾 Create New Backup Now
+              </button>
+            </div>
           </div>
 
-          <div class="backups-list" id="backupsList">
-            <!-- Populated by app.js -->
+          <!-- Sub-view: Limpiador de WTF -->
+          <div class="wtf-view-container" id="wtfCleanerView">
+            <!-- Banner Visto Bueno tras limpieza (oculto por defecto) -->
+            <div class="wtf-success-banner" id="wtfCleanBanner" style="display: none;">
+              <div class="wtf-banner-icon">✓</div>
+              <div class="wtf-banner-body">
+                <div class="wtf-banner-title" id="wtfBannerTitle" data-i18n-skip></div>
+                <div class="wtf-banner-file" id="wtfBannerFile" data-i18n-skip></div>
+                <p class="wtf-banner-prompt" data-i18n="wtf_clean_prompt">Launch the game to verify everything works properly. When satisfied:</p>
+                <div class="wtf-banner-actions">
+                  <button class="btn btn-sm btn-danger" id="btnDismissSafetyBackup" data-i18n="wtf_btn_discard_backup">
+                    Discard Safety Backup
+                  </button>
+                  <button class="btn btn-sm btn-secondary" id="btnKeepSafetyBackup" data-i18n="wtf_btn_keep_backup">
+                    Keep in Vault
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Resumen de Métricas -->
+            <div class="wtf-metrics-grid" id="wtfMetricsGrid">
+              <div class="wtf-metric-card metric-reclaimable">
+                <div class="metric-label" data-i18n="wtf_stat_reclaimable">Reclaimable Space</div>
+                <div class="metric-val" id="wtfValReclaimable" data-i18n-skip>0 KB</div>
+                <div class="metric-desc" id="wtfDescReclaimable" data-i18n-skip>-</div>
+              </div>
+              <div class="wtf-metric-card metric-active">
+                <div class="metric-label" data-i18n="wtf_stat_active">Active Addons</div>
+                <div class="metric-val" id="wtfValActive" data-i18n-skip>0 KB</div>
+                <div class="metric-desc" id="wtfDescActive" data-i18n-skip>-</div>
+              </div>
+              <div class="wtf-metric-card metric-disabled">
+                <div class="metric-label" data-i18n="wtf_stat_disabled">Disabled Addons</div>
+                <div class="metric-val" id="wtfValDisabled" data-i18n-skip>0 KB</div>
+                <div class="metric-desc" id="wtfDescDisabled" data-i18n-skip>-</div>
+              </div>
+              <div class="wtf-metric-card metric-total">
+                <div class="metric-label" data-i18n="wtf_stat_total">Total SavedVariables</div>
+                <div class="metric-val" id="wtfValTotal" data-i18n-skip>0 KB</div>
+                <div class="metric-desc" id="wtfDescTotal" data-i18n-skip>-</div>
+              </div>
+            </div>
+
+            <!-- Listados de clasificación -->
+            <div class="wtf-groups-container" id="wtfGroupsContainer">
+              <!-- Populated by app.js -->
+            </div>
+          </div>
+
+          <!-- Sub-view: Backups WTF -->
+          <div class="wtf-view-container" id="wtfBackupsView" style="display: none;">
+            <div class="backups-list" id="backupsList">
+              <!-- Populated by app.js -->
+            </div>
           </div>
         </section>
 

@@ -4315,3 +4315,352 @@ select:focus-visible {
   padding: 5px 12px;
   height: 30px;
 }
+
+/* ==========================================================================
+   Limpiador y Análisis de WTF
+   ========================================================================== */
+.wtf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.wtf-view-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Banner de éxito / Visto bueno tras limpieza */
+.wtf-success-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(245, 158, 11, 0.08));
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  animation: fadeIn 0.3s ease;
+}
+
+.wtf-banner-icon {
+  font-size: 1.5rem;
+  color: #4ade80;
+  line-height: 1;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.wtf-banner-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.wtf-banner-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #dcfce7;
+}
+
+.wtf-banner-file {
+  font-size: 0.8rem;
+  color: #86efac;
+  font-family: var(--font-mono);
+}
+
+.wtf-banner-prompt {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 4px 0 6px 0;
+}
+
+.wtf-banner-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Tarjetas de métricas */
+.wtf-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.wtf-metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.wtf-metric-card:hover {
+  border-color: rgba(245, 158, 11, 0.3);
+  transform: translateY(-1px);
+}
+
+.wtf-metric-card .metric-label {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.wtf-metric-card .metric-val {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--c-fff);
+}
+
+.wtf-metric-card.metric-reclaimable .metric-val {
+  color: var(--accent-gold);
+}
+
+.wtf-metric-card.metric-reclaimable.has-orphans {
+  border-color: rgba(245, 158, 11, 0.45);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(0, 0, 0, 0.3));
+}
+
+.wtf-metric-card .metric-desc {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+/* Secciones de grupos */
+.wtf-group-section {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.wtf-section-header {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.wtf-section-header:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.wtf-section-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.wtf-section-title {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--c-fff);
+  margin: 0;
+}
+
+.wtf-section-badge {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.wtf-section-badge.badge-orphans {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.wtf-section-badge.badge-active {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.wtf-section-badge.badge-disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.wtf-section-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wtf-cards-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.wtf-addon-row {
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  transition: background 0.15s;
+}
+
+.wtf-addon-row:last-child {
+  border-bottom: none;
+}
+
+.wtf-addon-row:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.wtf-addon-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.wtf-addon-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.wtf-addon-name-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wtf-addon-name {
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: var(--c-fff);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wtf-status-tag {
+  font-size: 0.68rem;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.wtf-status-tag.tag-orphan {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--accent-gold);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+.wtf-status-tag.tag-disabled {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+.wtf-status-tag.tag-active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.wtf-addon-meta {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.wtf-addon-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.wtf-addon-size {
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #e5e7eb;
+}
+
+.btn-toggle-files {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-toggle-files:hover {
+  color: var(--c-fff);
+  border-color: var(--border-focus);
+}
+
+.wtf-addon-files-details {
+  background: rgba(0, 0, 0, 0.25);
+  padding: 8px 16px 12px 42px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.wtf-file-entry {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+.wtf-file-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wtf-file-size {
+  color: #9ca3af;
+  margin-left: 12px;
+  flex-shrink: 0;
+}
+
+.backup-chip-preclean {
+  background: rgba(245, 158, 11, 0.12) !important;
+  border-color: rgba(245, 158, 11, 0.4) !important;
+  color: var(--accent-gold) !important;
+  font-weight: 700;
+}

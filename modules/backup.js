@@ -77,13 +77,14 @@ function listBackups(gameId = 'forever') {
         sizeMb: (stat.size / (1024 * 1024)).toFixed(2),
         date: stat.mtime.toLocaleString('es-ES'),
         timestamp: stat.mtimeMs,
+        isPreClean: fileName.toLowerCase().includes('_prelimpieza_'),
         contenido: resumenContenido(filePath)
       };
     })
     .sort((a, b) => b.timestamp - a.timestamp);
 }
 
-function createBackup(wtfPath, gameId = 'forever') {
+function createBackup(wtfPath, gameId = 'forever', prefix = '') {
   const dir = ensureBackupsDir(gameId);
   if (!wtfPath || !fs.existsSync(wtfPath)) {
     throw new Error(`La carpeta WTF no existe aún en: ${wtfPath || 'Ruta no configurada'}. Entra al menos una vez al juego para que WoW la cree.`);
