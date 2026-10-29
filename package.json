@@ -1,100 +1,100 @@
 {
-    "name":  "korforge",
-    "version":  "1.4.13",
-    "description":  "KoRForge - Standalone WoW Addon Manager",
-    "desktopName":  "korforge.desktop",
-    "main":  "main.js",
-    "scripts":  {
-                    "start":  "electron .",
-                    "server":  "node server.js",
-                    "build":  "node build.js",
-                    "compile":  "electron-builder --win dir",
-                    "package:installer":  "electron-builder --win nsis",
-                    "package:zip":  "electron-builder --win zip",
-                    "package:release":  "electron-builder --win nsis zip",
-                    "release":  "node scripts/release-github.js",
-                    "release:github-api":  "node scripts/subir-release-github.js",
-                    "release:web":  "node scripts/publish-korforge-release.js",
-                    "i18n:check":  "node scripts/verificar-i18n.js",
-                    "i18n:check:verbose":  "node scripts/verificar-i18n.js --verbose",
-                    "i18n:check:live":  "node scripts/verificar-i18n-en-vivo.mjs",
-                    "proteger":  "node scripts/proteger-build.js",
-                    "release:protegida":  "node scripts/proteger-build.js \u0026\u0026 npx electron-builder --win nsis zip dir \u0026\u0026 node scripts/proteger-build.js --restaurar"
-                },
-    "keywords":  [
-                     "wow",
-                     "addons",
-                     "curseforge",
-                     "wow-forever"
-                 ],
-    "author":  "KoRZoR",
-    "license":  "SEE LICENSE IN LICENSE",
-    "build":  {
-                  "appId":  "com.korzor.korforge",
-                  "productName":  "KoRForge",
-                  "copyright":  "Copyright (c) 2026 KoRZoR. Todos los derechos reservados.",
-                  "directories":  {
-                                      "output":  "release"
-                                  },
-                  "win":  {
-                              "target":  [
-                                             "dir",
-                                             "nsis",
-                                             "zip"
-                                         ],
-                              "icon":  "korforge.ico"
-                          },
-                  "nsis":  {
-                               "oneClick":  false,
-                               "perMachine":  false,
-                               "allowToChangeInstallationDirectory":  true,
-                               "createDesktopShortcut":  true,
-                               "createStartMenuShortcut":  true,
-                               "shortcutName":  "KoRForge",
-                               "artifactName":  "KoRForge-${version}-Windows.${ext}",
-                               "installerIcon":  "korforge.ico",
-                               "uninstallerIcon":  "korforge.ico",
-                               "runAfterFinish":  true,
-                               "include":  "build/installer.nsh"
-                           },
-                  "linux":  {
-                                "target":  [
-                                               "AppImage"
-                                           ],
-                                "category":  "Utility",
-                                "icon":  "korforge.png",
-                                "artifactName":  "KoRForge-${version}-Linux.${ext}",
-                                "executableName":  "korforge",
-                                "syncDesktopName":  true
-                            },
-                  "toolsets":  {
-                                   "appimage":  "1.0.3"
-                               },
-                  "asar":  true,
-                  "files":  [
-                                "main.js",
-                                "server.js",
-                                "preload.js",
-                                "config.example.json",
-                                "korforge.ico",
-                                "korforge.png",
-                                "Launch-KoRForge.vbs",
-                                "modules/**/*",
-                                "public/**/*"
-                            ],
-                  "asarUnpack":  [
-                                     "package.json",
-                                     "public/splash.png",
-                                     "Launch-KoRForge.vbs"
-                                 ]
-              },
-    "dependencies":  {
-                         "adm-zip":  "^0.5.16",
-                         "express":  "^4.21.2"
-                     },
-    "devDependencies":  {
-                            "electron":  "^44.9.0",
-                            "electron-builder":  "^26.15.3",
-                            "terser":  "^5.51.2"
-                        }
+    "name": "korforge",
+    "version": "1.4.14",
+    "description": "KoRForge - Standalone WoW Addon Manager",
+    "desktopName": "korforge.desktop",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "server": "node server.js",
+        "build": "node build.js",
+        "compile": "electron-builder --win dir",
+        "package:installer": "electron-builder --win nsis",
+        "package:zip": "electron-builder --win zip",
+        "package:release": "electron-builder --win nsis zip",
+        "release": "node scripts/release-github.js",
+        "release:github-api": "node scripts/subir-release-github.js",
+        "release:web": "node scripts/publish-korforge-release.js",
+        "i18n:check": "node scripts/verificar-i18n.js",
+        "i18n:check:verbose": "node scripts/verificar-i18n.js --verbose",
+        "i18n:check:live": "node scripts/verificar-i18n-en-vivo.mjs",
+        "proteger": "node scripts/proteger-build.js",
+        "release:protegida": "node scripts/proteger-build.js && npx electron-builder --win nsis zip dir && node scripts/proteger-build.js --restaurar"
+    },
+    "keywords": [
+        "wow",
+        "addons",
+        "curseforge",
+        "wow-forever"
+    ],
+    "author": "KoRZoR",
+    "license": "SEE LICENSE IN LICENSE",
+    "build": {
+        "appId": "com.korzor.korforge",
+        "productName": "KoRForge",
+        "copyright": "Copyright (c) 2026 KoRZoR. Todos los derechos reservados.",
+        "directories": {
+            "output": "release"
+        },
+        "win": {
+            "target": [
+                "dir",
+                "nsis",
+                "zip"
+            ],
+            "icon": "korforge.ico"
+        },
+        "nsis": {
+            "oneClick": false,
+            "perMachine": false,
+            "allowToChangeInstallationDirectory": true,
+            "createDesktopShortcut": true,
+            "createStartMenuShortcut": true,
+            "shortcutName": "KoRForge",
+            "artifactName": "KoRForge-${version}-Windows.${ext}",
+            "installerIcon": "korforge.ico",
+            "uninstallerIcon": "korforge.ico",
+            "runAfterFinish": true,
+            "include": "build/installer.nsh"
+        },
+        "linux": {
+            "target": [
+                "AppImage"
+            ],
+            "category": "Utility",
+            "icon": "korforge.png",
+            "artifactName": "KoRForge-${version}-Linux.${ext}",
+            "executableName": "korforge",
+            "syncDesktopName": true
+        },
+        "toolsets": {
+            "appimage": "1.0.3"
+        },
+        "asar": true,
+        "files": [
+            "main.js",
+            "server.js",
+            "preload.js",
+            "config.example.json",
+            "korforge.ico",
+            "korforge.png",
+            "Launch-KoRForge.vbs",
+            "modules/**/*",
+            "public/**/*"
+        ],
+        "asarUnpack": [
+            "package.json",
+            "public/splash.png",
+            "Launch-KoRForge.vbs"
+        ]
+    },
+    "dependencies": {
+        "adm-zip": "^0.5.16",
+        "express": "^4.21.2"
+    },
+    "devDependencies": {
+        "electron": "^44.9.0",
+        "electron-builder": "^26.15.3",
+        "terser": "^5.51.2"
+    }
 }
