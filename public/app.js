@@ -1941,6 +1941,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderCatalogCards(mods, targetContainer = cfResultsGrid) {
     targetContainer.innerHTML = '';
+    const isFavoritesView = (targetContainer === favoritesTabGrid) || (targetContainer === cfResultsGrid && lastCatalogMode === 'favorites');
     mods.forEach(mod => {
       const installedMatch = findInstalledAddon(mod);
       const isInstalled = !!installedMatch;
@@ -1963,7 +1964,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       let myVerPill = '';
-      if (isInstalled) {
+      // En favoritos no se muestra la version instalada (dueño, 29-10-2026)
+      if (isInstalled && !isFavoritesView) {
         const myVerRaw = (installedMatch.version && installedMatch.version !== 'N/A') ? installedMatch.version : null;
         const dispMyVer = myVerRaw ? formatVersionDisplay(myVerRaw) : T('status_installed');
         const hasUpdate = !!(availVer && myVerRaw && availVer !== myVerRaw && !availVer.includes(myVerRaw) && !myVerRaw.includes(availVer));
@@ -2104,7 +2106,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
               }
 
-              if (versionsRow) {
+              if (!isFavoritesView && versionsRow) {
                 const existingMine = versionsRow.querySelector('.cf-ver-mine');
                 if (existingMine) existingMine.remove();
 

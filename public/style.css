@@ -2337,33 +2337,69 @@ body:not([data-tab="news"]) .btn-news-refresh {
 }
 
 .btn-install-cf {
-  background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold-dark) 100%);
-  color: var(--c-fff);
-  border: none;
-  padding: 6px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 108px;
+  height: 32px;
+  padding: 0 14px;
   border-radius: 6px;
   font-size: 0.8rem;
   font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
   cursor: pointer;
   transition: all 0.15s ease;
-  flex-shrink: 0;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1.5px solid var(--accent-gold);
+  color: var(--c-fff);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
 .btn-install-cf:hover {
-  transform: translateY(-1px);
+  background: rgba(245, 158, 11, 0.28);
+  border-color: #fbbf24;
+  color: var(--c-fff);
   box-shadow: 0 0 12px var(--accent-gold-glow);
+  transform: translateY(-1px);
+}
+
+.btn-install-cf:active {
+  transform: translateY(0);
+  background: rgba(245, 158, 11, 0.36);
 }
 
 .btn-install-cf.installed {
-  background: rgba(16, 185, 129, 0.18);
-  border: 1px solid var(--status-green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 108px;
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+  flex-shrink: 0;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1.5px solid var(--status-green);
   color: var(--status-green);
   cursor: default;
   box-shadow: none;
+  transform: none;
 }
 
 .btn-install-cf.installed:hover {
   transform: none;
+  box-shadow: none;
+  background: rgba(16, 185, 129, 0.15);
+  border-color: var(--status-green);
 }
 
 /* Quick Favorites Filter in Sidebar */
@@ -4171,4 +4207,111 @@ select:focus-visible {
 .kf-menu-contextual,
 .kf-menu-contextual * {
   user-select: none;
+}
+
+/* Modal de Compartir Pack de Addons */
+.modal-dialog-share {
+  max-width: 590px;
+}
+
+.modal-share-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.12) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.55);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.25);
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.modal-share-icon-wrap .share-header-svg {
+  width: 22px;
+  height: 22px;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.7));
+}
+
+.share-title-field {
+  margin-bottom: 2px;
+}
+
+.share-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color 0.15s ease;
+}
+
+.share-card:hover {
+  border-color: rgba(245, 158, 11, 0.28);
+}
+
+.share-card.share-card-kfg {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08) 0%, rgba(0, 0, 0, 0.32) 100%);
+  border-color: rgba(245, 158, 11, 0.38);
+}
+
+.share-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.share-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+
+.share-card-badge {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 3px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  background: rgba(59, 130, 246, 0.18);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  color: #60a5fa;
+  flex-shrink: 0;
+}
+
+.share-card-badge.kfg {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.55);
+  color: var(--accent-gold);
+}
+
+.share-card-header h4 {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #f3f4f6;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.share-card-desc {
+  margin: 2px 0 0;
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.btn-action-card {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  padding: 5px 12px;
+  height: 30px;
 }
