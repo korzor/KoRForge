@@ -1,5 +1,6 @@
-# Titulo: 1.5.3 - Corrección splash actualizador, botón instalado y binarios duales
+# Titulo: 1.5.4 - Limpiador y analizador de WTF con visto bueno y protección
 
-- Actualizador in-app: solucionada la excepción de .NET/PowerShell ('Camino-Redondeado') en la ventana gráfica de progreso.
-- Botón de estado instalado: eliminado el visé (marca ✓) en todos los idiomas.
-- Compilación dual oficial sincronizada para Windows (.exe) y Linux (.AppImage).
+- Limpiador de WTF: escaneo automático de datos guardados (SavedVariables) cruzados con los addons del juego.
+- Clasificación inteligente: detección de datos huérfanos de addons desinstalados y protección total de addons activos y deshabilitados.
+- Puntos de restauración automáticos: respaldo de seguridad previo a la limpieza con opción de descarte o visto bueno en un clic.
+- Cuadro de mandos y métricas en vivo: visor detallado de archivos .lua y .bak, cuentas y personajes en la pestaña WTF.
