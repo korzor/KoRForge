@@ -532,7 +532,10 @@ function validarFuenteLimpio(pasoNum) {
 }
 
 function validarSha256(pasoNum) {
-  const sha256Path = path.join(RAIZ, 'SHA256SUMS.txt');
+  let sha256Path = path.join(RAIZ, 'release', 'SHA256SUMS.txt');
+  if (!fs.existsSync(sha256Path)) {
+    sha256Path = path.join(RAIZ, 'SHA256SUMS.txt');
+  }
   if (!fs.existsSync(sha256Path)) {
     abortar('SHA256SUMS.txt no existe tras sha256-release.js', pasoNum);
   }
