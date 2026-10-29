@@ -196,10 +196,11 @@ async function validacionesPrevias(version) {
       err('No se pudo ejecutar git status');
       todoOk = false;
     } else {
-      const lineas = rStatus.stdout?.toString().trim().split('\n').filter(Boolean) ?? [];
+      const raw = rStatus.stdout?.toString() ?? '';
+      const lineas = raw.split(/\r?\n/).filter(Boolean);
       const permitidos = ['docs/CAMBIOS-ULTIMA.md', 'package.json', 'package-lock.json'];
       const noPermitidos = lineas.filter(l => {
-        const archivo = l.slice(3).trim();
+        const archivo = l.substring(2).trim();
         return !permitidos.some(p => archivo.endsWith(p));
       });
       if (noPermitidos.length > 0) {
