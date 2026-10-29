@@ -31,10 +31,19 @@ function tokenDeGitHub() {
   if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
   if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
   try {
-    return execSync('gh auth token', { encoding: 'utf8' }).trim();
-  } catch (_) {
-    return '';
-  }
+    const t = execSync('gh auth token', { encoding: 'utf8' }).trim();
+    if (t) return t;
+  } catch (_) {}
+  try {
+    const out = execSync('git credential fill', {
+      input: 'protocol=https\nhost=github.com\n',
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'ignore']
+    });
+    const m = out.match(/^password=(.+)$/m);
+    if (m && m[1].trim()) return m[1].trim();
+  } catch (_) {}
+  return '';
 }
 
 const TOKEN = tokenDeGitHub();

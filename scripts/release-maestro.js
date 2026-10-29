@@ -39,6 +39,32 @@ const separador = () => console.log(`${C.blanco}${'─'.repeat(60)}${C.reset}`);
 // ─── Raíz del proyecto ────────────────────────────────────────────────────────
 const RAIZ = path.resolve(__dirname, '..');
 
+// ─── Token de GitHub ──────────────────────────────────────────────────────────
+function obtenerTokenGithub() {
+  if (process.env.GH_TOKEN) return process.env.GH_TOKEN;
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN;
+  try {
+    const t = spawnSync('gh', ['auth', 'token'], { encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'] });
+    if (t.status === 0 && t.stdout?.trim()) return t.stdout.trim();
+  } catch (_) {}
+  try {
+    const r = spawnSync('git', ['credential', 'fill'], {
+      input: 'protocol=https\nhost=github.com\n',
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'ignore']
+    });
+    if (r.status === 0 && r.stdout) {
+      const m = r.stdout.match(/^password=(.+)$/m);
+      if (m && m[1].trim()) return m[1].trim();
+    }
+  } catch (_) {}
+  return '';
+}
+const tokenDetectado = obtenerTokenGithub();
+if (tokenDetectado) {
+  process.env.GITHUB_TOKEN = tokenDetectado;
+}
+
 // ─── Leer package.json ────────────────────────────────────────────────────────
 function leerVersion() {
   const pkgPath = path.join(RAIZ, 'package.json');
@@ -415,13 +441,16 @@ async function main() {
     ok('Fuente restaurado y limpio (sin CF key)');
   }
 
-  // Linux AppImage: aviso de paso manual
+  // ── Paso 4.5: Linux AppImage (WSL) ─────────────────────────────────────────
   if (DESDE <= 4) {
     separador();
-    aviso('Paso 7 (Linux AppImage) se construye en WSL — FUERA de este script');
-    aviso('Si no has construido el AppImage en WSL, hazlo ahora antes de continuar con SHA256');
-    console.log(`${C.amarillo}  Pulsa Ctrl+C para interrumpir, o el script continuará en 10 segundos…${C.reset}`);
-    await esperar(10000);
+    paso('4.5', 'Compilar Linux AppImage en WSL');
+    const rLinux = ejecutar('wsl', ['-d', 'Ubuntu', '-u', 'korzor', '--', 'bash', '/mnt/p/KoRForge/scripts/build-linux-appimage.sh']);
+    if (rLinux === 0) {
+      ok('Linux AppImage generado correctamente en release/');
+    } else {
+      aviso('La compilación en WSL falló o devolvió código ' + rLinux + '. Continuando...');
+    }
   }
 
   // ── Paso 5: SHA256 ────────────────────────────────────────────────────────
