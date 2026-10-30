@@ -491,6 +491,82 @@ body.is-maximized .win-btn.win-max .icon-restore {
   box-shadow: 0 0 18px rgba(245, 158, 11, 0.45), inset 0 0 12px rgba(245, 158, 11, 0.15);
 }
 
+/* Botón para arrancar el cliente de juego (dueño, 30-10-2026) */
+.btn-launch-game {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 16px;
+  height: 58px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.35);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  border-radius: 9px;
+  color: #f1f5f9;
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  user-select: none;
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
+.btn-launch-game .launch-icon-play {
+  width: 15px;
+  height: 15px;
+  fill: #10b981;
+  filter: drop-shadow(0 0 5px rgba(16, 185, 129, 0.6));
+  transition: transform 0.2s ease, filter 0.2s ease;
+  flex-shrink: 0;
+}
+
+.btn-launch-game .launch-label {
+  text-transform: uppercase;
+}
+
+.btn-launch-game:hover:not(.is-disabled) {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(251, 191, 36, 0.60);
+  color: #ffffff;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35), 0 2px 10px rgba(0, 0, 0, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-launch-game:hover:not(.is-disabled) .launch-icon-play {
+  transform: scale(1.15);
+  filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.85));
+}
+
+.btn-launch-game:active:not(.is-disabled) {
+  transform: translateY(0);
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.26) 0%, rgba(217, 119, 6, 0.14) 100%);
+  border-color: var(--c-fbbf24);
+}
+
+.btn-launch-game.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  border-color: rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.btn-launch-game.is-disabled .launch-icon-play {
+  fill: #64748b;
+  filter: none;
+}
+
+.btn-launch-game.is-launching {
+  pointer-events: none;
+  opacity: 0.85;
+  border-color: #10b981;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.5);
+}
+
 /* Hero Logo in Settings Card */
 .about-card {
   text-align: center;

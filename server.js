@@ -6,7 +6,7 @@ const express = require('express');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
-const { exec, execFile } = require('child_process');
+const { exec, execFile, spawn } = require('child_process');
 
 const scanner = require('./modules/scanner');
 const installer = require('./modules/installer');
@@ -889,6 +889,71 @@ app.post('/api/addons/open-folder', (req, res) => {
   /* K3 (auditoría 22-10-2026): execFile con argumentos, sin pasar el nombre por el shell. */
   abrirEnElExplorador(dirToOpen);
   res.json({ success: true, opened: dirToOpen });
+});
+
+function buscarEjecutableDeJuego(directorio) {
+  if (!directorio || !fs.existsSync(directorio)) return '';
+  try {
+    const stat = fs.statSync(directorio);
+    if (stat.isFile()) return directorio;
+    if (!stat.isDirectory()) return '';
+  } catch (_) { return ''; }
+
+  const candidatos = [
+    'Wow.exe', 'WowClassic.exe', 'Wow-64.exe', 'WowClassic-64.exe',
+    'WowB.exe', 'WowT.exe', 'World of Warcraft Launcher.exe', 'Battle.net.exe',
+    'wow.exe', 'wowclassic.exe'
+  ];
+  for (const c of candidatos) {
+    const p = path.join(directorio, c);
+    if (fs.existsSync(p)) return p;
+  }
+  try {
+    const entradas = fs.readdirSync(directorio);
+    for (const f of entradas) {
+      if (/\.exe$/i.test(f) && !/^(blizzarderror|crashreport|uninstall)/i.test(f)) {
+        return path.join(directorio, f);
+      }
+    }
+  } catch (_) {}
+  return '';
+}
+
+app.post('/api/games/launch', (req, res) => {
+  const { gameId } = req.body || {};
+  const gKey = gameId || config.activeGame || 'forever';
+  const targetPath = rutaDeJuego(gKey);
+  if (!targetPath) return respuestaSinRuta(res, gKey);
+
+  const exePath = buscarEjecutableDeJuego(targetPath);
+  if (!exePath) {
+    return res.status(404).json({
+      success: false,
+      error: 'No se encontró el ejecutable del juego en ' + targetPath,
+      code: 'err_no_executable'
+    });
+  }
+
+  try {
+    if (process.platform === 'linux' && exePath.endsWith('.exe')) {
+      const child = spawn('xdg-open', [exePath], { detached: true, stdio: 'ignore' });
+      child.unref();
+    } else {
+      const child = spawn(exePath, [], {
+        cwd: path.dirname(exePath),
+        detached: true,
+        stdio: 'ignore'
+      });
+      child.unref();
+    }
+    res.json({ success: true, gameId: gKey, exePath });
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      error: 'No se pudo arrancar el juego',
+      code: 'err_launch_failed'
+    });
+  }
 });
 
 // API: CurseForge Search
