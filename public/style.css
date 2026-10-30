@@ -735,6 +735,14 @@ body.is-maximized .app-sidebar {
 }
 
 .btn-forever-addons .nav-label-title {
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.btn-forever-addons .nav-label-sub {
   font-size: 0.84rem;
   font-weight: 700;
   color: var(--accent-gold);
@@ -742,19 +750,11 @@ body.is-maximized .app-sidebar {
   white-space: nowrap;
 }
 
-.btn-forever-addons .nav-label-sub {
-  font-size: 0.70rem;
-  font-weight: 500;
-  color: var(--text-faint);
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
 .btn-forever-addons:hover {
   background: var(--bg-card);
 }
 
-.btn-forever-addons:hover .nav-label-sub {
+.btn-forever-addons:hover .nav-label-title {
   color: var(--text-muted);
 }
 
@@ -764,12 +764,12 @@ body.is-maximized .app-sidebar {
 }
 
 .btn-forever-addons.active .nav-label-title {
-  color: var(--accent-gold);
-  text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  color: rgba(245, 158, 11, 0.85);
 }
 
 .btn-forever-addons.active .nav-label-sub {
-  color: rgba(245, 158, 11, 0.85);
+  color: var(--accent-gold);
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
 
 .btn-settings-nav {
