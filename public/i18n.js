@@ -38,6 +38,10 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Search Addons',
+      nav_recommended: 'Recommended',
+      topbar_recommended: 'KoRForge / Recommended Addons',
+      rec_cat_ui_suite: 'Interface Suite',
+      rec_loading: 'Loading recommended addons...',
       nav_favorites: 'Favorites',
       nav_installed: 'Installed',
       nav_backups: 'WTF Vault',
@@ -645,6 +649,10 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Buscar Addons',
+      nav_recommended: 'Recomendados',
+      topbar_recommended: 'KoRForge / Addons Recomendados',
+      rec_cat_ui_suite: 'Suite de interfaz',
+      rec_loading: 'Cargando addons recomendados...',
       nav_favorites: 'Favoritos',
       nav_installed: 'Instalados',
       nav_backups: 'Bóveda WTF',
@@ -1252,6 +1260,10 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Buscar Addons',
+      nav_recommended: 'Recomendados',
+      topbar_recommended: 'KoRForge / Addons Recomendados',
+      rec_cat_ui_suite: 'Suite de interface',
+      rec_loading: 'Cargando addons recomendados...',
       nav_favorites: 'Favoritos',
       nav_installed: 'Instalados',
       nav_backups: 'Bóveda WTF',
@@ -1859,6 +1871,10 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Rechercher des Addons',
+      nav_recommended: 'Recommandés',
+      topbar_recommended: 'KoRForge / Addons Recommandés',
+      rec_cat_ui_suite: "Suite d'interface",
+      rec_loading: 'Chargement des addons recommandés...',
       nav_favorites: 'Favoris',
       nav_installed: 'Installés',
       nav_backups: 'Coffre-fort WTF',
@@ -2466,6 +2482,10 @@
 
       // --- Navegación y barra superior ------------------------------------
       nav_search: 'Cerca Addon',
+      nav_recommended: 'Consigliati',
+      topbar_recommended: 'KoRForge / Addon Consigliati',
+      rec_cat_ui_suite: 'Suite interfaccia',
+      rec_loading: 'Caricamento addon consigliati...',
       nav_favorites: 'Preferiti',
       nav_installed: 'Installati',
       nav_backups: 'Cassaforte WTF',
@@ -3069,6 +3089,10 @@
       pill_classic_era: 'WoW Классическая эра (ваниль 1.15)',
       pill_classic: 'WoW Классическая прогрессия (MoP / Cataclysm)',
       nav_search: 'Поиск дополнений',
+      nav_recommended: 'Рекомендуемые',
+      topbar_recommended: 'KoRForge / Рекомендуемые аддоны',
+      rec_cat_ui_suite: 'Пакет интерфейса',
+      rec_loading: 'Загрузка рекомендуемых аддонов...',
       nav_favorites: 'Избранное',
       nav_installed: 'Установлено',
       nav_backups: 'Хранилище WTF',
@@ -3689,6 +3713,10 @@
       pill_classic_era: 'WoW 经典时代（香草 1.15）',
       pill_classic: 'WoW 经典进程（MoP / 大灾变）',
       nav_search: '搜索插件',
+      nav_recommended: '推荐',
+      topbar_recommended: 'KoRForge / 推荐插件',
+      rec_cat_ui_suite: '界面套件',
+      rec_loading: '正在加载推荐插件...',
       nav_favorites: '收藏夹',
       nav_installed: '已安装',
       nav_backups: 'WTF 存档库',
@@ -4309,6 +4337,10 @@
       pill_classic_era: 'WoW 클래식 시대 (바닐라 1.15)',
       pill_classic: 'WoW 클래식 진행(MoP / 대격변)',
       nav_search: '애드온 검색',
+      nav_recommended: '추천',
+      topbar_recommended: 'KoRForge / 추천 애드온',
+      rec_cat_ui_suite: '인터페이스 스위트',
+      rec_loading: '추천 애드온 로드 중...',
       nav_favorites: '즐겨찾기',
       nav_installed: '설치됨',
       nav_backups: 'WTF 보관소',
@@ -4929,6 +4961,10 @@
       pill_classic_era: 'WoW クラシック時代 (バニラ 1.15)',
       pill_classic: 'WoW クラシック プログレッション (MoP / Cataclysm)',
       nav_search: 'アドオンの検索',
+      nav_recommended: 'おすすめ',
+      topbar_recommended: 'KoRForge / おすすめアドオン',
+      rec_cat_ui_suite: 'インターフェーススイート',
+      rec_loading: 'おすすめアドオンを読み込み中...',
       nav_favorites: 'お気に入り',
       nav_installed: 'インストール済み',
       nav_backups: 'WTF 保管庫',

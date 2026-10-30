@@ -548,6 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cur.type === 'tab') {
         if (cur.tabId === 'addons') loadInstalledAddons(true);
         else if (cur.tabId === 'search') triggerCurseForgeSearch();
+        else if (cur.tabId === 'recommended') renderRecommendedTab(true);
         else if (cur.tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
         else if (cur.tabId === 'backups') { loadBackups(); if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame); }
         else if (cur.tabId === 'news') cargarNoticias(true);
@@ -589,6 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function addressBarFor(tabId) {
     const labels = {
       search: { icon: '🔍', text: T('topbar_search') },
+      recommended: { icon: '✨', text: T('topbar_recommended') },
       addons: { icon: '📦', text: T('topbar_installed') },
       favorites: { icon: '⭐', text: T('topbar_favorites') },
       backups: { icon: '💾', text: T('topbar_backups') },
@@ -615,6 +617,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setAddressBar(current.icon, current.text);
 
     if (tabId === 'addons') loadInstalledAddons();
+    if (tabId === 'recommended') renderRecommendedTab();
     if (tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     if (tabId === 'search') {
       showCatalogView();
@@ -829,6 +832,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Busqueda con la version del cliente nuevo
     triggerCurseForgeSearch();
+
+    // Addons recomendados del nuevo cliente
+    if (document.getElementById('pane-recommended')?.classList.contains('active')) {
+      renderRecommendedTab(true);
+    } else {
+      recommendedLastGame = null;
+    }
 
     /* Noticias: son las del cliente elegido, asi que se vacian y, si la pestaña esta a la vista, se
        piden las del cliente nuevo (dueño, 24-10-2026). */
@@ -1660,6 +1670,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       return true;
     }
+    if (pestana === 'recommended') {
+      filtrarRecomendados(texto);
+      return true;
+    }
     if (pestana === 'addons') {
       const campo = document.getElementById('searchInput');
       if (campo) {
@@ -2158,6 +2172,167 @@ document.addEventListener('DOMContentLoaded', () => {
       const favInput = document.getElementById('favSearchInput');
       renderFavoritesTab(favInput ? favInput.value : '');
     }
+    if (typeof actualizarEstadoTarjetasRecomendadas === 'function') {
+      actualizarEstadoTarjetasRecomendadas();
+    }
+  }
+
+
+
+  /* ==================================================================
+   * Pestaña: Addons Recomendados (dueño, 30-10-2026)
+   * Selección curada fija de los mejores addons por categoría y versión.
+   * ================================================================== */
+  const recommendedContent = document.getElementById('recommendedContent');
+  let recommendedLastGame = null;
+  const recommendedModsCache = new Map();
+
+  const LISTA_RECOMENDADOS = [
+    {
+      id: 'suite_interfaz',
+      tituloKey: 'rec_cat_ui_suite',
+      addons: [
+        {
+          slug: 'ellesmereui',
+          modIds: {
+            forever: 1477613,
+            retail: 1477613,
+            classic: 1743362,
+            classic_era: 1477613
+          }
+        }
+      ]
+    }
+  ];
+
+  async function fetchModCached(modId) {
+    if (!modId) return null;
+    if (window._modDetailsCache && window._modDetailsCache[modId]) {
+      return window._modDetailsCache[modId];
+    }
+    try {
+      const res = await fetch(`/api/mod/${encodeURIComponent(modId)}`);
+      if (!res.ok) return null;
+      const data = await res.json();
+      const mod = data && (data.mod || data);
+      if (mod) {
+        if (!window._modDetailsCache) window._modDetailsCache = {};
+        window._modDetailsCache[modId] = mod;
+        return mod;
+      }
+    } catch (e) {
+      console.warn(`[KoRForge] Error fetching mod ${modId}:`, e.message);
+    }
+    return null;
+  }
+
+  async function renderRecommendedTab(forceRefresh = false) {
+    if (!recommendedContent) return;
+
+    if (!forceRefresh && recommendedLastGame === currentActiveGame && recommendedContent.querySelector('.recommended-category')) {
+      actualizarEstadoTarjetasRecomendadas();
+      return;
+    }
+
+    recommendedLastGame = currentActiveGame;
+
+    const cacheJuego = recommendedModsCache.get(currentActiveGame);
+    if (!cacheJuego || forceRefresh) {
+      recommendedContent.innerHTML = `
+        <div class="cf-loading" style="padding: 48px 0; display:flex; flex-direction:column; align-items:center; gap:14px;">
+          <div class="cf-spinner"></div>
+          <span style="color:var(--text-faint); font-size:0.95rem;">${T('rec_loading')}</span>
+        </div>
+      `;
+    }
+
+    try {
+      const categoriasCargadas = [];
+
+      for (const cat of LISTA_RECOMENDADOS) {
+        const modsDeCategoria = [];
+        for (const item of cat.addons) {
+          const modId = (item.modIds && item.modIds[currentActiveGame]) || item.modId;
+          if (!modId) continue;
+          const mod = await fetchModCached(modId);
+          if (mod) modsDeCategoria.push(mod);
+        }
+        categoriasCargadas.push({
+          id: cat.id,
+          tituloKey: cat.tituloKey,
+          mods: modsDeCategoria
+        });
+      }
+
+      recommendedModsCache.set(currentActiveGame, categoriasCargadas);
+      pintarCategoriasRecomendadas(categoriasCargadas);
+    } catch (err) {
+      console.error('[KoRForge] Error cargando recomendados:', err);
+      recommendedContent.innerHTML = `<div class="empty-state"><p>${T('rec_loading')}</p></div>`;
+    }
+  }
+
+  function pintarCategoriasRecomendadas(categorias) {
+    if (!recommendedContent) return;
+    recommendedContent.innerHTML = '';
+
+    categorias.forEach(cat => {
+      const catDiv = document.createElement('div');
+      catDiv.className = 'recommended-category';
+      catDiv.dataset.catId = cat.id;
+
+      const header = document.createElement('div');
+      header.className = 'recommended-category-header';
+      header.innerHTML = `
+        <h3 class="recommended-category-title">
+          <span class="recommended-category-icon">✦</span>
+          <span>${T(cat.tituloKey)}</span>
+        </h3>
+        <div class="recommended-category-divider"></div>
+      `;
+      catDiv.appendChild(header);
+
+      const grid = document.createElement('div');
+      grid.className = 'recommended-cards-grid';
+      grid.id = `rec-grid-${cat.id}`;
+      catDiv.appendChild(grid);
+
+      recommendedContent.appendChild(catDiv);
+
+      if (cat.mods && cat.mods.length > 0) {
+        renderCatalogCards(cat.mods, grid);
+      }
+    });
+  }
+
+  function actualizarEstadoTarjetasRecomendadas() {
+    if (!recommendedContent) return;
+    const cats = recommendedModsCache.get(currentActiveGame);
+    if (!cats) return;
+    cats.forEach(cat => {
+      const grid = document.getElementById(`rec-grid-${cat.id}`);
+      if (grid && cat.mods && cat.mods.length > 0) {
+        renderCatalogCards(cat.mods, grid);
+      }
+    });
+  }
+
+  function filtrarRecomendados(texto) {
+    if (!recommendedContent) return;
+    const q = (texto || '').toLowerCase().trim();
+    const categories = recommendedContent.querySelectorAll('.recommended-category');
+    categories.forEach(cat => {
+      let anyVisible = false;
+      const cards = cat.querySelectorAll('.cf-card');
+      cards.forEach(card => {
+        const title = (card.querySelector('.cf-title')?.textContent || '').toLowerCase();
+        const summary = (card.querySelector('.cf-summary')?.textContent || '').toLowerCase();
+        const matches = !q || title.includes(q) || summary.includes(q);
+        card.style.display = matches ? '' : 'none';
+        if (matches) anyVisible = true;
+      });
+      cat.style.display = anyVisible ? '' : 'none';
+    });
   }
 
   // 4. Addon Detail View Logic
@@ -4318,6 +4493,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const curTab = activeTabEl ? activeTabEl.getAttribute('data-tab') : 'search';
       const bar = addressBarFor(curTab);
       setAddressBar(bar.icon, bar.text);
+    }
+
+    if (recommendedContent && typeof recommendedModsCache !== 'undefined' && recommendedModsCache.has(currentActiveGame)) {
+      const cats = recommendedModsCache.get(currentActiveGame);
+      cats.forEach(cat => {
+        const titleSpan = recommendedContent.querySelector(`.recommended-category[data-cat-id="${cat.id}"] .recommended-category-title span:last-child`);
+        if (titleSpan) titleSpan.textContent = T(cat.tituloKey);
+      });
+      if (typeof actualizarEstadoTarjetasRecomendadas === 'function') {
+        actualizarEstadoTarjetasRecomendadas();
+      }
     }
 
     // 6. Botón de versión del menú lateral

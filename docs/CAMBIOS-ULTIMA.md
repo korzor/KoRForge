@@ -1,5 +1,6 @@
-# Titulo: 1.5.6 - Tarjeta del actualizador con resolución y tipografía optimizadas
+# Titulo: 1.5.7 - Nueva pestaña Recomendados y selección curada de addons
 
-- Tarjeta de actualización adaptada a 660 × 480: igualadas las dimensiones de la ventana de actualización in-app al diseño del instalador oficial.
-- Tipografía clara y nítida: corregida la escala tipográfica en la tarjeta de progreso con Segoe UI legible y proporcionada.
-- Barra de progreso y arte de marca ampliados: nuevo tamaño para el arte oficial y animación de carga estilizada.
+- Nueva pestaña «Recomendados»: añadida entre «Buscar Addons» y «Favoritos» con acceso directo a una cuidada selección de los mejores addons por categoría.
+- Organización por categorías: secciones delimitadas con cabecera y divisores dorados sin solapa de filtros para una navegación limpia y directa.
+- Compatibilidad multi-cliente: adaptación automática de las tarjetas y descargas según la versión activa de WoW (Retail, Classic Prog, Era y Forever).
+- Primera suite recomendada: integración inicial de EllesmereUI con estados reactivos de instalación en vivo.

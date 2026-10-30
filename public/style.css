@@ -730,6 +730,7 @@ body.is-maximized .app-sidebar {
 }
 
 #pane-addons.active,
+#pane-recommended.active,
 #pane-favorites.active,
 #pane-backups.active,
 #pane-settings.active,
@@ -1832,7 +1833,8 @@ body:not([data-tab="search"]) #cfSortWrap {
   display: none;
 }
 
-body[data-tab="news"] #btnCfSearch {
+body[data-tab="news"] #btnCfSearch,
+body[data-tab="recommended"] #btnCfSearch {
   display: none;
 }
 
@@ -2077,6 +2079,58 @@ body:not([data-tab="news"]) .btn-news-refresh {
   padding-right: 6px;
   padding-bottom: 28px;
   /* Las filas no se estiran a lo alto cuando hay pocas tarjetas (favoritos con 1-2 addons) */
+  align-content: start;
+}
+
+/* ===== Pestaña: Addons Recomendados (dueño, 30-10-2026) ===================== */
+.recommended-content {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  width: 100%;
+  padding-top: 4px;
+}
+
+.recommended-category {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.recommended-category-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recommended-category-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+
+.recommended-category-icon {
+  font-size: 0.95rem;
+  opacity: 0.85;
+}
+
+.recommended-category-divider {
+  height: 2px;
+  width: 100%;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.75) 0%, rgba(245, 158, 11, 0.25) 35%, rgba(255, 255, 255, 0.06) 80%, transparent 100%);
+  border-radius: 2px;
+}
+
+.recommended-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 16px;
   align-content: start;
 }
 
@@ -4107,14 +4161,14 @@ select:focus-visible {
 /* K-D1: la ventana puede bajar hasta ~1024 px (antes 1120). */
 @media (max-width: 1366px) {
   .app-topbar { padding-right: 132px; }
-  .cf-results-grid { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
+  .cf-results-grid, .recommended-cards-grid { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 14px; }
 }
 @media (max-width: 1200px) {
   .app-topbar { padding-right: 118px; }
   .topbar-game-tabs { gap: 4px; }
   .game-version-pill { padding: 0 6px; }
   .game-version-pill .pill-logo { height: 36px; max-width: 92px; }
-  .cf-results-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+  .cf-results-grid, .recommended-cards-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
   .app-content { padding: 12px 8px; }
   /* Aquí el contenido lleva 12 px arriba en vez de 14: el panel lateral baja 2 px para seguir
      alineado con la palabra «Filtros» (dueño, 25-10-2026). */
@@ -4125,7 +4179,7 @@ select:focus-visible {
   .app-brand-icon { height: 52px; width: 52px; }
   .game-version-pill { height: 52px; }
   .game-version-pill .pill-logo { height: 32px; max-width: 82px; }
-  .cf-results-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .cf-results-grid, .recommended-cards-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
 }
 
 /* ===== Menú contextual de texto (dueño, 24-10-2026) ================================

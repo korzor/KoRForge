@@ -137,6 +137,10 @@
             <span class="nav-icon"><img src="magnifier-rune.png" data-i18n-alt="nav_search" class="nav-icon-img"></span>
             <span class="nav-label" data-i18n="nav_search">Search Addons</span>
           </button>
+          <button class="nav-item" data-tab="recommended">
+            <span class="nav-icon"><img src="icon-recommended.png" data-i18n-alt="nav_recommended" class="nav-icon-img"></span>
+            <span class="nav-label" data-i18n="nav_recommended">Recommended</span>
+          </button>
           <button class="nav-item" data-tab="favorites">
             <span class="nav-icon"><img src="icon-favorites.png" data-i18n-alt="nav_favorites" class="nav-icon-img"></span>
             <span class="nav-label" data-i18n="nav_favorites">Favorites</span>
@@ -230,6 +234,11 @@
           <div class="addons-grid" id="addonsGrid">
             <!-- Populated by app.js -->
           </div>
+        </section>
+
+        <!-- View: Addons Recomendados -->
+        <section class="tab-pane" id="pane-recommended">
+          <div class="recommended-content" id="recommendedContent"></div>
         </section>
 
         <!-- View: Addons Favoritos -->
