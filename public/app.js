@@ -2203,10 +2203,49 @@ document.addEventListener('DOMContentLoaded', () => {
       id: 'suite_interfaz',
       tituloKey: 'rec_cat_ui_suite',
       addons: [
-        {
-          slug: 'ellesmereui',
-          modId: 1477613 // EllesmereUI para WoW Forever
-        }
+        { slug: 'ellesmereui', modId: 1477613 }
+      ]
+    },
+    {
+      id: 'bolsas_inventario',
+      tituloKey: 'rec_cat_bags',
+      addons: [
+        { slug: 'baganator', modId: 914482 }
+      ]
+    },
+    {
+      id: 'misiones_subida',
+      tituloKey: 'rec_cat_quests',
+      addons: [
+        { slug: 'questie', modId: 334372 }
+      ]
+    },
+    {
+      id: 'profesiones_recoleccion',
+      tituloKey: 'rec_cat_professions',
+      addons: [
+        { slug: 'gathermate2-classic', modId: 405809 }
+      ]
+    },
+    {
+      id: 'subastas_economia',
+      tituloKey: 'rec_cat_economy',
+      addons: [
+        { slug: 'auctionator', modId: 6124 }
+      ]
+    },
+    {
+      id: 'mapa_minimapa',
+      tituloKey: 'rec_cat_map',
+      addons: [
+        { slug: 'minimapbuttonbutton', modId: 446096 }
+      ]
+    },
+    {
+      id: 'mazmorras_bandas',
+      tituloKey: 'rec_cat_dungeons',
+      addons: [
+        { slug: 'dungeonjournal', modId: 1707971 }
       ]
     }
   ];
@@ -2628,8 +2667,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnDetailToggleFav.className = `btn btn-secondary btn-fav-detail ${isFav ? 'is-fav' : ''}`;
     btnDetailToggleFav.innerHTML = `<span class="star-icon">${isFav ? '★' : '☆'}</span><span class="fav-label">${isFav ? T('detail_fav_has') : T('detail_fav_add')}</span>`;
 
-    btnDetailInstall.className = `btn btn-gold btn-install-detail ${isInstalled ? 'installed' : ''}`;
-    btnDetailInstall.textContent = isInstalled ? T('detail_installed') : T('detail_install_latest');
+    btnDetailInstall.className = `btn btn-install-detail ${isInstalled ? 'installed' : 'btn-gold'}`;
+    btnDetailInstall.textContent = isInstalled ? T('btn_installed') : T('detail_install_latest');
 
     const availVer = formatVersionString(mod.version);
     const heroSummary = (isTranslated && currentTranslatedSummary) ? currentTranslatedSummary : (mod.summary || '');
@@ -2927,7 +2966,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.success) {
-        btnDetailInstall.textContent = T('detail_install_done');
+        btnDetailInstall.className = 'btn btn-install-detail installed';
+        btnDetailInstall.textContent = T('btn_installed');
         showToast(T('toast_install_done', { name: currentDetailMod.name }));
         loadInstalledAddons();
       } else {

@@ -2518,7 +2518,8 @@ body:not([data-tab="news"]) .btn-news-refresh {
   background: rgba(245, 158, 11, 0.36);
 }
 
-.btn-install-cf.installed {
+.btn-install-cf.installed,
+.btn-install-detail.installed {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2533,19 +2534,21 @@ body:not([data-tab="news"]) .btn-news-refresh {
   text-align: center;
   white-space: nowrap;
   flex-shrink: 0;
-  background: rgba(16, 185, 129, 0.15);
-  border: 1.5px solid var(--status-green);
-  color: var(--status-green);
+  background: rgba(16, 185, 129, 0.15) !important;
+  border: 1.5px solid var(--status-green) !important;
+  color: var(--status-green) !important;
   cursor: default;
-  box-shadow: none;
-  transform: none;
+  box-shadow: none !important;
+  transform: none !important;
 }
 
-.btn-install-cf.installed:hover {
-  transform: none;
-  box-shadow: none;
-  background: rgba(16, 185, 129, 0.15);
-  border-color: var(--status-green);
+.btn-install-cf.installed:hover,
+.btn-install-detail.installed:hover {
+  transform: none !important;
+  box-shadow: none !important;
+  background: rgba(16, 185, 129, 0.15) !important;
+  border-color: var(--status-green) !important;
+  color: var(--status-green) !important;
 }
 
 /* Quick Favorites Filter in Sidebar */

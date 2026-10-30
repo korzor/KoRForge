@@ -1,5 +1,4 @@
-# Titulo: 1.5.8 - Forever Addons: pestaña exclusiva y fija para WoW Forever
+# Titulo: 1.5.9 - Nuevas categorías en Forever Addons y botón Instalado unificado
 
-- Botón «Forever Addons»: ubicado encima de Ajustes en la barra lateral con formato vertical de dos líneas ajustadas.
-- Pestaña exclusiva para WoW Forever: selección de addons curados específicamente para el cliente Forever.
-- Bloqueo de versión: fijado el selector superior en WoW Forever impidiendo cambios accidentales de versión mientras se está en la pestaña.
+- Categorías ampliadas en Forever Addons: incorporados Baganator (Bolsas e inventario), Questie (Misiones y subida de nivel), GatherMate2 Classic (Profesiones y recolección), Auctionator (Subastas y economía), MinimapButtonButton (Mapa y minimapa) y DungeonJournal (Mazmorras y bandas).
+- Botón de estado en verde: unificado el estado a «Installed» / «Instalado» con estilo verde esmeralda idéntico tanto en las tarjetas del catálogo como en la ficha detallada.
