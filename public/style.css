@@ -698,6 +698,80 @@ body.is-maximized .app-sidebar {
 
 
 
+/* Botón Forever Addons (dueño, 30-10-2026) */
+.btn-forever-addons {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.btn-forever-addons .nav-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-forever-addons .nav-icon-img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.btn-forever-addons .nav-label-stack {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  line-height: 1.15;
+  gap: 1px;
+  min-width: 0;
+}
+
+.btn-forever-addons .nav-label-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--accent-gold);
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.btn-forever-addons .nav-label-sub {
+  font-size: 0.70rem;
+  font-weight: 500;
+  color: var(--text-faint);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.btn-forever-addons:hover {
+  background: var(--bg-card);
+}
+
+.btn-forever-addons:hover .nav-label-sub {
+  color: var(--text-muted);
+}
+
+.btn-forever-addons.active {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.02) 100%);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.btn-forever-addons.active .nav-label-title {
+  color: var(--accent-gold);
+  text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+}
+
+.btn-forever-addons.active .nav-label-sub {
+  color: rgba(245, 158, 11, 0.85);
+}
+
 .btn-settings-nav {
   width: 100%;
 }
@@ -1836,6 +1910,24 @@ body:not([data-tab="search"]) #cfSortWrap {
 body[data-tab="news"] #btnCfSearch,
 body[data-tab="recommended"] #btnCfSearch {
   display: none;
+}
+
+/* Bloqueo del selector de versión del juego en la pestaña Forever Addons (dueño, 30-10-2026) */
+body[data-tab="recommended"] .game-version-pill:not([data-game-id="forever"]) {
+  opacity: 0.3;
+  cursor: not-allowed;
+  filter: grayscale(0.85);
+}
+
+body[data-tab="recommended"] .game-version-pill:not([data-game-id="forever"]):hover {
+  border-color: transparent;
+  transform: none;
+}
+
+body[data-tab="recommended"] .game-version-pill[data-game-id="forever"] {
+  border-color: rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+  cursor: default;
 }
 
 /* Orden de la lista (Favoritos e Instalados): a la izquierda del buscador (dueño, 25-10-2026)

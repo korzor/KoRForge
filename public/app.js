@@ -617,7 +617,12 @@ document.addEventListener('DOMContentLoaded', () => {
     setAddressBar(current.icon, current.text);
 
     if (tabId === 'addons') loadInstalledAddons();
-    if (tabId === 'recommended') renderRecommendedTab();
+    if (tabId === 'recommended') {
+      if (currentActiveGame !== 'forever') {
+        switchActiveGame('forever');
+      }
+      renderRecommendedTab();
+    }
     if (tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     if (tabId === 'search') {
       showCatalogView();
@@ -654,6 +659,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Topbar Game Version Tabs Click Event
   document.querySelectorAll('.game-version-pill').forEach(pill => {
     pill.addEventListener('click', () => {
+      const activeTabEl = document.querySelector('.nav-item.active');
+      const curTab = activeTabEl ? activeTabEl.getAttribute('data-tab') : '';
+      if (curTab === 'recommended') {
+        // En la pestaña Forever Addons no se puede cambiar de versión: fija a WoW Forever (dueño, 30-10-2026)
+        return;
+      }
       const gameId = pill.getAttribute('data-game-id');
       if (gameId && gameId !== currentActiveGame) {
         switchActiveGame(gameId);
@@ -2194,12 +2205,7 @@ document.addEventListener('DOMContentLoaded', () => {
       addons: [
         {
           slug: 'ellesmereui',
-          modIds: {
-            forever: 1477613,
-            retail: 1477613,
-            classic: 1743362,
-            classic_era: 1477613
-          }
+          modId: 1477613 // EllesmereUI para WoW Forever
         }
       ]
     }
@@ -2229,14 +2235,12 @@ document.addEventListener('DOMContentLoaded', () => {
   async function renderRecommendedTab(forceRefresh = false) {
     if (!recommendedContent) return;
 
-    if (!forceRefresh && recommendedLastGame === currentActiveGame && recommendedContent.querySelector('.recommended-category')) {
+    if (!forceRefresh && recommendedContent.querySelector('.recommended-category')) {
       actualizarEstadoTarjetasRecomendadas();
       return;
     }
 
-    recommendedLastGame = currentActiveGame;
-
-    const cacheJuego = recommendedModsCache.get(currentActiveGame);
+    const cacheJuego = recommendedModsCache.get('forever');
     if (!cacheJuego || forceRefresh) {
       recommendedContent.innerHTML = `
         <div class="cf-loading" style="padding: 48px 0; display:flex; flex-direction:column; align-items:center; gap:14px;">
@@ -2252,7 +2256,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const cat of LISTA_RECOMENDADOS) {
         const modsDeCategoria = [];
         for (const item of cat.addons) {
-          const modId = (item.modIds && item.modIds[currentActiveGame]) || item.modId;
+          const modId = (item.modIds && item.modIds['forever']) || item.modId;
           if (!modId) continue;
           const mod = await fetchModCached(modId);
           if (mod) modsDeCategoria.push(mod);
@@ -2264,7 +2268,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
 
-      recommendedModsCache.set(currentActiveGame, categoriasCargadas);
+      recommendedModsCache.set('forever', categoriasCargadas);
       pintarCategoriasRecomendadas(categoriasCargadas);
     } catch (err) {
       console.error('[KoRForge] Error cargando recomendados:', err);
@@ -2307,7 +2311,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function actualizarEstadoTarjetasRecomendadas() {
     if (!recommendedContent) return;
-    const cats = recommendedModsCache.get(currentActiveGame);
+    const cats = recommendedModsCache.get('forever');
     if (!cats) return;
     cats.forEach(cat => {
       const grid = document.getElementById(`rec-grid-${cat.id}`);

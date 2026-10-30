@@ -1,6 +1,5 @@
-# Titulo: 1.5.7 - Nueva pestaña Recomendados y selección curada de addons
+# Titulo: 1.5.8 - Forever Addons: pestaña exclusiva y fija para WoW Forever
 
-- Nueva pestaña «Recomendados»: añadida entre «Buscar Addons» y «Favoritos» con acceso directo a una cuidada selección de los mejores addons por categoría.
-- Organización por categorías: secciones delimitadas con cabecera y divisores dorados sin solapa de filtros para una navegación limpia y directa.
-- Compatibilidad multi-cliente: adaptación automática de las tarjetas y descargas según la versión activa de WoW (Retail, Classic Prog, Era y Forever).
-- Primera suite recomendada: integración inicial de EllesmereUI con estados reactivos de instalación en vivo.
+- Botón «Forever Addons»: ubicado encima de Ajustes en la barra lateral con formato vertical de dos líneas ajustadas.
+- Pestaña exclusiva para WoW Forever: selección de addons curados específicamente para el cliente Forever.
+- Bloqueo de versión: fijado el selector superior en WoW Forever impidiendo cambios accidentales de versión mientras se está en la pestaña.
