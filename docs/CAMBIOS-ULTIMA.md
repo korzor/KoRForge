@@ -1,6 +1,5 @@
-# Titulo: 1.5.4 - Limpiador y analizador de WTF con visto bueno y protección
+# Titulo: 1.5.5 - Sincronización en vivo del catálogo y buscador de addons
 
-- Limpiador de WTF: escaneo automático de datos guardados (SavedVariables) cruzados con los addons del juego.
-- Clasificación inteligente: detección de datos huérfanos de addons desinstalados y protección total de addons activos y deshabilitados.
-- Puntos de restauración automáticos: respaldo de seguridad previo a la limpieza con opción de descarte o visto bueno en un clic.
-- Cuadro de mandos y métricas en vivo: visor detallado de archivos .lua y .bak, cuentas y personajes en la pestaña WTF.
+- Sincronización reactiva del buscador: actualización inmediata del estado de instalación de las tarjetas en el catálogo al instalar o desinstalar addons.
+- Eliminación de estados congelados: las tarjetas cambian al instante entre «Instalar» e «Instalado» sin requerir reiniciar la app o repetir búsquedas.
+- Persistencia de navegación y scroll: actualización fluida del catálogo y la ficha de detalle preservando la posición visual del usuario.

@@ -1,6 +1,6 @@
 {
     "name": "korforge",
-    "version": "1.5.4",
+    "version": "1.5.5",
     "description": "KoRForge - Standalone WoW Addon Manager",
     "desktopName": "korforge.desktop",
     "main": "main.js",

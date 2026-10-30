@@ -618,7 +618,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     if (tabId === 'search') {
       showCatalogView();
-      if (cfResultsGrid.children.length === 0) triggerCurseForgeSearch();
+      if (cfResultsGrid.children.length === 0) {
+        triggerCurseForgeSearch();
+      } else {
+        actualizarEstadoVisualAddons();
+      }
     }
     if (tabId === 'backups') { loadBackups(); if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame); }
     if (tabId === 'news') cargarNoticias();
@@ -1239,6 +1243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       renderInstalledAddons();
+      actualizarEstadoVisualAddons();
       if (notify) showToast(T('toast_scan_done', { count: installedAddons.length }));
     } catch (err) {
       console.error('Error escaneando addons:', err);
@@ -2139,6 +2144,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Sincroniza en caliente el estado visual (instalado/disponible) de las tarjetas y la ficha
+  function actualizarEstadoVisualAddons() {
+    if (lastCatalogResults && lastCatalogResults.length > 0 && cfResultsGrid && cfResultsGrid.children.length > 0 && !cfResultsGrid.querySelector('.empty-state')) {
+      const prevScroll = cfResultsGrid.scrollTop;
+      renderCatalogCards(lastCatalogResults, cfResultsGrid);
+      cfResultsGrid.scrollTop = prevScroll;
+    }
+    if (cfDetailView && cfDetailView.style.display !== 'none' && currentDetailMod) {
+      renderDetailHero(currentDetailMod, findInstalledAddon(currentDetailMod));
+    }
+    if (favoritesTabGrid && favoritesTabGrid.children.length > 0 && !favoritesTabGrid.querySelector('.empty-state')) {
+      const favInput = document.getElementById('favSearchInput');
+      renderFavoritesTab(favInput ? favInput.value : '');
+    }
+  }
+
   // 4. Addon Detail View Logic
   function showCatalogView() {
     cerrarNavegadorInterno();
@@ -2146,6 +2167,7 @@ document.addEventListener('DOMContentLoaded', () => {
     cfCatalogLayout.style.display = 'flex';
     setAddressBar('⚡', T('topbar_explorer'));
     pushNavState({ type: 'tab', tabId: 'search' });
+    actualizarEstadoVisualAddons();
   }
 
   btnBackToCatalog?.addEventListener('click', () => {
