@@ -1,4 +1,3 @@
-# Titulo: 1.5.9 - Nuevas categorías en Forever Addons y botón Instalado unificado
+# Titulo: 1.5.10 - Botón de actualización simplificado en verde
 
-- Categorías ampliadas en Forever Addons: incorporados Baganator (Bolsas e inventario), Questie (Misiones y subida de nivel), GatherMate2 Classic (Profesiones y recolección), Auctionator (Subastas y economía), MinimapButtonButton (Mapa y minimapa) y DungeonJournal (Mazmorras y bandas).
-- Botón de estado en verde: unificado el estado a «Installed» / «Instalado» con estilo verde esmeralda idéntico tanto en las tarjetas del catálogo como en la ficha detallada.
+- Botón de actualización in-app estilizado: simplificado el texto a «Update» / «Actualizar» con un diseño verde esmeralda y resplandor activo.

@@ -3619,6 +3619,35 @@ body:not([data-tab="news"]) .btn-news-refresh {
   color: var(--c-e2e8f0);
 }
 
+/* Botón de actualización del modal en verde (dueño, 30-10-2026) */
+#btnDownloadUpdate,
+.btn-update-modal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: 1px solid #34d399 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.35) !important;
+  transition: all 0.2s ease;
+}
+
+#btnDownloadUpdate:hover,
+.btn-update-modal:hover {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  border-color: #6ee7b7 !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 20px rgba(16, 185, 129, 0.55) !important;
+  transform: translateY(-1px);
+}
+
+#btnDownloadUpdate:active,
+.btn-update-modal:active {
+  transform: translateY(0) !important;
+}
+
 /* App Update Modal Dialog */
 .app-modal-backdrop {
   position: fixed;
