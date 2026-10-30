@@ -372,8 +372,8 @@ function createSplash() {
     splashMostradoEn = Date.now();
 
     splash = new BrowserWindow({
-      width: 560,
-      height: 372,
+      width: 660,
+      height: 480,
       frame: false,
       transparent: true,
       backgroundColor: '#00000000',

@@ -1,5 +1,5 @@
-# Titulo: 1.5.5 - Sincronización en vivo del catálogo y buscador de addons
+# Titulo: 1.5.6 - Tarjeta del actualizador con resolución y tipografía optimizadas
 
-- Sincronización reactiva del buscador: actualización inmediata del estado de instalación de las tarjetas en el catálogo al instalar o desinstalar addons.
-- Eliminación de estados congelados: las tarjetas cambian al instante entre «Instalar» e «Instalado» sin requerir reiniciar la app o repetir búsquedas.
-- Persistencia de navegación y scroll: actualización fluida del catálogo y la ficha de detalle preservando la posición visual del usuario.
+- Tarjeta de actualización adaptada a 660 × 480: igualadas las dimensiones de la ventana de actualización in-app al diseño del instalador oficial.
+- Tipografía clara y nítida: corregida la escala tipográfica en la tarjeta de progreso con Segoe UI legible y proporcionada.
+- Barra de progreso y arte de marca ampliados: nuevo tamaño para el arte oficial y animación de carga estilizada.

@@ -152,8 +152,8 @@ try {
     const [, px, py, pw, ph, factor, lx, ly, lw, lh] = m.map(Number);
     const acotar = (v) => Math.min(Math.max(v, 0.75), 2.2);
     const factorEsperado = Math.min(acotar(pw / 1920), acotar(ph / 1080));
-    const anchoEsperado = Math.round(560 * factorEsperado);
-    const altoEsperado = Math.round(372 * factorEsperado);
+    const anchoEsperado = Math.round(660 * factorEsperado);
+    const altoEsperado = Math.round(480 * factorEsperado);
     const centroX = lx + lw / 2;
     const centroY = ly + lh / 2;
     const objetivoX = px + pw / 2;
