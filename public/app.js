@@ -2247,6 +2247,13 @@ document.addEventListener('DOMContentLoaded', () => {
       addons: [
         { slug: 'dungeonjournal', modId: 1707971 }
       ]
+    },
+    {
+      id: 'sanacion_marcos',
+      tituloKey: 'rec_cat_healing',
+      addons: [
+        { slug: 'heal-bot-continued', modId: 2743 }
+      ]
     }
   ];
 
