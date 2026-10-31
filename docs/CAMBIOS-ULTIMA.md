@@ -1,4 +1,4 @@
-# Titulo: 1.5.14 - Icono en barra de tareas de Windows e integración nativa
+# Titulo: 1.5.15 - Filtro estricto para Classic Era y autodetección Battle.net
 
-- Icono en barra de tareas: asociado el AppUserModelId oficial (com.korzor.korforge) y cargado el icono nativo multirresolución en la ventana principal para que Windows lo muestre correctamente en la barra de tareas.
-- Recursos empaquetados: configurada la extracción de los iconos fuera del paquete ASAR para garantizar la compatibilidad con el explorador y las APIs de Windows.
+- Filtro estricto para Classic Era: consulta a CurseForge acotada a gameVersionTypeId=67408 y descarte automático de versiones de progresión (MoP / Cata) para que Classic Era siempre descargue sus addons correspondientes (1.15.x).
+- Autodetección Battle.net: lectura del archivo .build.info para detectar de forma automática las carpetas instaladas (_classic_era_, _forever_, _retail_) y resolución de rutas seleccionadas.

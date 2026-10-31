@@ -13,6 +13,13 @@ CF_API_KEY = String(CF_API_KEY || process.env.CF_API_KEY || '').trim();
 if (!CF_API_KEY) {
   console.warn('[KoRForge] Sin clave de CurseForge: crea cf-key.local.txt en la raiz (no se versiona) para buscar addons.');
 }
+const GAME_VERSION_TYPE_IDS = {
+  forever: 88568,
+  retail: 517,
+  classic_era: 67408,
+  classic: [79434, 77522, 73713, 81212]
+};
+
 const BASE_URL = process.env.CF_BASE_URL || 'https://api.curseforge.com/v1';
 
 function extractSourceUrl(links) {

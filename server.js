@@ -695,7 +695,12 @@ app.get('/api/addons/check-updates', async (req, res) => {
 
       if (!modId) {
         try {
-          const searchRes = await curseforge.searchAddons({ query: addon.actualName, pageSize: 3 });
+          const versionTypeId = (curseforge.GAME_VERSION_TYPE_IDS && curseforge.GAME_VERSION_TYPE_IDS[gameId]) || null;
+          const searchRes = await curseforge.searchAddons({
+            query: addon.actualName,
+            gameVersionTypeId: versionTypeId,
+            pageSize: 3
+          });
           if (searchRes && searchRes.length > 0) {
             const match = searchRes.find(m => 
               m.slug.toLowerCase() === addon.actualName.toLowerCase() ||
