@@ -1,4 +1,4 @@
-# Titulo: 1.5.13 - Botón para arrancar el juego y DBM en recomendados
+# Titulo: 1.5.14 - Icono en barra de tareas de Windows e integración nativa
 
-- Botón de arranque directo: incorporado un botón translúcido «Play» a la derecha de los selectores de versión del juego en la barra superior para ejecutar directamente el cliente del juego activo.
-- DBM en Forever Addons: añadido «DBM - Deadly Boss Mods (DBM-Core)» en la categoría de Mazmorras y bandas.
+- Icono en barra de tareas: asociado el AppUserModelId oficial (com.korzor.korforge) y cargado el icono nativo multirresolución en la ventana principal para que Windows lo muestre correctamente en la barra de tareas.
+- Recursos empaquetados: configurada la extracción de los iconos fuera del paquete ASAR para garantizar la compatibilidad con el explorador y las APIs de Windows.

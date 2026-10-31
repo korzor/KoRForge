@@ -12,6 +12,11 @@ const userDataPath = path.join(app.getPath('appData'), 'KoRForge');
 app.setPath('userData', userDataPath);
 process.env.KORFORGE_USER_DATA = userDataPath;
 
+// Identificador de modelo de usuario para Windows: vincula la ventana con su acceso directo y fija el icono en la barra de tareas
+if (process.platform === 'win32') {
+  app.setAppUserModelId('com.korzor.korforge');
+}
+
 const bootLogFile = path.join(userDataPath, 'boot.log');
 function logBoot(msg) {
   try {
@@ -361,6 +366,31 @@ function cerrarSplash() {
   splash = null;
 }
 
+// Carga del icono de la aplicacion tanto como ruta como nativeImage
+function getAppIcon() {
+  const iconName = process.platform === 'linux' ? 'korforge.png' : 'korforge.ico';
+  const posiblesRutas = [
+    path.join(__dirname, iconName),
+    path.join(process.resourcesPath || '', iconName),
+    path.join(process.resourcesPath || '', 'app.asar.unpacked', iconName),
+    path.join(__dirname, 'korforge.png')
+  ];
+
+  for (const ruta of posiblesRutas) {
+    if (ruta && fs.existsSync(ruta)) {
+      try {
+        const img = nativeImage.createFromPath(ruta);
+        if (!img.isEmpty()) {
+          return { path: ruta, image: img };
+        }
+      } catch (_) {}
+    }
+  }
+
+  const fallbackPath = path.join(__dirname, iconName);
+  return { path: fallbackPath, image: nativeImage.createFromPath(fallbackPath) };
+}
+
 function createSplash() {
   try {
     const cfg = loadConfigSync();
@@ -371,9 +401,11 @@ function createSplash() {
     const recienActualizada = ARRANQUE_TRAS_ACTUALIZAR;
     splashMostradoEn = Date.now();
 
+    const splashIcon = getAppIcon();
     splash = new BrowserWindow({
       width: 660,
       height: 480,
+      icon: !splashIcon.image.isEmpty() ? splashIcon.image : splashIcon.path,
       frame: false,
       transparent: true,
       backgroundColor: '#00000000',
@@ -469,10 +501,8 @@ function applyTrayLanguage(lang) {
 function createTray() {
   if (tray) return;
   try {
-    /* Linux: el .ico de Windows no vale; el PNG es el icono del AppImage. */
-    const iconPath = path.join(__dirname, process.platform === 'linux' ? 'korforge.png' : 'korforge.ico');
-    const trayImg = nativeImage.createFromPath(iconPath);
-    tray = new Tray(trayImg);
+    const trayIconInfo = getAppIcon();
+    tray = new Tray(trayIconInfo.image);
 
     const texts = trayTexts();
     const contextMenu = Menu.buildFromTemplate([
@@ -517,6 +547,7 @@ function createTray() {
 
 function createWindow() {
   const cfg = loadConfigSync();
+  const windowIconInfo = getAppIcon();
 
   win = new BrowserWindow({
     width: 1400,
@@ -530,7 +561,7 @@ function createWindow() {
     backgroundMaterial: 'none',
     thickFrame: false,
     title: 'KoRForge - WoW Forever Addon Forge',
-    icon: path.join(__dirname, process.platform === 'linux' ? 'korforge.png' : 'korforge.ico'),
+    icon: !windowIconInfo.image.isEmpty() ? windowIconInfo.image : windowIconInfo.path,
     autoHideMenuBar: true,
     show: !cfg.startMinimized,
     webPreferences: {
@@ -540,6 +571,12 @@ function createWindow() {
       webviewTag: true
     }
   });
+
+  if (!windowIconInfo.image.isEmpty()) {
+    try {
+      win.setIcon(windowIconInfo.image);
+    } catch (_) {}
+  }
 
   win.once('ready-to-show', () => {
     logBoot('win ready-to-show event fired. startMinimized: ' + cfg.startMinimized);

@@ -1,6 +1,6 @@
 {
     "name": "korforge",
-    "version": "1.5.13",
+    "version": "1.5.14",
     "description": "KoRForge - Standalone WoW Addon Manager",
     "desktopName": "korforge.desktop",
     "main": "main.js",
@@ -85,7 +85,9 @@
         "asarUnpack": [
             "package.json",
             "public/splash.png",
-            "Launch-KoRForge.vbs"
+            "Launch-KoRForge.vbs",
+            "korforge.ico",
+            "korforge.png"
         ]
     },
     "dependencies": {
