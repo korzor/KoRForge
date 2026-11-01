@@ -2374,6 +2374,29 @@ document.addEventListener('DOMContentLoaded', () => {
       ]
     },
     {
+      id: 'combate_auras',
+      tituloKey: 'rec_cat_combat_auras',
+      addons: [
+        { slug: 'foreverauras', modId: 1703325 }
+      ]
+    },
+    {
+      id: 'utilidades_calidad',
+      tituloKey: 'rec_cat_utility',
+      addons: [
+        { slug: 'oneforall-forever', modId: 1714201 },
+        { slug: 'manners', modId: 1705364 }
+      ]
+    },
+    {
+      id: 'mapa_minimapa',
+      tituloKey: 'rec_cat_map',
+      addons: [
+        { slug: 'minimapbuttonbutton', modId: 446096 },
+        { slug: 'leatrix-maps', modId: 298842 }
+      ]
+    },
+    {
       id: 'bolsas_inventario',
       tituloKey: 'rec_cat_bags',
       addons: [
@@ -2399,13 +2422,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tituloKey: 'rec_cat_economy',
       addons: [
         { slug: 'auctionator', modId: 6124 }
-      ]
-    },
-    {
-      id: 'mapa_minimapa',
-      tituloKey: 'rec_cat_map',
-      addons: [
-        { slug: 'minimapbuttonbutton', modId: 446096 }
       ]
     },
     {
