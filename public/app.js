@@ -1347,46 +1347,58 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Acciones en lote: Desactivar/Activar todos y Desinstalar todos ---
+  const SVG_BATCH_PAUSE = '<rect x="6" y="5" width="3.5" height="14" rx="1" fill="currentColor"/><rect x="14.5" y="5" width="3.5" height="14" rx="1" fill="currentColor"/>';
+  const SVG_BATCH_PLAY = '<path d="M7 4.5v15l12-7.5-12-7.5z" fill="currentColor"/>';
+
   function actualizarInterruptorLoteAddons() {
-    const wrap = document.getElementById('wrapBatchToggle');
-    const toggle = document.getElementById('toggleAllAddons');
+    const btnBatch = document.getElementById('btnBatchToggleAddons');
     const label = document.getElementById('lblBatchToggleText');
+    const icon = document.getElementById('iconBatchToggle');
     const btnUninstallAll = document.getElementById('btnUninstallAllAddons');
-    if (!wrap || !toggle || !label || !btnUninstallAll) return;
+    if (!btnBatch || !label || !btnUninstallAll) return;
 
     const hayAddons = Array.isArray(installedAddons) && installedAddons.length > 0;
     if (!hayAddons) {
-      wrap.style.opacity = '0.4';
-      wrap.style.pointerEvents = 'none';
+      btnBatch.style.opacity = '0.4';
+      btnBatch.style.pointerEvents = 'none';
       btnUninstallAll.style.opacity = '0.4';
       btnUninstallAll.style.pointerEvents = 'none';
-      toggle.checked = false;
+      btnBatch.classList.remove('is-enable');
+      btnBatch.classList.add('is-disable');
       label.textContent = T('batch_disable_all');
+      if (icon) icon.innerHTML = SVG_BATCH_PAUSE;
       return;
     }
 
-    wrap.style.opacity = '1';
-    wrap.style.pointerEvents = 'auto';
+    btnBatch.style.opacity = '1';
+    btnBatch.style.pointerEvents = 'auto';
     btnUninstallAll.style.opacity = '1';
     btnUninstallAll.style.pointerEvents = 'auto';
 
     const todosDesactivados = installedAddons.every(a => !a.enabled);
     if (todosDesactivados) {
-      toggle.checked = false;
+      btnBatch.classList.remove('is-disable');
+      btnBatch.classList.add('is-enable');
+      btnBatch.dataset.action = 'enable';
       label.textContent = T('batch_enable_all');
+      btnBatch.title = T('batch_enable_all');
+      if (icon) icon.innerHTML = SVG_BATCH_PLAY;
     } else {
-      toggle.checked = true;
+      btnBatch.classList.remove('is-enable');
+      btnBatch.classList.add('is-disable');
+      btnBatch.dataset.action = 'disable';
       label.textContent = T('batch_disable_all');
+      btnBatch.title = T('batch_disable_all');
+      if (icon) icon.innerHTML = SVG_BATCH_PAUSE;
     }
   }
 
-  const toggleAllAddonsEl = document.getElementById('toggleAllAddons');
-  toggleAllAddonsEl?.addEventListener('change', async (e) => {
+  const btnBatchToggleAddonsEl = document.getElementById('btnBatchToggleAddons');
+  btnBatchToggleAddonsEl?.addEventListener('click', async (e) => {
     e.stopPropagation();
-    const quiereActivar = toggleAllAddonsEl.checked;
-    toggleAllAddonsEl.checked = !quiereActivar;
-
     if (!Array.isArray(installedAddons) || installedAddons.length === 0) return;
+
+    const quiereActivar = btnBatchToggleAddonsEl.dataset.action === 'enable';
 
     const confirmado = await askConfirm({
       title: quiereActivar ? T('batch_enable_title') : T('batch_disable_title'),
