@@ -206,6 +206,19 @@
             <button class="btn btn-primary" id="btnScanAddons" data-i18n-title="addons_rescan_hint">
               <span data-i18n="addons_rescan">🔍 Rescan</span>
             </button>
+            <div class="pane-actions-right">
+              <div class="batch-toggle-wrap" id="wrapBatchToggle" data-i18n-title="batch_toggle_hint">
+                <label class="switch" id="lblBatchToggle" data-i18n-aria-label="batch_toggle_hint">
+                  <input type="checkbox" id="toggleAllAddons" checked>
+                  <span class="slider"></span>
+                </label>
+                <span class="batch-toggle-label" id="lblBatchToggleText" data-i18n="batch_disable_all">Disable all</span>
+              </div>
+              <button class="btn btn-uninstall-all" id="btnUninstallAllAddons" data-i18n-title="btn_uninstall_all_hint">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span data-i18n="btn_uninstall_all">Uninstall all</span>
+              </button>
+            </div>
           </div>
 
           <!-- Banner dinámico de actualizaciones masivas (El Botón Mágico) -->
@@ -222,30 +235,7 @@
             </button>
           </div>
 
-          <div class="toolbar">
-            <!-- El buscador es el de la barra de arriba; este campo se queda oculto para no perder
-                 el filtro de la pestaña. -->
-            <input type="hidden" id="searchInput">
-            <div class="filter-pills">
-              <button class="pill active" data-filter="all" data-i18n="filter_all">All</button>
-              <button class="pill" data-filter="enabled" data-i18n="filter_enabled">Active</button>
-              <button class="pill" data-filter="disabled" data-i18n="filter_disabled">Disabled</button>
-              <button class="pill" data-filter="alerts" data-i18n="filter_alerts">⚠️ With Alerts</button>
-            </div>
-            <div class="toolbar-batch-actions">
-              <div class="batch-toggle-wrap" id="wrapBatchToggle" data-i18n-title="batch_toggle_hint">
-                <label class="switch" id="lblBatchToggle" data-i18n-aria-label="batch_toggle_hint">
-                  <input type="checkbox" id="toggleAllAddons" checked>
-                  <span class="slider"></span>
-                </label>
-                <span class="batch-toggle-label" id="lblBatchToggleText" data-i18n="batch_disable_all">Disable all</span>
-              </div>
-              <button class="btn btn-danger-subtle btn-uninstall-all" id="btnUninstallAllAddons" data-i18n-title="btn_uninstall_all_hint">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <span data-i18n="btn_uninstall_all">Uninstall all</span>
-              </button>
-            </div>
-          </div>
+          <input type="hidden" id="searchInput">
 
           <div class="addons-grid" id="addonsGrid">
             <!-- Populated by app.js -->

@@ -153,8 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function aplicarOrdenDeLista() {
     const p = (window.KorforgeOrden && window.KorforgeOrden.pestanaConOrden) ? window.KorforgeOrden.pestanaConOrden() : (document.body.dataset.tab === 'addons' ? 'addons' : 'favorites');
     if (p === 'addons') {
-      const pill = document.querySelector('.filter-pills .pill.active');
-      renderInstalledAddons(pill ? pill.getAttribute('data-filter') : 'all', document.getElementById('searchInput')?.value || '');
+      renderInstalledAddons('all', document.getElementById('searchInput')?.value || '');
       const ordenActual = window.KorforgeOrden?.getOrden ? window.KorforgeOrden.getOrden() : '';
       if (ordenActual === 'updates' && availableAddonUpdates.length === 0) {
         checkAddonUpdates(true);
@@ -1717,20 +1716,8 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Filter Pills in Mis Addons
-  const filterPills = document.querySelectorAll('.filter-pills .pill');
-  filterPills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      filterPills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      renderInstalledAddons(pill.getAttribute('data-filter'), document.getElementById('searchInput')?.value || '');
-    });
-  });
-
   document.getElementById('searchInput')?.addEventListener('input', (e) => {
-    const activePill = document.querySelector('.filter-pills .pill.active');
-    const filter = activePill ? activePill.getAttribute('data-filter') : 'all';
-    renderInstalledAddons(filter, e.target.value);
+    renderInstalledAddons('all', e.target.value);
   });
 
   // 3. CurseForge Dynamic Filter & Search Engine
@@ -4238,9 +4225,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Re-render installed addons to show update pills
-      const activePill = document.querySelector('.filter-pills .pill.active');
-      const filter = activePill ? activePill.getAttribute('data-filter') : 'all';
-      renderInstalledAddons(filter, document.getElementById('searchInput')?.value || '');
+      renderInstalledAddons('all', document.getElementById('searchInput')?.value || '');
     } catch (err) {
       if (!silent) showToast(T('toast_check_addons_error'), 'error');
     }
@@ -4700,9 +4685,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (backupsSub) backupsSub.textContent = T('vault_subtitle_game', { game: gameLabel(currentActiveGame) });
 
     // 2. Listas
-    const activePill = document.querySelector('.filter-pills .pill.active');
-    const filter = activePill ? activePill.getAttribute('data-filter') : 'all';
-    if (addonsGrid) renderInstalledAddons(filter, document.getElementById('searchInput')?.value || '');
+    if (addonsGrid) renderInstalledAddons('all', document.getElementById('searchInput')?.value || '');
     if (favoritesTabGrid) renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     rellenarOpcionesOrden();
     if (gamesManagementList && Object.keys(currentGamesData).length) {
