@@ -1,4 +1,3 @@
-# Titulo: 1.5.18 - Corrección del filtro de ordenación «Update available first»
+# Titulo: 1.5.19 - Retirada del botón «Play» (lanzamiento de juego)
 
-- **Corrección de ordenación por actualizaciones**: Se conectó el estado de actualizaciones disponibles (`availableAddonUpdates`) con el subsistema de ordenación de listas (`orden-listas-ui.js`). La opción de ordenar «Update available first» (Con actualización primero) ahora coloca de forma inmediata y prioritaria todos los addons con versiones nuevas disponibles al principio de la lista.
-- **Búsqueda automática al seleccionar el filtro**: Si el usuario selecciona el orden por actualizaciones y aún no se había realizado la comprobación de actualizaciones en la sesión actual, la app realiza automáticamente una comprobación silenciosa en segundo plano para presentar los resultados ordenados.
+- **Retirada del botón Play**: Se elimina el botón «Play» de la barra superior y su endpoint asociado. En sistemas Linux los clientes de WoW suelen ejecutarse mediante Steam/Proton, Heroic o lanzadores dedicados de Battle.net, por lo que el intento de ejecución directa desde el gestor provocaba fallos de Wine (`xdg-open`). Para evitar confusiones, comportamientos inesperados e inconsistencias multiplataforma, la app se enfoca puramente en la gestión, actualización y sincronización de addons.

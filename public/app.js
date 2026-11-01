@@ -333,14 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    const btnLaunch = document.getElementById('btnLaunchGame');
-    if (btnLaunch) {
-      const activo = currentGamesData[gameId];
-      const sinCarpeta = !activo || !activo.folderExists;
-      btnLaunch.classList.toggle('is-disabled', sinCarpeta);
-      const nombre = gameLabel(gameId);
-      btnLaunch.setAttribute('title', sinCarpeta ? T('pill_no_path', { juego: nombre }) : T('topbar_launch_game', { game: nombre }));
-    }
   }
 
   // Application Data State
@@ -1267,31 +1259,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnScanAddons?.addEventListener('click', () => loadInstalledAddons(true));
   btnRefreshAddons?.addEventListener('click', () => loadInstalledAddons(true));
-  const btnLaunchGame = document.getElementById('btnLaunchGame');
-  btnLaunchGame?.addEventListener('click', async () => {
-    const juego = currentGamesData[currentActiveGame];
-    if (!juego || !juego.folderExists) {
-      showToast(T('toast_no_path', { juego: gameLabel(currentActiveGame) }), 'warning');
-      return;
-    }
-    btnLaunchGame.classList.add('is-launching');
-    try {
-      const res = await fetch('/api/games/launch', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ gameId: currentActiveGame })
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.code ? mensajeDeError(data) : (data.error || ''));
-      }
-      showToast(T('toast_game_launched', { game: gameLabel(currentActiveGame) }), 'success');
-    } catch (err) {
-      showToast(T('toast_game_launch_error', { message: err.message }), 'error');
-    } finally {
-      setTimeout(() => btnLaunchGame.classList.remove('is-launching'), 1000);
-    }
-  });
 
   // 2. Mis Addons Loader
   let installedAddonsNoPath = false;
