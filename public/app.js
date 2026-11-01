@@ -28,6 +28,9 @@
 })();
 
 document.addEventListener('DOMContentLoaded', () => {
+  if (window.electronAPI && window.electronAPI.platform === 'linux') {
+    document.body.classList.add('is-linux');
+  }
   // K8 (CSP): las hojas de fuentes que esperaban a onload se activan aquí (sin inline).
   document.querySelectorAll('link[data-activar-media]').forEach((l) => { l.media = 'all'; });
   // --- Textos -----------------------------------------------------------
@@ -113,6 +116,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const barra = document.querySelector('.app-topbar');
     if (!barra) return;
     const esInteractivo = (el) => !!(el && el.closest && el.closest('button, a, input, select, textarea, label, .switch, .brand'));
+
+    if (window.electronAPI && window.electronAPI.platform === 'linux') return;
 
     barra.addEventListener('mousedown', (ev) => {
       if (ev.button !== 0 || esInteractivo(ev.target)) return;
@@ -235,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * resuelve a true (aceptar) o false (cancelar, Esc o clic fuera). El texto va en el cuerpo y los
    * botones se pueden renombrar (p. ej. la pregunta de los SavedVariables: Sí borrar / No conservar).
    */
-  function askConfirm({ title = '', sub = '', mensaje = '', okLabel = null, cancelLabel = null } = {}) {
+  function askConfirm({ title = '', sub = '', mensaje = '', okLabel = null, cancelLabel = null, danger = false, requirePhrase = null, phrasePrompt = '' } = {}) {
     return new Promise((resolve) => {
       const modal = document.getElementById('confirmModal');
       const elTitulo = document.getElementById('confirmTitle');
@@ -244,6 +249,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnOk = document.getElementById('btnConfirmOk');
       const btnCancel = document.getElementById('btnConfirmCancel');
       const btnClose = document.getElementById('btnCloseConfirmModal');
+      const phraseWrap = document.getElementById('confirmPhraseWrap');
+      const phrasePromptEl = document.getElementById('confirmPhrasePrompt');
+      const phraseInput = document.getElementById('confirmPhraseInput');
+
       if (!modal || !elTitulo || !elTexto || !btnOk || !btnCancel) {
         resolve(false);
         return;
@@ -257,26 +266,63 @@ document.addEventListener('DOMContentLoaded', () => {
       btnOk.textContent = okLabel || T('modal_continue');
       btnCancel.textContent = cancelLabel || T('modal_cancel');
 
+      if (danger) {
+        btnOk.classList.add('btn-danger');
+        btnOk.classList.remove('btn-gold');
+      } else {
+        btnOk.classList.add('btn-gold');
+        btnOk.classList.remove('btn-danger');
+      }
+
+      const onPhraseInput = () => {
+        if (!requirePhrase || !phraseInput) return;
+        const val = phraseInput.value.trim().toLowerCase();
+        const matches = val === requirePhrase.toLowerCase() || val === 'por favor';
+        btnOk.disabled = !matches;
+        btnOk.classList.toggle('is-disabled', !matches);
+      };
+
+      if (requirePhrase && phraseWrap && phraseInput && phrasePromptEl) {
+        phraseWrap.style.display = 'block';
+        phrasePromptEl.textContent = phrasePrompt || `Escribe "${requirePhrase}" para confirmar:`;
+        phraseInput.value = '';
+        btnOk.disabled = true;
+        btnOk.classList.add('is-disabled');
+        phraseInput.addEventListener('input', onPhraseInput);
+        setTimeout(() => phraseInput.focus(), 50);
+      } else if (phraseWrap) {
+        phraseWrap.style.display = 'none';
+        btnOk.disabled = false;
+        btnOk.classList.remove('is-disabled');
+      }
+
       let hecho = false;
       const focoPrevio = document.activeElement;
       const alTeclear = (e) => {
         if (e.key === 'Escape') { e.preventDefault(); cerrar(false); }
-        if (e.key === 'Enter') { e.preventDefault(); cerrar(true); }
+        if (e.key === 'Enter' && !btnOk.disabled) { e.preventDefault(); cerrar(true); }
       };
       const alFondo = (e) => { if (e.target === modal) cerrar(false); };
-      const alAceptar = () => cerrar(true);
+      const alAceptar = () => { if (!btnOk.disabled) cerrar(true); };
       const alCerrar = () => cerrar(false);
 
       function cerrar(valor) {
         if (hecho) return;
         hecho = true;
         modal.style.display = 'none';
+        if (phraseWrap) phraseWrap.style.display = 'none';
+        if (phraseInput) {
+          phraseInput.removeEventListener('input', onPhraseInput);
+          phraseInput.value = '';
+        }
+        btnOk.disabled = false;
+        btnOk.classList.remove('is-disabled', 'btn-danger');
+        btnOk.classList.add('btn-gold');
         document.removeEventListener('keydown', alTeclear);
         modal.removeEventListener('click', alFondo);
         btnOk.removeEventListener('click', alAceptar);
         btnCancel.removeEventListener('click', alCerrar);
         if (btnClose) btnClose.removeEventListener('click', alCerrar);
-        /* K-D3: devolver el foco a donde estaba antes de abrir. */
         if (focoPrevio && typeof focoPrevio.focus === 'function') {
           try { focoPrevio.focus(); } catch (_) {}
         }
@@ -1301,7 +1347,114 @@ document.addEventListener('DOMContentLoaded', () => {
     return 'addon-default.svg';
   }
 
+  // --- Acciones en lote: Desactivar/Activar todos y Desinstalar todos ---
+  function actualizarInterruptorLoteAddons() {
+    const wrap = document.getElementById('wrapBatchToggle');
+    const toggle = document.getElementById('toggleAllAddons');
+    const label = document.getElementById('lblBatchToggleText');
+    const btnUninstallAll = document.getElementById('btnUninstallAllAddons');
+    if (!wrap || !toggle || !label || !btnUninstallAll) return;
+
+    const hayAddons = Array.isArray(installedAddons) && installedAddons.length > 0;
+    if (!hayAddons) {
+      wrap.style.opacity = '0.4';
+      wrap.style.pointerEvents = 'none';
+      btnUninstallAll.style.opacity = '0.4';
+      btnUninstallAll.style.pointerEvents = 'none';
+      toggle.checked = false;
+      label.textContent = T('batch_disable_all');
+      return;
+    }
+
+    wrap.style.opacity = '1';
+    wrap.style.pointerEvents = 'auto';
+    btnUninstallAll.style.opacity = '1';
+    btnUninstallAll.style.pointerEvents = 'auto';
+
+    const todosDesactivados = installedAddons.every(a => !a.enabled);
+    if (todosDesactivados) {
+      toggle.checked = false;
+      label.textContent = T('batch_enable_all');
+    } else {
+      toggle.checked = true;
+      label.textContent = T('batch_disable_all');
+    }
+  }
+
+  const toggleAllAddonsEl = document.getElementById('toggleAllAddons');
+  toggleAllAddonsEl?.addEventListener('change', async (e) => {
+    e.stopPropagation();
+    const quiereActivar = toggleAllAddonsEl.checked;
+    toggleAllAddonsEl.checked = !quiereActivar;
+
+    if (!Array.isArray(installedAddons) || installedAddons.length === 0) return;
+
+    const confirmado = await askConfirm({
+      title: quiereActivar ? T('batch_enable_title') : T('batch_disable_title'),
+      mensaje: quiereActivar ? T('batch_enable_confirm') : T('batch_disable_confirm'),
+      okLabel: quiereActivar ? T('batch_enable_ok') : T('batch_disable_ok'),
+      cancelLabel: T('modal_cancel')
+    });
+
+    if (!confirmado) return;
+
+    showToast(quiereActivar ? T('toast_enabling_all') : T('toast_disabling_all'), 'info');
+    try {
+      const res = await fetch('/api/addons/toggle-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enable: quiereActivar, gameId: currentActiveGame })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(quiereActivar ? T('toast_all_enabled') : T('toast_all_disabled'), 'success');
+        loadInstalledAddons();
+      } else {
+        showToast(data.error || 'Error', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Error', 'error');
+    }
+  });
+
+  const btnUninstallAllAddonsEl = document.getElementById('btnUninstallAllAddons');
+  btnUninstallAllAddonsEl?.addEventListener('click', async () => {
+    if (!Array.isArray(installedAddons) || installedAddons.length === 0) return;
+
+    const confirmado = await askConfirm({
+      title: T('batch_uninstall_title'),
+      sub: gameLabel(currentActiveGame),
+      mensaje: T('batch_uninstall_confirm', { count: installedAddons.length, game: gameLabel(currentActiveGame) }),
+      okLabel: T('batch_uninstall_ok'),
+      cancelLabel: T('modal_cancel'),
+      danger: true,
+      requirePhrase: 'por favor',
+      phrasePrompt: T('batch_uninstall_phrase_prompt')
+    });
+
+    if (!confirmado) return;
+
+    showToast(T('toast_uninstalling_all'), 'info');
+    try {
+      const res = await fetch('/api/addons/uninstall-all', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ gameId: currentActiveGame })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(T('toast_all_uninstalled', { count: data.deletedCount }), 'success');
+        loadInstalledAddons();
+      } else {
+        showToast(data.error || 'Error', 'error');
+      }
+    } catch (err) {
+      showToast(err.message || 'Error', 'error');
+    }
+  });
+
   function renderInstalledAddons(filter = 'all', searchTerm = '') {
+    actualizarInterruptorLoteAddons();
     addonsGrid.innerHTML = '';
     const term = searchTerm.toLowerCase().trim();
 
@@ -1375,7 +1528,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const updateInfo = (availableAddonUpdates || []).find(u => (addon.modId && u.modId === addon.modId) || u.folderName === addon.folderName);
       const updatePillHtml = updateInfo ? `
         <button class="btn-card-update btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_action_hint', { name: addon.title, version: updateInfo.newVersion })}">
-          ⚡ ${T('card_btn_update')}
+          <svg class="btn-card-update-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><polyline points="21 3 21 8 16 8"/></svg>
+          <span>${T('card_btn_update')}</span>
         </button>
       ` : '';
 
@@ -1400,7 +1554,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="ver-label">${T('card_ver_label')}</span> <span class="ver-val">${prefixV}${dispAddonVer}</span>
               </div>
               ${compatHtml}
-              ${updatePillHtml}
             </div>
             <p class="cf-summary" title="${addon.notes || ''}">${addon.notes || T('addon_notes_fallback')}</p>
             ${missingDepsHtml}
@@ -1408,7 +1561,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="cf-card-bottom">
             <div class="cf-card-meta-col">
               <div class="cf-card-stats">
-                <span class="installed-folder-tag" title="${T('card_folder_hint')}">📁 <code>${addon.folderName}</code></span>
+                ${updatePillHtml}
                 ${addon.dependencies && addon.dependencies.length > 0 ? `<span class="installed-deps-tag" title="${T('card_deps_hint', { deps: addon.dependencies.join(', ') })}">🔗 ${addon.dependencies.join(', ')}</span>` : ''}
               </div>
             </div>

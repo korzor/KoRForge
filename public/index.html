@@ -232,6 +232,19 @@
               <button class="pill" data-filter="disabled" data-i18n="filter_disabled">Disabled</button>
               <button class="pill" data-filter="alerts" data-i18n="filter_alerts">⚠️ With Alerts</button>
             </div>
+            <div class="toolbar-batch-actions">
+              <div class="batch-toggle-wrap" id="wrapBatchToggle" data-i18n-title="batch_toggle_hint">
+                <label class="switch" id="lblBatchToggle" data-i18n-aria-label="batch_toggle_hint">
+                  <input type="checkbox" id="toggleAllAddons" checked>
+                  <span class="slider"></span>
+                </label>
+                <span class="batch-toggle-label" id="lblBatchToggleText" data-i18n="batch_disable_all">Disable all</span>
+              </div>
+              <button class="btn btn-danger-subtle btn-uninstall-all" id="btnUninstallAllAddons" data-i18n-title="btn_uninstall_all_hint">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span data-i18n="btn_uninstall_all">Uninstall all</span>
+              </button>
+            </div>
           </div>
 
           <div class="addons-grid" id="addonsGrid">
@@ -610,7 +623,7 @@
             <div class="settings-card">
               <div class="settings-card-header">
                 <h3 data-i18n="settings_app_card">🖥️ Application Behavior</h3>
-                <p class="settings-desc" data-i18n="settings_app_desc">Control startup with Windows, the system tray and the interface language.</p>
+                <p class="settings-desc" data-i18n="settings_app_desc">Control system startup, the system tray and the interface language.</p>
               </div>
 
               <div class="settings-options-list">
@@ -636,7 +649,7 @@
                 </div>
                 <div class="settings-option-item">
                   <div class="option-info">
-                    <span class="option-title" data-i18n="settings_autostart_title">Launch on Windows startup</span>
+                    <span class="option-title" data-i18n="settings_autostart_title">Launch on Startup</span>
                     <span class="option-desc" data-i18n="settings_autostart_desc">Start KoRForge automatically in the background when the PC boots.</span>
                   </div>
                   <label class="switch" data-i18n-aria-label="settings_autostart_title">
@@ -967,6 +980,10 @@
       </div>
       <div class="app-modal-body">
         <p class="confirm-text" id="confirmText" data-i18n-skip></p>
+        <div class="confirm-phrase-wrap" id="confirmPhraseWrap" style="display: none;">
+          <label class="confirm-phrase-label" for="confirmPhraseInput" id="confirmPhrasePrompt" data-i18n-skip></label>
+          <input type="text" class="confirm-phrase-input" id="confirmPhraseInput" autocomplete="off" spellcheck="false">
+        </div>
       </div>
       <div class="app-modal-footer">
         <button class="btn btn-secondary" id="btnConfirmCancel" data-i18n="modal_cancel">Cancel</button>

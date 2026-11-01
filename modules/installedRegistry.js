@@ -106,11 +106,20 @@ function findByModId(gameId = 'forever', modId) {
   return gameReg[String(modId)] || null;
 }
 
+function clearGame(gameId = 'forever') {
+  const reg = loadRegistry();
+  if (reg[gameId]) {
+    delete reg[gameId];
+    saveRegistry(reg);
+  }
+}
+
 module.exports = {
   loadRegistry,
   getGameRegistry,
   recordInstallation,
   removeByFolderName,
   findByFolder,
-  findByModId
+  findByModId,
+  clearGame
 };

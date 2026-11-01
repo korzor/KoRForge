@@ -136,6 +136,13 @@ body.is-maximized .app-shell {
   -webkit-app-region: no-drag;
 }
 
+/* Arrastre nativo en Linux (Wayland / X11) donde setBounds manual no es soportado */
+body.is-linux .app-topbar,
+body.is-linux .topbar-game-tabs,
+body.is-linux .browser-address-container {
+  -webkit-app-region: drag;
+}
+
 body.is-maximized .app-topbar {
   border-top-left-radius: 0;
   border-top-right-radius: 0;
@@ -2307,30 +2314,53 @@ body:not([data-tab="news"]) .btn-news-refresh {
 }
 
 .btn-card-update {
+  height: 32px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: linear-gradient(135deg, var(--accent-gold) 0%, #d97706 100%);
-  color: var(--c-000);
-  font-weight: 700;
+  gap: 6px;
+  padding: 0 12px;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.16) 0%, rgba(217, 119, 6, 0.10) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.42);
+  border-radius: 8px;
+  color: #fbbf24;
+  font-family: inherit;
   font-size: 0.8rem;
-  padding: 3px 9px;
-  border-radius: 4px;
-  border: 1px solid var(--c-fbbf24);
+  font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
-  transition: all 0.2s ease;
   user-select: none;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.btn-card-update .btn-card-update-icon {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
 }
 
 .btn-card-update:hover {
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.26) 0%, rgba(217, 119, 6, 0.18) 100%);
+  border-color: rgba(245, 158, 11, 0.70);
+  color: #ffffff;
   transform: translateY(-1px);
-  background: linear-gradient(135deg, var(--c-fbbf24) 0%, var(--accent-gold) 100%);
-  box-shadow: 0 0 14px rgba(245, 158, 11, 0.7);
+  box-shadow: 0 3px 10px rgba(245, 158, 11, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.btn-card-update:hover .btn-card-update-icon {
+  transform: rotate(180deg);
 }
 
 .btn-card-update:active {
   transform: translateY(0);
+  background: linear-gradient(180deg, rgba(217, 119, 6, 0.22) 0%, rgba(180, 83, 9, 0.16) 100%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .btn-card-update-action {
@@ -2446,7 +2476,7 @@ body:not([data-tab="news"]) .btn-news-refresh {
 .cf-card-bottom {
   display: flex;
   justify-content: space-between;
-  align-items: flex-end;
+  align-items: center;
   border-top: 1px solid rgba(255, 255, 255, 0.05);
   padding-top: 8px;
   margin-top: auto;
@@ -4853,4 +4883,128 @@ select:focus-visible {
   border-color: rgba(245, 158, 11, 0.4) !important;
   color: var(--accent-gold) !important;
   font-weight: 700;
+}
+
+/* Acciones por lote en pestaña de instalados */
+.toolbar-batch-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.batch-toggle-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+  padding: 0 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  height: 34px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.batch-toggle-wrap:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.batch-toggle-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.btn-uninstall-all {
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  border-radius: 8px;
+  color: #f87171;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.btn-uninstall-all svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.btn-uninstall-all:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.65);
+  color: #fecaca;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.btn-uninstall-all:active {
+  transform: translateY(0);
+}
+
+.confirm-phrase-wrap {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.confirm-phrase-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.confirm-phrase-input {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 8px;
+  color: #fecaca;
+  font-family: inherit;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.confirm-phrase-input:focus {
+  border-color: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff !important;
+  border: 1px solid #f87171 !important;
+  box-shadow: 0 2px 10px rgba(239, 68, 68, 0.35);
+}
+
+.btn-danger:hover:not(:disabled):not(.is-disabled) {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.55);
+}
+
+.btn-danger:disabled,
+.btn-danger.is-disabled {
+  opacity: 0.45 !important;
+  cursor: not-allowed !important;
+  filter: grayscale(0.5);
+  box-shadow: none !important;
+  pointer-events: none;
 }
