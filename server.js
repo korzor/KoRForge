@@ -783,7 +783,7 @@ app.post('/api/addons/update-all', async (req, res) => {
       try {
         if (!item.downloadUrl || !item.modId) continue;
         console.log(`[KoRForge Bulk] Actualizando ${item.name} (${item.newVersion})...`);
-        const installRes = await installer.installFromUrl(item.downloadUrl, dir, item.name);
+        const installRes = await installer.installFromUrl(item.downloadUrl, dir, item.name, { targetGame });
         registry.recordInstallation(targetGame, {
           modId: item.modId,
           name: item.name,
@@ -793,7 +793,8 @@ app.post('/api/addons/update-all', async (req, res) => {
         });
         results.push({ name: item.name, success: true, folders: installRes.installedFolders });
       } catch (err) {
-        results.push({ name: item.name, success: false, error: err.message });
+        const code = err.code || (err.message && err.message.includes('err_incompatible_toc') ? 'err_incompatible_toc' : 'err_update_failed');
+        results.push({ name: item.name, success: false, code, error: err.message });
       }
     }
 
@@ -983,13 +984,15 @@ app.get('/api/search', async (req, res) => {
       return isNaN(num) ? null : num;
     };
 
+    const targetGame = req.query.gameId || config.activeGame || 'forever';
     const results = await curseforge.searchAddons({
       query: q || '',
       gameVersionTypeId: parseList(gameVersionTypeId),
       categoryId: parseList(categoryId),
       sortField: sortField || '2',
       sortOrder: sortOrder || 'desc',
-      pageSize: pageSize ? parseInt(pageSize) : 30
+      pageSize: pageSize ? parseInt(pageSize) : 30,
+      gameId: targetGame
     });
     res.json({ results });
   } catch (err) {
@@ -1002,7 +1005,8 @@ app.get('/api/search', async (req, res) => {
 app.get('/api/mod/:modId', async (req, res) => {
   try {
     const { modId } = req.params;
-    const details = await curseforge.getModDetails(modId);
+    const gameId = req.query.gameId || config.activeGame || 'forever';
+    const details = await curseforge.getModDetails(modId, gameId);
     res.json({ mod: details });
   } catch (err) {
     res.status(500).json({ error: 'Error interno', code: 'err_internal' });
@@ -1074,14 +1078,46 @@ app.post('/api/install-curseforge', async (req, res) => {
       return respuestaSinRuta(res, targetGame);
     }
 
-    console.log(`[KoRForge] Obteniendo archivo para mod ${modId} (${name || 'Addon'}) en ${targetGame}...`);
-    const fileInfo = await curseforge.getLatestFile(modId, targetGame);
-    if (!fileInfo || !fileInfo.downloadUrl) {
-      return res.status(404).json({ error: 'No se encontró archivo compatible con el cliente de WoW activo (Forever / Classic). Para evitar errores LUA, no se instalarán versiones exclusivas de Retail.', code: 'err_no_compatible_file' });
+    console.log(`[KoRForge] Buscando versión compatible para mod ${modId} (${name || 'Addon'}) en ${targetGame}...`);
+    const candidates = await curseforge.getCandidateFiles(modId, targetGame);
+    if (!candidates || candidates.length === 0) {
+      return res.status(404).json({ error: 'No se encontró archivo compatible con el cliente de WoW activo. Para evitar errores LUA, no se instalarán versiones de otros clientes.', code: 'err_no_compatible_file' });
     }
 
-    console.log(`[KoRForge] Descargando desde CDN: ${fileInfo.downloadUrl}`);
-    const installResult = await installer.installFromUrl(fileInfo.downloadUrl, targetDir, name || fileInfo.displayName);
+    let installResult = null;
+    let selectedFile = null;
+    let lastError = null;
+
+    for (const cand of candidates) {
+      try {
+        let downloadUrl = cand.downloadUrl;
+        if (!downloadUrl) {
+          downloadUrl = await curseforge.getFileDownloadUrl(modId, cand.id);
+        }
+        if (!downloadUrl) continue;
+
+        console.log(`[KoRForge] Probando candidato ${cand.displayName || cand.fileName} (id ${cand.id})...`);
+        installResult = await installer.installFromUrl(downloadUrl, targetDir, name || cand.displayName, { targetGame });
+        selectedFile = cand;
+        break;
+      } catch (err) {
+        if (err.message && err.message.includes('err_incompatible_toc')) {
+          console.warn(`[KoRForge] Candidato ${cand.displayName || cand.id} descartado tras análisis de .toc interno: ${err.message}`);
+          lastError = err;
+          continue;
+        }
+        throw err;
+      }
+    }
+
+    if (!installResult || !selectedFile) {
+      return res.status(400).json({
+        error: lastError ? lastError.message : 'No se encontró ningún archivo cuyo .toc sea compatible con este cliente.',
+        code: 'err_incompatible_toc'
+      });
+    }
+
+    const fileInfo = selectedFile;
 
     // Auto-install required external dependencies (relationType === 3)
     const autoInstalledDeps = [];
@@ -1157,7 +1193,7 @@ app.post('/api/install-file', async (req, res) => {
     }
 
     console.log(`[KoRForge] Instalando archivo específico en ${targetGame}: ${downloadUrl}`);
-    const installResult = await installer.installFromUrl(downloadUrl, targetDir, name || 'Addon');
+    const installResult = await installer.installFromUrl(downloadUrl, targetDir, name || 'Addon', { targetGame });
 
     if (modId) {
       registry.recordInstallation(targetGame, {
@@ -1176,7 +1212,8 @@ app.post('/api/install-file', async (req, res) => {
     });
   } catch (err) {
     console.error('[KoRForge] Error al instalar archivo:', err.message);
-    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+    const code = err.code || (err.message && err.message.includes('err_incompatible_toc') ? 'err_incompatible_toc' : 'err_internal');
+    res.status(code === 'err_incompatible_toc' ? 400 : 500).json({ error: err.message, code });
   }
 });
 
@@ -1630,7 +1667,7 @@ app.post('/api/profiles/install-missing', async (req, res) => {
       if (!item.modId) continue;
       try {
         console.log(`[KoRForge Profile] Instalando addon del pack: ${item.name} (${item.modId})...`);
-        const fileInfo = await curseforge.getLatestFile(item.modId);
+        const fileInfo = await curseforge.getLatestFile(item.modId, targetGame);
         if (fileInfo && fileInfo.downloadUrl) {
           const instRes = await installer.installFromUrl(fileInfo.downloadUrl, dir, item.name);
           registry.recordInstallation(targetGame, {

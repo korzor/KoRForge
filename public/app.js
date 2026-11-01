@@ -1393,8 +1393,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const esFavorito = isModFavorite(idFavoritoDeAddon(addon));
       const updateInfo = (availableAddonUpdates || []).find(u => (addon.modId && u.modId === addon.modId) || u.folderName === addon.folderName);
       const updatePillHtml = updateInfo ? `
-        <span class="addon-card-update-pill" title="${T('card_update_hint', { version: updateInfo.newVersion })}">⚡ v${updateInfo.newVersion}</span>
-        <button class="btn-card-update btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_now_hint')}">${T('card_btn_update')}</button>
+        <button class="btn-card-update btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_action_hint', { name: addon.title, version: updateInfo.newVersion })}">
+          ⚡ ${T('card_btn_update')}
+        </button>
       ` : '';
 
       const dispAddonVer = formatVersionDisplay(addon.version);
@@ -1431,7 +1432,6 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="installed-card-actions">
-              ${updateInfo ? `<button class="btn-card-update-action btn-addon-update-single" data-modid="${updateInfo.modId}" data-url="${updateInfo.downloadUrl}" data-name="${addon.title}" data-ver="${updateInfo.newVersion}" data-fileid="${updateInfo.newFileId || ''}" title="${T('card_update_action_hint', { name: addon.title, version: updateInfo.newVersion })}">${T('card_btn_update')}</button>` : ''}
               <button class="installed-btn-action btn-addon-fav ${esFavorito ? 'is-fav' : ''}" data-folder="${addon.folderName}" title="${esFavorito ? T('card_fav_remove_hint') : T('detail_fav_add')}">
                 <svg class="fav-star-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               </button>
@@ -2639,7 +2639,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     try {
       // 1. Fetch Mod Details
-      const res = await fetch(`/api/mod/${modId}`);
+      const res = await fetch(`/api/mod/${modId}?gameId=${encodeURIComponent(currentActiveGame)}`);
       const data = await res.json();
       const mod = data.mod;
       currentDetailMod = mod;
@@ -2916,7 +2916,9 @@ document.addEventListener('DOMContentLoaded', () => {
       item.className = 'file-item';
 
       const typeClass = f.releaseType === 1 ? 'file-type-release' : f.releaseType === 2 ? 'file-type-beta' : 'file-type-alpha';
-      const isForever = (f.gameVersions || []).some(v => v.includes('1.60') || v.toLowerCase().includes('forever'));
+      const isForever = (f.gameVersions || []).some(v => v.includes('1.60') || v.toLowerCase().includes('forever')) ||
+                        (f.fileName || '').toLowerCase().includes('forever') ||
+                        (f.displayName || '').toLowerCase().includes('forever');
 
       const versionsBadges = (f.gameVersions || []).slice(0, 6).map(v => {
         const isVerForever = v.includes('1.60') || v.toLowerCase().includes('forever');
@@ -4188,10 +4190,27 @@ document.addEventListener('DOMContentLoaded', () => {
         if (availableAddonUpdates.length === 0 && bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
         loadInstalledAddons();
       } else {
-        throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_update_one_error', { message: '' })));
+        const isTocMismatch = (data.code === 'err_incompatible_toc') || (data.error && data.error.includes('err_incompatible_toc'));
+        if (isTocMismatch) {
+          // Descartar aviso de actualización: el zip del update es para otra versión de WoW
+          availableAddonUpdates = availableAddonUpdates.filter(u => u.modId != modId);
+          if (availableAddonUpdates.length === 0 && bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
+          showToast(T('toast_update_skipped_client', { name, game: gameLabel(currentActiveGame) }), 'warning');
+          loadInstalledAddons();
+        } else {
+          throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_update_one_error', { message: '' })));
+        }
       }
     } catch (err) {
-      showToast(T('toast_update_one_error', { message: err.message }), 'error');
+      const isTocMismatch = err.message && err.message.includes('err_incompatible_toc');
+      if (isTocMismatch) {
+        availableAddonUpdates = availableAddonUpdates.filter(u => u.modId != modId);
+        if (availableAddonUpdates.length === 0 && bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
+        showToast(T('toast_update_skipped_client', { name, game: gameLabel(currentActiveGame) }), 'warning');
+        loadInstalledAddons();
+      } else {
+        showToast(T('toast_update_one_error', { message: err.message }), 'error');
+      }
     }
   });
 

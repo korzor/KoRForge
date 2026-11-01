@@ -35,14 +35,21 @@ function extractSourceUrl(links) {
   return '';
 }
 
-function extractLatestVersion(latestFiles) {
+function extractLatestVersion(latestFiles, gameId = null) {
   if (!latestFiles || !Array.isArray(latestFiles) || latestFiles.length === 0) return '';
-  // Prefer release files (releaseType === 1), otherwise newest file
-  const releaseFiles = latestFiles.filter(f => f.releaseType === 1);
-  const target = releaseFiles.length > 0 
-    ? releaseFiles[releaseFiles.length - 1] 
-    : latestFiles[latestFiles.length - 1];
-  
+  let candidates = latestFiles;
+  if (gameId) {
+    const scored = latestFiles
+      .map(f => ({ file: f, score: getFileScore(f, gameId) }))
+      .filter(x => x.score > 0);
+    if (scored.length > 0) {
+      scored.sort((a, b) => b.score - a.score || (b.file.id || 0) - (a.file.id || 0));
+      candidates = scored.map(x => x.file);
+    }
+  }
+
+  const releaseFiles = candidates.filter(f => f.releaseType === 1);
+  const target = releaseFiles.length > 0 ? releaseFiles[0] : candidates[0];
   if (!target) return '';
   let ver = target.displayName || target.fileName || '';
   ver = ver.replace(/\.zip$/i, '').trim();
@@ -55,7 +62,8 @@ async function searchAddons({
   categoryId = null,
   sortField = '2', // 2 = Popularity, 1 = Featured, 3 = Last Updated, 4 = Name, 6 = Total Downloads
   sortOrder = 'desc',
-  pageSize = 30
+  pageSize = 30,
+  gameId = null
 } = {}) {
   try {
     const url = new URL(`${BASE_URL}/mods/search`);
@@ -111,7 +119,7 @@ async function searchAddons({
       websiteUrl: mod.links?.websiteUrl || `https://www.curseforge.com/wow/addons/${mod.slug}`,
       categories: (mod.categories || []).map(c => ({ id: c.id, name: c.name })),
       dateModified: mod.dateModified,
-      version: extractLatestVersion(mod.latestFiles),
+      version: extractLatestVersion(mod.latestFiles, gameId),
       latestFiles: mod.latestFiles || []
     }));
   } catch (err) {
@@ -120,7 +128,7 @@ async function searchAddons({
   }
 }
 
-async function getModDetails(modId) {
+async function getModDetails(modId, gameId = null) {
   try {
     const url = `${BASE_URL}/mods/${modId}`;
     const res = await fetch(url, {
@@ -146,7 +154,7 @@ async function getModDetails(modId) {
       iconUrl: mod.logo?.thumbnailUrl || mod.logo?.url || '',
       author: mod.authors?.[0]?.name || 'Desconocido',
       authors: (mod.authors || []).map(a => a.name),
-      version: extractLatestVersion(mod.latestFiles),
+      version: extractLatestVersion(mod.latestFiles, gameId),
       websiteUrl: mod.links?.websiteUrl || `https://www.curseforge.com/wow/addons/${mod.slug}`,
       sourceUrl: extractSourceUrl(mod.links),
       issuesUrl: mod.links?.issuesUrl || '',
@@ -239,104 +247,108 @@ function filterRequiredDependencies(dependencies = []) {
   return dependencies.filter(d => d.relationType === 3);
 }
 
-function isFileCompatibleWithGame(file, gameId = 'forever') {
-  if (!file || !Array.isArray(file.gameVersions) || file.gameVersions.length === 0) {
-    return false;
-  }
-  const vers = file.gameVersions.map(v => String(v).toLowerCase());
+function getFileScore(file, gameId = 'forever') {
+  if (!file) return 0;
+  const vers = Array.isArray(file.gameVersions) ? file.gameVersions.map(v => String(v).toLowerCase()) : [];
+  const nameStr = ((file.fileName || '') + ' ' + (file.displayName || '')).toLowerCase();
 
-  const hasAny = (prefixes) => vers.some(v => prefixes.some(p => v.includes(p) || v.startsWith(p)));
-  const isOnlyRetail = vers.every(v => v.startsWith('11.') || v.startsWith('12.') || v.includes('retail') || v.includes('within'));
-  const isOnlyClassic = vers.every(v => v.startsWith('1.12') || v.startsWith('1.14') || v.startsWith('1.15') || v.includes('classic'));
+  const hasVer = (arr) => vers.some(v => arr.some(p => v === p || v.startsWith(p) || v.includes(p)));
+  const hasText = (arr) => arr.some(p => nameStr.includes(p));
+
+  const isForever = hasVer(['1.60', 'forever']) || hasText(['forever', '1.60']);
+  const isVanilla112 = hasVer(['1.12']) || hasText(['1.12']);
+  const isEra = hasVer(['1.15', '1.14', '1.13', 'classic era']) || hasText(['classicera', 'classic-era', 'classic_era', 'era.zip', 'era-']);
+  const isProgression = hasVer(['5.5', '5.0', '4.4', '3.4', '2.5', 'cataclysm', 'mists', 'pandaria', 'wrath', 'wotlk', 'tbc', 'burning crusade', 'progression']) ||
+                        hasText(['mop', 'pandaria', 'cata', 'cataclysm', 'wotlk', 'wrath', 'tbc', 'burningcrusade', 'anniversary']);
+  const isRetail = hasVer(['11.', '12.', '10.', 'retail', 'the war within', 'midnight']) ||
+                   hasText(['retail', 'tww', 'thewarwithin', 'midnight']);
 
   if (gameId === 'forever') {
-    // Forever 1.60.1 / Classic 1.12
-    const isForeverOrClassic = hasAny(['1.60', '1.12', '1.15', '1.14', 'classic']);
-    return isForeverOrClassic && !isOnlyRetail;
-  }
-
-  if (gameId === 'retail') {
-    // The War Within 11.x / 12.x
-    const isRetail = hasAny(['11.', '12.', 'retail', 'the war within']);
-    return isRetail && !isOnlyClassic;
+    if (isForever) return 100;
+    if (isEra || isProgression || isRetail) return 0; // Incompatibles: no mezclar con Classic Era/Progression/Retail
+    if (isVanilla112) return 80;
+    if (hasVer(['classic'])) return 20;
+    return 10;
   }
 
   if (gameId === 'classic_era') {
-    // Classic Era / Vanilla 1.15 / 1.12
-    const isEra = hasAny(['1.15', '1.14', '1.12', 'classic era', 'vanilla']);
-    const isProgOrRetail = hasAny(['11.', '12.', '4.4', '5.5', 'cataclysm', 'mists', 'pandaria']);
-    return isEra && !isProgOrRetail;
+    if (isEra) return 100;
+    if (isProgression || isRetail || (isForever && !isEra)) return 0;
+    if (isVanilla112) return 60;
+    if (hasVer(['classic'])) return 20;
+    return 10;
   }
 
   if (gameId === 'classic') {
-    // Classic Progression (Cataclysm 4.4 / MoP 5.5 / WotLK 3.4)
-    const isProg = hasAny(['4.4', '5.5', '5.0', '3.4', 'cataclysm', 'mists', 'pandaria', 'progression']);
-    return isProg && !isOnlyRetail;
+    if (isProgression) return 100;
+    if (isRetail || (isForever && !isProgression) || (isEra && !isProgression)) return 0;
+    if (hasVer(['progression'])) return 50;
+    return 0;
   }
 
-  return false;
+  if (gameId === 'retail') {
+    if (isRetail) return 100;
+    if ((isForever || isEra || isProgression || isVanilla112) && !isRetail) return 0;
+    return 10;
+  }
+
+  return 0;
 }
 
-/**
- * ¿El fichero está etiquetado para Retail (11.x / 12.x)?
- *
- * Los autores suelen etiquetar el MISMO fichero con Retail y con Classic (o suben el de Retail con
- * etiquetas de más). Pasó el 21-10-2026: en el cliente de MoP se instaló «TipTac Reborn» con un .toc
- * `Interface: 120100` (Retail) y el addon salía como incompatible aunque el juego lo cargara.
- */
-function tieneEtiquetaRetail(file) {
-  const vers = Array.isArray(file && file.gameVersions)
-    ? file.gameVersions.map(v => String(v).toLowerCase())
-    : [];
-  return vers.some(v => v.startsWith('11.') || v.startsWith('12.') || v.includes('retail') || v.includes('within'));
+function isFileCompatibleWithGame(file, gameId = 'forever') {
+  return getFileScore(file, gameId) > 0;
 }
 
-async function getLatestFile(modId, gameId = 'forever') {
+async function getCandidateFiles(modId, gameId = 'forever') {
   try {
-    /* Se miran VARIAS tandas de ficheros, no solo los más nuevos.
-       Motivo (dueño, 21-10-2026): RareScanner en MoP Classic daba «no compatible file» y el addon
-       sí tiene 45 ficheros de la rama 5.5.x; el problema era que los 25 más recientes son de Retail
-       y de Forever. Un cliente puede tener su último fichero varias tandas más atrás, así que se baja
-       por páginas de 50 (las más nuevas primero) hasta encontrar alguno compatible. Tope de 5 tandas
-       para no encadenar peticiones: 250 ficheros de histórico. */
     const TAMANO_TANDA = 50;
     const MAX_TANDAS = 5;
-    let compatibleFiles = [];
+    let allCandidates = [];
 
     for (let tanda = 0; tanda < MAX_TANDAS; tanda += 1) {
       const pagina = await getModFiles(modId, TAMANO_TANDA, tanda * TAMANO_TANDA);
       if (!Array.isArray(pagina) || pagina.length === 0) break;
-      const compatibles = pagina.filter(f => isFileCompatibleWithGame(f, gameId));
-      if (compatibles.length > 0) {
-        compatibleFiles = compatibles;
+
+      const scored = pagina
+        .map(f => ({ file: f, score: getFileScore(f, gameId) }))
+        .filter(item => item.score > 0);
+
+      allCandidates.push(...scored);
+
+      if (allCandidates.some(c => c.score >= 80)) {
         break;
       }
-      if (pagina.length < TAMANO_TANDA) break; // se acabaron los ficheros
+
+      if (pagina.length < TAMANO_TANDA) break;
     }
 
-    if (compatibleFiles.length === 0) {
-      return null;
+    if (allCandidates.length === 0) {
+      return [];
     }
 
-    /* En los clientes Classic, si hay ficheros SIN etiqueta de Retail, esos mandan: son los que
-       llevan el `Interface` del cliente. Si todos la llevan, se usa lo que haya (mejor eso que nada). */
-    const esClienteClassic = gameId === 'classic' || gameId === 'classic_era';
-    const sinRetail = compatibleFiles.filter(f => !tieneEtiquetaRetail(f));
-    const candidatos = (esClienteClassic && sinRetail.length > 0) ? sinRetail : compatibleFiles;
+    allCandidates.sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      const aRel = a.file.releaseType === 1 ? 1 : 0;
+      const bRel = b.file.releaseType === 1 ? 1 : 0;
+      if (bRel !== aRel) return bRel - aRel;
+      return (b.file.id || 0) - (a.file.id || 0);
+    });
 
-    const validFile = candidatos.find(f => f.downloadUrl && f.releaseType === 1) || 
-                      candidatos.find(f => f.downloadUrl) || 
-                      candidatos[0];
-    
-    if (validFile && !validFile.downloadUrl) {
-      validFile.downloadUrl = await getFileDownloadUrl(modId, validFile.id);
-    }
-
-    return validFile;
+    return allCandidates.map(c => c.file);
   } catch (err) {
-    console.error(`[CurseForge] Error obteniendo archivo para mod ${modId} en ${gameId}:`, err.message);
-    return null;
+    console.error(`[CurseForge] Error obteniendo candidatos para mod ${modId} en ${gameId}:`, err.message);
+    return [];
   }
+}
+
+async function getLatestFile(modId, gameId = 'forever') {
+  const candidates = await getCandidateFiles(modId, gameId);
+  if (!candidates || candidates.length === 0) return null;
+  const best = candidates[0];
+  if (best && !best.downloadUrl) {
+    best.downloadUrl = await getFileDownloadUrl(modId, best.id);
+  }
+  return best;
 }
 
 async function getFileDownloadUrl(modId, fileId) {
@@ -358,6 +370,8 @@ async function getFileDownloadUrl(modId, fileId) {
 
 module.exports = {
   searchAddons,
+  getCandidateFiles,
+  getFileScore,
   getModDetails,
   getModDescription,
   getModFiles,

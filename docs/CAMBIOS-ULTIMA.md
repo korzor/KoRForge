@@ -1,5 +1,5 @@
-# Titulo: 1.5.16 - Corrección de instalación en ficha de addon y estilo unificado
+# Titulo: 1.5.17 - Filtrado inteligente de versiones en updates y diseño limpio de tarjetas
 
-- Botón de instalación en ficha de addon unificado con el catálogo: diseño amarillo/dorado translúcido con resplandor y transición a «Installed» (verde) al instalar.
-- Corrección del bloqueo de instalación desde el detalle del addon: el botón ahora gestiona su estado habilitado/deshabilitado dinámicamente y refresca la información de versión instalada al completarse.
-- Soporte para resolución automática de URL de descarga en la pestaña de «Versiones y archivos» mediante CurseForge API cuando el listado de archivos omite downloadUrl.
+- **Descarte inteligente de actualizaciones incompatibles**: Verificación de compatibilidad mediante inspección de metadatos y archivos `.toc` del zip antes de extraer. Si una actualización corresponde a otra versión de cliente (ej. Classic Era o Retail en WoW Forever), el aviso de update se descarta automáticamente para evitar romper la instalación y no molestar al usuario.
+- **Unificación y eliminación de redundancias en tarjetas de addons**: Se eliminó el botón duplicado de actualización que pisaba la etiqueta de la carpeta instalada, dejando un único botón «Update» visible y perfectamente posicionado en la fila superior de metadatos.
+- **Mejora en la selección de archivos candidatos**: Priorización estricta por versión de juego (Forever / Classic Era / Progression / Retail) tanto en descargas directas como en comprobación de actualizaciones masivas.

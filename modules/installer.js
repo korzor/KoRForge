@@ -172,8 +172,102 @@ async function resolveGitHubRelease(url) {
   return data.zipball_url || `https://github.com/${owner}/${repo}/archive/refs/heads/master.zip`;
 }
 
+/**
+ * Inspecciona los archivos .toc contenidos dentro del ZIP y extrae sus directivas ## Interface:
+ */
+function inspectZipTocs(zip) {
+  const tocs = [];
+  const entries = (typeof zip.getEntries === 'function' ? zip.getEntries() : []) || [];
+  for (const entry of entries) {
+    if (!entry.isDirectory && entry.entryName.toLowerCase().endsWith('.toc')) {
+      try {
+        const content = entry.getData().toString('utf8');
+        const match = content.match(/^##\s*Interface:\s*(.+)$/im);
+        const interfaces = match
+          ? match[1].split(/[\s,]+/).map(s => parseInt(s, 10)).filter(n => !isNaN(n))
+          : [];
+        tocs.push({
+          name: path.basename(entry.entryName),
+          entryPath: entry.entryName,
+          interfaces
+        });
+      } catch (_) {}
+    }
+  }
+  return tocs;
+}
+
+/**
+ * Valida si las interfaces de los .toc son compatibles con el juego destino (forever, classic_era, classic, retail).
+ */
+function checkTocCompatibility(tocs, gameId = 'forever') {
+  if (!tocs || tocs.length === 0) return { ok: true, reason: 'no_toc' };
+
+  let hasAnyForever = false;
+  let hasAny112 = false;
+  let hasAnyEra = false;
+  let hasAnyProg = false;
+  let hasAnyRetail = false;
+
+  for (const t of tocs) {
+    const fileName = (t.name || '').toLowerCase();
+    const interfaces = t.interfaces || [];
+    const hasNum = (min, max) => interfaces.some(n => n >= min && n <= max);
+
+    if (interfaces.includes(16001) || hasNum(16000, 16099) || fileName.includes('forever')) {
+      hasAnyForever = true;
+    }
+    if (interfaces.includes(11200)) {
+      hasAny112 = true;
+    }
+    if (hasNum(11400, 11599) || fileName.includes('classicera') || fileName.includes('classic-era')) {
+      hasAnyEra = true;
+    }
+    if (hasNum(20500, 50599) || fileName.includes('tbc') || fileName.includes('wotlk') || fileName.includes('cata') || fileName.includes('mop')) {
+      hasAnyProg = true;
+    }
+    if (hasNum(110000, 129999) || fileName.includes('mainline') || fileName.includes('retail')) {
+      hasAnyRetail = true;
+    }
+  }
+
+  if (gameId === 'forever') {
+    if (hasAnyForever || hasAny112) return { ok: true, reason: 'forever_matched' };
+    if (hasAnyEra || hasAnyProg || hasAnyRetail) {
+      return { ok: false, reason: 'incompatible_for_forever', tocs };
+    }
+    return { ok: true, reason: 'fallback' };
+  }
+
+  if (gameId === 'classic_era') {
+    if (hasAnyEra || hasAny112) return { ok: true, reason: 'era_matched' };
+    if (hasAnyProg || hasAnyRetail || (hasAnyForever && !hasAnyEra)) {
+      return { ok: false, reason: 'incompatible_for_era', tocs };
+    }
+    return { ok: true, reason: 'fallback' };
+  }
+
+  if (gameId === 'classic') {
+    if (hasAnyProg) return { ok: true, reason: 'prog_matched' };
+    if (hasAnyRetail || (hasAnyForever && !hasAnyProg) || (hasAnyEra && !hasAnyProg)) {
+      return { ok: false, reason: 'incompatible_for_prog', tocs };
+    }
+    return { ok: true, reason: 'fallback' };
+  }
+
+  if (gameId === 'retail') {
+    if (hasAnyRetail) return { ok: true, reason: 'retail_matched' };
+    if (hasAnyForever || hasAnyEra || hasAnyProg || hasAny112) {
+      return { ok: false, reason: 'incompatible_for_retail', tocs };
+    }
+    return { ok: true, reason: 'fallback' };
+  }
+
+  return { ok: true, reason: 'unknown_game' };
+}
+
 // Installs an addon zip file into addonsDir
-async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon') {
+async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon', options = {}) {
   if (!fs.existsSync(addonsDir)) {
     fs.mkdirSync(addonsDir, { recursive: true });
   }
@@ -195,6 +289,17 @@ async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon') {
       if (/tope/.test(String(err.message))) throw err;
       /* zip corrupto: lo dirá extractAllTo */
     }
+    const tocs = inspectZipTocs(zip);
+    if (options && options.targetGame && tocs.length > 0 && !options.force) {
+      const check = checkTocCompatibility(tocs, options.targetGame);
+      if (!check.ok) {
+        const tocErr = new Error(`err_incompatible_toc: El archivo .toc del addon declara una versión de juego incompatible con ${options.targetGame} (${check.reason}).`);
+        tocErr.code = 'err_incompatible_toc';
+        tocErr.reason = check.reason;
+        throw tocErr;
+      }
+    }
+
     zip.extractAllTo(tempExtractDir, true);
 
     // Recursively locate all directories that contain a .toc file
@@ -255,7 +360,7 @@ async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon') {
 }
 
 // High-level install workflow from any URL (GitHub, direct zip, or CurseForge)
-async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon') {
+async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon', options = {}) {
   /* K6: la URL de entrada también se valida (la ruta del API ya responde 400 antes, esto es la
      segunda barrera por si se llama desde otro sitio). */
   const validacionEntrada = await validarUrlDescarga(rawUrl);
@@ -271,7 +376,7 @@ async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon') {
   const tempZipPath = path.join(os.tmpdir(), `korforge_dl_${Date.now()}.zip`);
   try {
     await downloadFile(downloadUrl, tempZipPath);
-    const installed = await installFromZip(tempZipPath, addonsDir, nameHint);
+    const installed = await installFromZip(tempZipPath, addonsDir, nameHint, options);
     return {
       success: true,
       installedFolders: installed,
@@ -287,6 +392,8 @@ async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon') {
 module.exports = {
   installFromUrl,
   installFromZip,
+  inspectZipTocs,
+  checkTocCompatibility,
   resolveGitHubRelease,
   esUrlDeDescargaPermitida,
   validarUrlDescarga,

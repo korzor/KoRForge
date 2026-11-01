@@ -499,6 +499,8 @@
       toast_check_addons_error: 'Error checking addon updates',
       toast_updating_one: 'Updating "{name}" to {version}...',
       toast_updated_one: '"{name}" updated successfully',
+      toast_update_skipped_client: 'Update for "{name}" is for another game version and not for {game}. Notice dismissed.',
+      err_incompatible_toc: 'The addon is for a different WoW version and is not compatible with the active client.',
       toast_update_one_error: 'Error updating the addon: {message}',
 
       // --- Packs de addons --------------------------------------------------
@@ -1125,6 +1127,8 @@
       toast_check_addons_error: 'Error al comprobar actualizaciones de addons',
       toast_updating_one: 'Actualizando "{name}" a {version}...',
       toast_updated_one: '"{name}" actualizado con éxito',
+      toast_update_skipped_client: 'La actualización de "{name}" es para otra versión de WoW y no aplica a {game}. Aviso descartado.',
+      err_incompatible_toc: 'El addon es para otra versión de WoW y no es compatible con el cliente activo.',
       toast_update_one_error: 'Error al actualizar el addon: {message}',
 
       // --- Packs de addons --------------------------------------------------
@@ -1751,6 +1755,8 @@
       toast_check_addons_error: 'Erro ao comprobar actualizacións de addons',
       toast_updating_one: 'Actualizando "{name}" a {version}...',
       toast_updated_one: '"{name}" actualizado con éxito',
+      toast_update_skipped_client: 'A actualización de "{name}" é para outra versión de WoW e non aplica a {game}. Aviso descartado.',
+      err_incompatible_toc: 'O addon é para outra versión de WoW e non é compatible co cliente activo.',
       toast_update_one_error: 'Erro ao actualizar o addon: {message}',
 
       // --- Packs de addons --------------------------------------------------
@@ -2377,6 +2383,8 @@
       toast_check_addons_error: 'Erreur lors de la vérification des mises à jour',
       toast_updating_one: 'Mise à jour de "{name}" vers {version}...',
       toast_updated_one: '"{name}" mis à jour avec succès',
+      toast_update_skipped_client: 'La mise à jour de "{name}" concerne une autre version de WoW et ne s’applique pas à {game}. Avis ignoré.',
+      err_incompatible_toc: 'L’addon est destiné à une autre version de WoW et n’est pas compatible avec le client actif.',
       toast_update_one_error: 'Erreur lors de la mise à jour de l’addon : {message}',
 
       // --- Packs de addons --------------------------------------------------
@@ -3003,6 +3011,8 @@
       toast_check_addons_error: 'Errore nel controllo degli aggiornamenti degli addon',
       toast_updating_one: 'Aggiornamento di "{name}" a {version}...',
       toast_updated_one: '"{name}" aggiornato con successo',
+      toast_update_skipped_client: 'L’aggiornamento di "{name}" è per un’altra versione di WoW e non si applica a {game}. Avviso ignorato.',
+      err_incompatible_toc: 'L\'addon è per un\'altra versione di WoW e non è compatibile con il client attivo.',
       toast_update_one_error: 'Errore nell’aggiornamento dell’addon: {message}',
 
       // --- Packs de addons --------------------------------------------------
@@ -3648,6 +3658,8 @@
       toast_check_addons_error: 'Ошибка проверки обновлений аддона.',
       toast_updating_one: 'Обновление "{name}" до {version}...',
       toast_updated_one: '«{name}» успешно обновлено',
+      toast_update_skipped_client: 'Обновление для «{name}» предназначено для другой версии WoW и не подходит для {game}. Уведомление отклонено.',
+      err_incompatible_toc: 'Аддон предназначен для другой версии WoW и несовместим с активным клиентом.',
       toast_update_one_error: 'Ошибка обновления дополнения: {message}.',
       pack_kfg_export_title: 'Полный пакет (.kfg)',
       pack_kfg_export_desc: 'Сохраните все установленные аддоны, избранное и папку WTF в один файл для экспорта и импорта.',
@@ -4287,6 +4299,8 @@
       toast_check_addons_error: '检查插件更新时出错',
       toast_updating_one: '正在将“{name}”更新为 {version} ...',
       toast_updated_one: '“{name}”更新成功',
+      toast_update_skipped_client: '“{name}”的更新适用于其他WoW版本，不适用于{game}。已忽略通知。',
+      err_incompatible_toc: '该插件适用于其他WoW版本，与当前客户端不兼容。',
       toast_update_one_error: '更新插件时出错：{message}',
       pack_kfg_export_title: '完整配置包 (.kfg)',
       pack_kfg_export_desc: '将所有已安装插件、收藏夹和WTF配置保存到一个便于导入导出的文件中。',
@@ -4926,6 +4940,8 @@
       toast_check_addons_error: '애드온 업데이트 확인 중 오류 발생',
       toast_updating_one: '" {name} "를 {version}로 업데이트하는 중...',
       toast_updated_one: '" {name} "가 성공적으로 업데이트되었습니다.',
+      toast_update_skipped_client: '"{name}"의 업데이트는 다른 WoW 버전용이며 {game}에는 적용되지 않습니다. 알림이 취소되었습니다.',
+      err_incompatible_toc: '이 애드온은 다른 WoW 버전용이며 현재 클라이언트와 호환되지 않습니다.',
       toast_update_one_error: '애드온 업데이트 중 오류 발생: {message}',
       pack_kfg_export_title: '전체 패키지 (.kfg)',
       pack_kfg_export_desc: '설치된 모든 애드온, 즐겨찾기 및 WTF 폴더를 하나의 파일로 저장하여 내보내기 및 가져오기가 가능합니다.',
@@ -5565,6 +5581,8 @@
       toast_check_addons_error: 'アドオンの更新チェック中にエラーが発生しました',
       toast_updating_one: '「 {name} 」を {version} に更新しています ...',
       toast_updated_one: '「 {name} 」が正常に更新されました',
+      toast_update_skipped_client: '「{name}」の更新は別のWoWバージョン用であり、{game}には適用されません。通知を破棄しました。',
+      err_incompatible_toc: 'このアドオンは別のWoWバージョン用であり、現在のアクティブなクライアントと互換性がありません。',
       toast_update_one_error: 'アドオンの更新エラー: {message}',
       pack_kfg_export_title: '完全パッケージ (.kfg)',
       pack_kfg_export_desc: 'インストール済みアドオン、お気に入り、WTFフォルダを1つのファイルに保存し、エクスポートとインポートが可能です。',
