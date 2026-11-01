@@ -1,6 +1,6 @@
-# Titulo: Gestión por lote de addons, interfaz unificada y arrastre en Linux
+# Titulo: Botón de acción por lote y nuevos addons recomendados para WoW Forever
 
-- **Acciones por lote en cabecera unificada**: Se integran en la barra principal el interruptor dinámico («Disable all» / «Enable all») y el botón de desinstalación masiva («Uninstall all») protegido por frase de seguridad («por favor»). Se retiran las pestañas de filtro secundarias para mantener una interfaz limpia y directa.
-- **Botón de actualización integrado y sobrio**: Se reubica el botón de actualización en la fila inferior de la tarjeta del addon, sustituyendo la etiqueta de la carpeta por un diseño estilizado en tono ámbar y con nuevo icono SVG.
-- **Arrastre de ventana nativo en Linux**: Soporte para mover la ventana frameless en compositores Wayland y gestores X11 mediante región de arrastre nativa (`-webkit-app-region: drag`).
-- **Ajustes de inicio agnósticos del sistema**: Se actualizan las opciones de arranque automático a «Launch on Startup» («Arrancar con el sistema») en los 9 idiomas.
+- **Botón de acción directa por lote**: Se sustituye el interruptor por un botón interactivo («Disable all» / «Enable all») que muestra siempre de forma transparente y sin ambigüedades la acción a realizar, manteniendo confirmación modal y estilo homogéneo con el resto de la barra.
+- **Nuevos addons recomendados para WoW Forever**: Se incorporan a la pestaña curada los addons «OneForAll - Forever», «Leatrix Maps», «Manners - Buff Nearby Players» y «ForeverAuras - A WeakAura Fork».
+- **Nuevas categorías en recomendados**: Añadidas las secciones «Combate y auras» y «Utilidades y calidad de vida» traducidas a los 9 idiomas de la interfaz.
+- **Optimizaciones de estabilidad y catálogo**: Actualización de dependencias y registro de versiones.
