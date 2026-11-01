@@ -93,9 +93,24 @@ window.KorforgeOrden = (() => {
     }
   }
 
+  function getOrdenActual() {
+    const p = pestanaConOrden();
+    return ordenLista[p];
+  }
+
   function addonConActualizacion(addon) {
-    const updates = window.availableAddonUpdates || [];
-    return updates.some((u) => (addon.modId && u.modId === addon.modId) || u.folderName === addon.folderName);
+    if (!addon) return false;
+    const updates = (typeof window.getAvailableAddonUpdates === 'function')
+      ? window.getAvailableAddonUpdates()
+      : (window.availableAddonUpdates || []);
+    if (!Array.isArray(updates) || updates.length === 0) return false;
+    return updates.some((u) => {
+      if (!u) return false;
+      const modMatch = addon.modId && u.modId && String(addon.modId) === String(u.modId);
+      const folderMatch = addon.folderName && u.folderName && String(addon.folderName).toLowerCase() === String(u.folderName).toLowerCase();
+      const actualMatch = addon.actualName && u.folderName && String(addon.actualName).toLowerCase() === String(u.folderName).toLowerCase();
+      return !!(modMatch || folderMatch || actualMatch);
+    });
   }
 
   function addonConProblemas(addon) {
@@ -148,6 +163,7 @@ window.KorforgeOrden = (() => {
     ordenarFavoritos: ordenarFavoritos,
     ordenarInstalados: ordenarInstalados,
     pestanaConOrden: pestanaConOrden,
+    getOrden: getOrdenActual,
     get ordenActual() { return ordenLista; },
   };
 })();

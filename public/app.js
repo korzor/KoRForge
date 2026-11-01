@@ -150,6 +150,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (p === 'addons') {
       const pill = document.querySelector('.filter-pills .pill.active');
       renderInstalledAddons(pill ? pill.getAttribute('data-filter') : 'all', document.getElementById('searchInput')?.value || '');
+      const ordenActual = window.KorforgeOrden?.getOrden ? window.KorforgeOrden.getOrden() : '';
+      if (ordenActual === 'updates' && availableAddonUpdates.length === 0) {
+        checkAddonUpdates(true);
+      }
     } else {
       renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     }
@@ -343,6 +347,16 @@ document.addEventListener('DOMContentLoaded', () => {
   let favoriteMods = [];
   let installedAddons = [];
   let availableAddonUpdates = [];
+  try {
+    Object.defineProperty(window, 'availableAddonUpdates', {
+      get: () => availableAddonUpdates,
+      set: (v) => { availableAddonUpdates = Array.isArray(v) ? v : []; },
+      configurable: true
+    });
+  } catch (_) {
+    window.availableAddonUpdates = availableAddonUpdates;
+  }
+  window.getAvailableAddonUpdates = () => availableAddonUpdates;
   let lastBackups = [];
 
   // Folder & Addons Action Elements

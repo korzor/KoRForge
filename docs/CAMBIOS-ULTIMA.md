@@ -1,5 +1,4 @@
-# Titulo: 1.5.17 - Filtrado inteligente de versiones en updates y diseño limpio de tarjetas
+# Titulo: 1.5.18 - Corrección del filtro de ordenación «Update available first»
 
-- **Descarte inteligente de actualizaciones incompatibles**: Verificación de compatibilidad mediante inspección de metadatos y archivos `.toc` del zip antes de extraer. Si una actualización corresponde a otra versión de cliente (ej. Classic Era o Retail en WoW Forever), el aviso de update se descarta automáticamente para evitar romper la instalación y no molestar al usuario.
-- **Unificación y eliminación de redundancias en tarjetas de addons**: Se eliminó el botón duplicado de actualización que pisaba la etiqueta de la carpeta instalada, dejando un único botón «Update» visible y perfectamente posicionado en la fila superior de metadatos.
-- **Mejora en la selección de archivos candidatos**: Priorización estricta por versión de juego (Forever / Classic Era / Progression / Retail) tanto en descargas directas como en comprobación de actualizaciones masivas.
+- **Corrección de ordenación por actualizaciones**: Se conectó el estado de actualizaciones disponibles (`availableAddonUpdates`) con el subsistema de ordenación de listas (`orden-listas-ui.js`). La opción de ordenar «Update available first» (Con actualización primero) ahora coloca de forma inmediata y prioritaria todos los addons con versiones nuevas disponibles al principio de la lista.
+- **Búsqueda automática al seleccionar el filtro**: Si el usuario selecciona el orden por actualizaciones y aún no se había realizado la comprobación de actualizaciones en la sesión actual, la app realiza automáticamente una comprobación silenciosa en segundo plano para presentar los resultados ordenados.
