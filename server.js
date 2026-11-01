@@ -1136,7 +1136,12 @@ app.post('/api/install-curseforge', async (req, res) => {
 // API: Install a specific file directly
 app.post('/api/install-file', async (req, res) => {
   try {
-    const { downloadUrl, name, gameId, modId, version, fileId } = req.body;
+    let { downloadUrl, name, gameId, modId, version, fileId } = req.body;
+
+    if (!downloadUrl && modId && fileId) {
+      downloadUrl = await curseforge.getFileDownloadUrl(modId, fileId);
+    }
+
     if (!downloadUrl) return res.status(400).json({ error: 'downloadUrl requerida', code: 'err_download_url_required' });
 
     /* K6 (auditoría 22-10-2026): solo https hacia hosts conocidos y con DNS público (sin SSRF). */

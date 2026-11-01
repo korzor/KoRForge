@@ -329,18 +329,29 @@ async function getLatestFile(modId, gameId = 'forever') {
                       candidatos[0];
     
     if (validFile && !validFile.downloadUrl) {
-      const urlRes = await fetch(`${BASE_URL}/mods/${modId}/files/${validFile.id}/download-url`, {
-        headers: { 'x-api-key': CF_API_KEY }
-      });
-      if (urlRes.ok) {
-        const urlData = await urlRes.json();
-        validFile.downloadUrl = urlData.data;
-      }
+      validFile.downloadUrl = await getFileDownloadUrl(modId, validFile.id);
     }
 
     return validFile;
   } catch (err) {
     console.error(`[CurseForge] Error obteniendo archivo para mod ${modId} en ${gameId}:`, err.message);
+    return null;
+  }
+}
+
+async function getFileDownloadUrl(modId, fileId) {
+  try {
+    const urlRes = await fetch(`${BASE_URL}/mods/${modId}/files/${fileId}/download-url`, {
+      headers: {
+        'x-api-key': CF_API_KEY,
+        'Accept': 'application/json'
+      }
+    });
+    if (!urlRes.ok) return null;
+    const urlData = await urlRes.json();
+    return urlData.data || null;
+  } catch (err) {
+    console.error(`[CurseForge] Error resolviendo downloadUrl (${modId}, ${fileId}):`, err.message);
     return null;
   }
 }
@@ -351,6 +362,7 @@ module.exports = {
   getModDescription,
   getModFiles,
   getLatestFile,
+  getFileDownloadUrl,
   filterRequiredDependencies,
   isFileCompatibleWithGame
 };

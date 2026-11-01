@@ -2598,6 +2598,11 @@ document.addEventListener('DOMContentLoaded', () => {
     cfCatalogLayout.style.display = 'none';
     cfDetailView.style.display = 'flex';
     cfDetailView.scrollTop = 0; // cada addon abre la ficha desde arriba
+    if (btnDetailInstall) {
+      btnDetailInstall.disabled = true;
+      btnDetailInstall.className = 'btn btn-install-detail';
+      btnDetailInstall.textContent = T('btn_install');
+    }
 
     // Ensure search tab is active in sidebar
     navItems.forEach(i => i.classList.remove('active'));
@@ -2709,8 +2714,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnDetailToggleFav.className = `btn btn-secondary btn-fav-detail ${isFav ? 'is-fav' : ''}`;
     btnDetailToggleFav.innerHTML = `<span class="star-icon">${isFav ? '★' : '☆'}</span><span class="fav-label">${isFav ? T('detail_fav_has') : T('detail_fav_add')}</span>`;
 
-    btnDetailInstall.className = `btn btn-install-detail ${isInstalled ? 'installed' : 'btn-gold'}`;
-    btnDetailInstall.textContent = isInstalled ? T('btn_installed') : T('detail_install_latest');
+    btnDetailInstall.className = `btn btn-install-detail ${isInstalled ? 'installed' : ''}`;
+    btnDetailInstall.textContent = isInstalled ? T('btn_installed') : T('btn_install');
+    btnDetailInstall.disabled = isInstalled;
 
     const availVer = formatVersionString(mod.version);
     const heroSummary = (isTranslated && currentTranslatedSummary) ? currentTranslatedSummary : (mod.summary || '');
@@ -2942,13 +2948,24 @@ document.addEventListener('DOMContentLoaded', () => {
           const res = await fetch('/api/install-file', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ downloadUrl: f.downloadUrl, name: lastDetailAddonName, gameId: currentActiveGame })
+            body: JSON.stringify({
+              downloadUrl: f.downloadUrl,
+              modId: currentDetailMod ? currentDetailMod.id : null,
+              fileId: f.id,
+              name: lastDetailAddonName,
+              version: f.displayName || f.fileName,
+              gameId: currentActiveGame
+            })
           });
           const resData = await res.json();
           if (resData.success) {
             btnInst.textContent = T('btn_installed');
+            btnInst.classList.add('installed');
             showToast(T('toast_install_done', { name: lastDetailAddonName }));
-            loadInstalledAddons();
+            await loadInstalledAddons();
+            if (currentDetailMod) {
+              renderDetailHero(currentDetailMod, findInstalledAddon(currentDetailMod));
+            }
           } else {
             throw new Error(resData.code ? mensajeDeError(resData) : (resData.error || T('toast_install_error', { message: '' })));
           }
@@ -2997,6 +3014,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Detail View Install Latest
   btnDetailInstall?.addEventListener('click', async () => {
     if (!currentDetailMod) return;
+    if (findInstalledAddon(currentDetailMod)) return;
+
     btnDetailInstall.disabled = true;
     btnDetailInstall.textContent = T('btn_downloading');
 
@@ -3008,10 +3027,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       const data = await res.json();
       if (data.success) {
-        btnDetailInstall.className = 'btn btn-install-detail installed';
-        btnDetailInstall.textContent = T('btn_installed');
         showToast(T('toast_install_done', { name: currentDetailMod.name }));
-        loadInstalledAddons();
+        await loadInstalledAddons();
+        renderDetailHero(currentDetailMod, findInstalledAddon(currentDetailMod));
       } else {
         throw new Error(data.code ? mensajeDeError(data) : (data.error || T('toast_install_error', { message: '' })));
       }
