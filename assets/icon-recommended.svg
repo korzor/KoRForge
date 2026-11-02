@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!--
+    Icono de «Recommended Forever Addons» (dueño, 02-11-2026): diana de arquero con una flecha
+    clavada en el centro, al estilo del resto de iconos de la app (oro, cuero y rojo).
+    Base geometrica: el icono CC0 «target with archery arrow at bullseye» (Pinhead, Wikimedia
+    Commons), redibujado entero con degradados y volumen propios.
+  -->
+  <defs>
+    <radialGradient id="disco" cx="38%" cy="30%" r="78%">
+      <stop offset="0" stop-color="#5b3a22"/>
+      <stop offset="0.62" stop-color="#33200f"/>
+      <stop offset="1" stop-color="#1c1008"/>
+    </radialGradient>
+    <linearGradient id="oro" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/>
+      <stop offset="0.22" stop-color="#f2c65c"/>
+      <stop offset="0.5" stop-color="#b07a22"/>
+      <stop offset="0.72" stop-color="#f6d47c"/>
+      <stop offset="1" stop-color="#7c4d12"/>
+    </linearGradient>
+    <radialGradient id="crema" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#fff7e4"/>
+      <stop offset="0.6" stop-color="#ecdcbb"/>
+      <stop offset="1" stop-color="#c9b183"/>
+    </radialGradient>
+    <radialGradient id="rojo" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#c8453a"/>
+      <stop offset="0.55" stop-color="#9c2822"/>
+      <stop offset="1" stop-color="#5f1512"/>
+    </radialGradient>
+    <radialGradient id="centro" cx="35%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#ffe9a0"/>
+      <stop offset="0.6" stop-color="#f0b93f"/>
+      <stop offset="1" stop-color="#a86f1a"/>
+    </radialGradient>
+    <linearGradient id="madera" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a9743c"/>
+      <stop offset="0.5" stop-color="#7c4f24"/>
+      <stop offset="1" stop-color="#4a2c12"/>
+    </linearGradient>
+    <linearGradient id="acero" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f2f6fa"/>
+      <stop offset="0.45" stop-color="#b9c4ce"/>
+      <stop offset="1" stop-color="#5c6771"/>
+    </linearGradient>
+    <linearGradient id="pluma" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fffaf0"/>
+      <stop offset="0.55" stop-color="#e2d3b4"/>
+      <stop offset="1" stop-color="#b49b6f"/>
+    </linearGradient>
+    <radialGradient id="brillo" cx="32%" cy="24%" r="70%">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.30"/>
+      <stop offset="0.45" stop-color="#ffffff" stop-opacity="0.06"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="vineta" cx="50%" cy="55%" r="62%">
+      <stop offset="0.55" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0.45"/>
+    </radialGradient>
+    <filter id="sombra" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="2" stdDeviation="2.2" flood-color="#000000" flood-opacity="0.32"/>
+    </filter>
+    <filter id="sombraFlecha" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="1" dy="1.4" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.65"/>
+    </filter>
+  </defs>
+
+  <!-- Disco con sombra -->
+  <g filter="url(#sombra)">
+    <circle cx="64" cy="64" r="59" fill="url(#oro)"/>
+    <circle cx="64" cy="64" r="52.5" fill="url(#disco)"/>
+  </g>
+  <circle cx="64" cy="64" r="59" fill="none" stroke="#2a1508" stroke-opacity="0.7" stroke-width="1.4"/>
+
+  <!-- Cara de la diana -->
+  <circle cx="64" cy="64" r="52" fill="url(#crema)"/>
+  <circle cx="64" cy="64" r="43" fill="url(#rojo)"/>
+  <circle cx="64" cy="64" r="34" fill="url(#crema)"/>
+  <circle cx="64" cy="64" r="25" fill="url(#rojo)"/>
+  <circle cx="64" cy="64" r="16" fill="url(#crema)"/>
+  <circle cx="64" cy="64" r="8" fill="url(#centro)"/>
+
+  <!-- Volumen: luz arriba a la izquierda y sombra abajo -->
+  <circle cx="64" cy="64" r="52" fill="url(#brillo)"/>
+  <circle cx="64" cy="64" r="52" fill="url(#vineta)"/>
+
+  <!-- Remaches del aro -->
+  <g fill="#ffe6a1" stroke="#6b4310" stroke-width="0.7">
+    <circle cx="64" cy="8.5" r="2.1"/>
+    <circle cx="103.2" cy="24.8" r="2.1"/>
+    <circle cx="119.5" cy="64" r="2.1"/>
+    <circle cx="103.2" cy="103.2" r="2.1"/>
+    <circle cx="64" cy="119.5" r="2.1"/>
+    <circle cx="24.8" cy="103.2" r="2.1"/>
+    <circle cx="8.5" cy="64" r="2.1"/>
+    <circle cx="24.8" cy="24.8" r="2.1"/>
+  </g>
+
+  <!-- Reflejo del aro -->
+  <path d="M 22 40 A 46 46 0 0 1 96 22" fill="none" stroke="#fff3c4" stroke-opacity="0.55" stroke-width="2.2" stroke-linecap="round"/>
+
+  <!-- Grietas del impacto -->
+  <g stroke="#3a2416" stroke-opacity="0.75" stroke-width="1" stroke-linecap="round" fill="none">
+    <path d="M64 64 L71 55"/>
+    <path d="M64 64 L57 57"/>
+    <path d="M64 64 L66 74"/>
+  </g>
+
+  <!-- Flecha clavada en el centro: cola abajo a la izquierda, punta en el centro -->
+  <g transform="rotate(-45 64 64)" filter="url(#sombraFlecha)">
+    <!-- Asta -->
+    <rect x="8" y="60.4" width="48" height="7.2" rx="3" fill="url(#madera)" stroke="#2c1908" stroke-width="0.9"/>
+    <rect x="12" y="61.6" width="42" height="2" rx="1" fill="#d0a468" opacity="0.5"/>
+    <!-- Ataduras -->
+    <rect x="19" y="59.6" width="3.4" height="8.8" rx="1.2" fill="#3d2a17" opacity="0.95"/>
+    <rect x="44" y="59.6" width="2.8" height="8.8" rx="1.2" fill="#3d2a17" opacity="0.95"/>
+    <!-- Plumas -->
+    <path d="M25 60.2 C 15 57.2, 7 52.2, 5.5 46.2 C 10.5 45.2, 19 50.5, 25.5 57 Z" fill="url(#pluma)" stroke="#4a3418" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M25 67.8 C 15 70.8, 7 75.8, 5.5 81.8 C 10.5 82.8, 19 77.5, 25.5 71 Z" fill="url(#pluma)" stroke="#4a3418" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M22 58.9 C 15.5 56.2, 11 53.2, 9 49.6" stroke="#9c2822" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <path d="M22 69.1 C 15.5 71.8, 11 74.8, 9 78.4" stroke="#9c2822" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+    <!-- Punta de acero -->
+    <path d="M64 64 L49.5 56.5 L54 64 L49.5 71.5 Z" fill="url(#acero)" stroke="#2f3740" stroke-width="1.1" stroke-linejoin="round"/>
+    <path d="M64 64 L49.5 56.5 L54 64 Z" fill="#6d7883" opacity="0.75"/>
+    <path d="M64 64 L51 70 L54 64 Z" fill="#f6fafd" opacity="0.45"/>
+    <path d="M64 64 L56 62 L56 66 Z" fill="#ffffff" opacity="0.35"/>
+    <!-- Cubo donde entra el asta -->
+    <rect x="52.5" y="60" width="4" height="8" rx="1.2" fill="#3b4148" stroke="#23282d" stroke-width="0.7"/>
+  </g>
+
+  <!-- Punto de impacto -->
+  <circle cx="64" cy="64" r="3.4" fill="#2a1508" opacity="0.75"/>
+  <circle cx="63.2" cy="63.2" r="1.3" fill="#f7d98a" opacity="0.9"/>
+</svg>
