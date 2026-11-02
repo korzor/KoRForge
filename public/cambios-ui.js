@@ -1,28 +1,25 @@
 /**
- * public/cambios-ui.js — «Latest Forever Changes» (dueño, 02-11-2026).
+ * public/cambios-ui.js — «Latest Changes» (dueño, 02-11-2026).
  *
- * Pinta dos vistas dentro de #pane-changes:
- *   · Notas del parche — el texto, los iconos y las tablas vienen ya saneados del servidor
- *     (/api/cambios-forever): no hay enlaces y las imágenes apuntan al servidor local (/cambios-img).
- *   · Blue posts — los mensajes de los Community Manager de Blizzard en el foro oficial de
- *     WoW: Forever (/api/blue-posts). El cuerpo de cada uno se pide al abrir su tarjeta y se pinta
- *     ya saneado (sin enlaces ni imágenes de fuera); los vídeos de YouTube se montan aquí, solo
- *     cuando el usuario le da al play, y con el dominio sin cookies.
+ * Una sola lista, mezclada y ordenada por fecha:
+ *   · Notas del parche — Forever las trae de /api/cambios-forever (texto, iconos y tablas ya
+ *     saneados); los demás juegos, de /api/notas/<juego> (portal de Blizzard).
+ *   · Blue posts — solo en Forever: los mensajes de los Community Manager en el foro oficial
+ *     (/api/blue-posts). El cuerpo se pide al abrir la tarjeta y las imágenes y los vídeos van
+ *     también por el servidor local.
  *
- * El cuerpo de cada nota se inyecta la primera vez que se abre (las más largas pesan decenas de KB)
- * y así la pestaña abre al instante aunque haya 30 notas con cientos de iconos.
+ * El cuerpo de cada tarjeta se inyecta la primera vez que se abre (las más largas pesan decenas de
+ * KB) y las de blue posts ni siquiera lo piden hasta entonces.
  */
 
 'use strict';
 
 window.KorforgeCambios = (() => {
-  const VISTAS = {
-    notes: { articulos: [], aviso: false, cargada: false },
-    blue: { articulos: [], cargada: false }
-  };
-  let vista = 'notes';
+  let articulos = [];
+  let aviso = false;
+  let cargada = false;
   let cargando = false;
-  /* Qué juego está elegido arriba: Forever tiene su fuente; el resto, la de Blizzard. */
+  /* Qué juego está elegido arriba: Forever tiene dos fuentes; el resto, la de Blizzard. */
   let juegoApi = 'forever';
 
   const API_DE_JUEGO = {
@@ -34,12 +31,6 @@ window.KorforgeCambios = (() => {
 
   function apiDeJuego(clave) {
     return Object.prototype.hasOwnProperty.call(API_DE_JUEGO, clave) && API_DE_JUEGO[clave] ? API_DE_JUEGO[clave] : 'forever';
-  }
-
-  function urlDeNotas(forzar) {
-    const sufijo = forzar ? '?forzar=1' : '';
-    if (juegoApi === 'forever') return `/api/cambios-forever${sufijo}`;
-    return `/api/notas/${juegoApi}${sufijo}`;
   }
 
   function tr(clave, vars) {
@@ -80,6 +71,17 @@ window.KorforgeCambios = (() => {
       caja.appendChild(p);
     }
     return caja;
+  }
+
+  /* ---------------------------------------------------------------- mezcla */
+
+  /** Notas y blue posts en una sola lista, de lo más nuevo a lo más viejo. */
+  function mezclar(notas, azules) {
+    const lista = [];
+    for (const n of notas || []) lista.push(Object.assign({}, n, { origen: 'nota' }));
+    for (const b of azules || []) lista.push(Object.assign({}, b, { origen: 'blue', tipo: 'blue' }));
+    lista.sort((a, b) => Date.parse(b.fecha) - Date.parse(a.fecha));
+    return lista;
   }
 
   /* ---------------------------------------------------------------- tarjetas */
@@ -148,13 +150,12 @@ window.KorforgeCambios = (() => {
     return tarjeta;
   }
 
-  function tarjetaNota(articulo, indice) {
+  function tarjetaNota(articulo) {
     return tarjeta({
       tipo: articulo.tipo || 'build',
       titulo: articulo.titulo,
       sub: fechaCorta(articulo.fecha),
       tituloLargo: fechaLarga(articulo.fecha),
-      /* Las notas abren todas cerradas (dueño, 02-11-2026): se abre la que interese. */
       abierta: false,
       alAbrir: (cuerpo) => {
         /* HTML saneado en el servidor: sin enlaces, sin scripts y con los iconos ya locales. */
@@ -163,7 +164,7 @@ window.KorforgeCambios = (() => {
     });
   }
 
-  function tarjetaBlue(articulo, indice) {
+  function tarjetaBlue(articulo) {
     const autor = articulo.autor ? `${tr('blue_author')} · ${articulo.autor}` : tr('blue_author');
     const fecha = fechaCorta(articulo.fecha);
     return tarjeta({
@@ -171,7 +172,7 @@ window.KorforgeCambios = (() => {
       titulo: articulo.titulo,
       sub: [autor, fecha].filter(Boolean).join(' · '),
       tituloLargo: fechaLarga(articulo.fecha),
-      abierta: indice === 0,
+      abierta: false,
       alAbrir: (cuerpo) => cargarCuerpoBlue(articulo, cuerpo)
     });
   }
@@ -210,7 +211,6 @@ window.KorforgeCambios = (() => {
     marco.loading = 'lazy';
     const caja = boton.closest('.bp-video');
     if (!caja) return;
-    /* Se guarda el botón para poder volver a ponerlo si se cierra la tarjeta. */
     caja.__boton = boton;
     caja.replaceChildren(marco);
   }
@@ -240,37 +240,40 @@ window.KorforgeCambios = (() => {
     if (!lista) return;
     lista.replaceChildren();
 
-    const datos = VISTAS[vista];
-
-    if (!datos.articulos.length) {
-      if (vista === 'blue') {
-        lista.appendChild(estado('💬', tr('blue_empty_title'), tr('blue_empty_desc')));
-      } else {
-        lista.appendChild(estado('📜', tr('changes_empty_title'), tr('changes_empty_desc')));
-      }
+    if (!articulos.length) {
+      lista.appendChild(estado('📜', tr('changes_empty_title'), tr('changes_empty_desc')));
       return;
     }
 
-    if (vista === 'notes' && datos.aviso) {
-      const aviso = document.createElement('p');
-      aviso.className = 'changes-warning';
-      aviso.textContent = tr('changes_partial');
-      lista.appendChild(aviso);
+    if (aviso) {
+      const nota = document.createElement('p');
+      nota.className = 'changes-warning';
+      nota.textContent = tr('changes_partial');
+      lista.appendChild(nota);
     }
 
-    const crear = vista === 'blue' ? tarjetaBlue : tarjetaNota;
-    datos.articulos.forEach((articulo, indice) => lista.appendChild(crear(articulo, indice)));
+    for (const articulo of articulos) {
+      lista.appendChild(articulo.origen === 'blue' ? tarjetaBlue(articulo) : tarjetaNota(articulo));
+    }
   }
 
   /* ---------------------------------------------------------------- carga */
+
+  async function quitarDatos(url) {
+    try {
+      const res = await fetch(url);
+      return await res.json();
+    } catch (_) {
+      return null;
+    }
+  }
 
   async function cargar(forzar = false) {
     const lista = document.getElementById('changesList');
     const boton = document.getElementById('btnRefreshChanges');
     if (!lista || cargando) return;
 
-    const actual = VISTAS[vista];
-    if (actual.cargada && !forzar) {
+    if (cargada && !forzar) {
       pintar();
       return;
     }
@@ -280,91 +283,56 @@ window.KorforgeCambios = (() => {
       boton.disabled = true;
       etiquetaBoton(boton, 'changes_refreshing');
     }
-    lista.replaceChildren(estado('⏳', tr(vista === 'blue' ? 'blue_loading' : 'changes_loading')));
+    lista.replaceChildren(estado('⏳', tr('changes_loading')));
 
+    const sufijo = forzar ? '?forzar=1' : '';
     try {
-      const url = vista === 'blue'
-        ? `/api/blue-posts${forzar ? '?forzar=1' : ''}`
-        : urlDeNotas(forzar);
-      const res = await fetch(url);
-      const datos = await res.json();
-      if (!datos || !datos.success) throw new Error((datos && datos.code) || 'err_changes');
-      actual.articulos = Array.isArray(datos.articulos) ? datos.articulos : [];
-      actual.aviso = !!datos.parcial;
-      actual.cargada = true;
+      if (juegoApi === 'forever') {
+        /* Las dos fuentes a la vez; si el foro falla, las notas se ven igual. */
+        const [notas, azules] = await Promise.all([
+          quitarDatos(`/api/cambios-forever${sufijo}`),
+          quitarDatos(`/api/blue-posts${sufijo}`)
+        ]);
+        if (!notas || !notas.success) throw new Error((notas && notas.code) || 'err_changes');
+        articulos = mezclar(notas.articulos, azules && azules.success ? azules.articulos : []);
+        aviso = !!notas.parcial;
+      } else {
+        const datos = await quitarDatos(`/api/notas/${juegoApi}${sufijo}`);
+        if (!datos || !datos.success) throw new Error((datos && datos.code) || 'err_notas');
+        articulos = mezclar(datos.articulos, []);
+        aviso = false;
+      }
+      cargada = true;
       pintar();
     } catch (_) {
-      lista.replaceChildren(estado('⚠️',
-        tr(vista === 'blue' ? 'blue_error_title' : 'changes_error_title'),
-        tr(vista === 'blue' ? 'blue_error_desc' : 'changes_error_desc')));
-      actual.cargada = false;
+      lista.replaceChildren(estado('⚠️', tr('changes_error_title'), tr('changes_error_desc')));
+      cargada = false;
     } finally {
       cargando = false;
       if (boton) {
         boton.disabled = false;
         etiquetaBoton(boton, 'changes_refresh');
-        aplicarPistaBoton(boton);
       }
     }
   }
 
-  /* ---------------------------------------------------------------- vistas */
-
-  function aplicarPistaBoton(boton) {
-    if (!boton) return;
-    const clave = vista === 'blue' ? 'changes_refresh_hint_blue' : 'changes_refresh_hint';
-    boton.setAttribute('data-i18n-title', clave);
-    boton.title = tr(clave);
-  }
-
-  function cambiarVista(nueva) {
-    if (!VISTAS[nueva] || nueva === vista) return;
-    vista = nueva;
-    document.querySelectorAll('.changes-view').forEach((b) => {
-      const activa = b.dataset.view === nueva;
-      b.classList.toggle('is-active', activa);
-      b.setAttribute('aria-selected', activa ? 'true' : 'false');
-    });
-    aplicarPistaBoton(document.getElementById('btnRefreshChanges'));
-    cargar(false);
-  }
-
-  function limpiar() {
-    Object.values(VISTAS).forEach((v) => {
-      v.articulos = [];
-      v.cargada = false;
-    });
-    const lista = document.getElementById('changesList');
-    if (lista) lista.replaceChildren();
-  }
+  /* ---------------------------------------------------------------- juego */
 
   /** Al cambiar de idioma: se repinta lo que ya está cargado (fechas y textos del botón). */
   function repintar() {
-    aplicarPistaBoton(document.getElementById('btnRefreshChanges'));
-    if (VISTAS[vista].cargada) pintar();
+    if (!window.I18N) return;
+    if (cargada) pintar();
   }
 
-  /** El selector de juego de arriba manda: cada juego tiene sus notas y su fuente. */
+  /** El selector de juego de arriba manda: cada juego tiene sus notas (y Forever, sus blue posts). */
   function fijarJuego(clave) {
     const nuevo = apiDeJuego(clave);
     if (nuevo === juegoApi) return;
 
     juegoApi = nuevo;
-    Object.values(VISTAS).forEach((v) => {
-      v.articulos = [];
-      v.cargada = false;
-      v.aviso = false;
-    });
-
-    /* Los blue posts son del foro de WoW: Forever; en los demás juegos no hay vista. */
-    if (juegoApi !== 'forever' && vista === 'blue') vista = 'notes';
-    const botonBlue = document.querySelector('.changes-view[data-view="blue"]');
-    if (botonBlue) botonBlue.hidden = juegoApi !== 'forever';
-    document.querySelectorAll('.changes-view').forEach((b) => {
-      const activa = b.dataset.view === vista;
-      b.classList.toggle('is-active', activa);
-      b.setAttribute('aria-selected', activa ? 'true' : 'false');
-    });
+    articulos = [];
+    cargada = false;
+    aviso = false;
 
     const lista = document.getElementById('changesList');
     if (lista) lista.replaceChildren();
@@ -375,17 +343,22 @@ window.KorforgeCambios = (() => {
     return juegoApi;
   }
 
+  function limpiar() {
+    articulos = [];
+    cargada = false;
+    aviso = false;
+    const lista = document.getElementById('changesList');
+    if (lista) lista.replaceChildren();
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const boton = document.getElementById('btnRefreshChanges');
     if (boton) boton.addEventListener('click', () => cargar(true));
-    document.querySelectorAll('.changes-view').forEach((b) => {
-      b.addEventListener('click', () => cambiarVista(b.dataset.view));
-    });
     /* Si se sale de la pestaña con un vídeo sonando, se corta. */
     document.querySelectorAll('.nav-item').forEach((b) => {
       b.addEventListener('click', () => pararVideos(document.getElementById('changesList')));
     });
   });
 
-  return { cargar, pintar, limpiar, cambiarVista, repintar, fijarJuego, juegoActual };
+  return { cargar, pintar, limpiar, repintar, fijarJuego, juegoActual };
 })();
