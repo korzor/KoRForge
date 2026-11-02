@@ -930,8 +930,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const corto = NOMBRE_CORTO_JUEGO[currentActiveGame] || 'Forever';
     const cambios = document.getElementById('navChangesSub');
     const addons = document.getElementById('navAddonsSub');
-    if (cambios) cambios.textContent = T('nav_changes_sub_game', { game: corto });
-    if (addons) addons.textContent = T('nav_addons_sub_game', { game: corto });
+    /* Arriba, el nombre corto de la sección; debajo, el juego elegido (dueño, 02-11-2026). */
+    if (cambios) cambios.textContent = corto;
+    if (addons) addons.textContent = corto;
+    const tituloCambios = document.querySelector('.btn-forever[data-tab="changes"] .nav-label-title');
+    const tituloAddons = document.querySelector('.btn-forever[data-tab="recommended"] .nav-label-title');
+    if (tituloCambios) tituloCambios.textContent = T('nav_changes_title');
+    if (tituloAddons) tituloAddons.textContent = T('nav_addons_title');
   }
 
   async function switchActiveGame(gameId) {
