@@ -415,21 +415,39 @@ app.get('/api/ping', (req, res) => {
   res.json({ pong: true, pid: process.pid, time: Date.now() });
 });
 
-// API: Noticias de Blizzard de la versión del cliente elegido (dueño, 24-10-2026)
-const noticiasBlizzard = require('./modules/noticias');
+// API: «Latest Forever Changes» (dueño, 02-11-2026): notas del parche de WoW Forever.
+const cambiosForever = require('./modules/cambiosForever');
 
-app.get('/api/noticias', async (req, res) => {
-  const version = String(req.query.gameId || config.activeGame || 'forever');
-  const limite = Number(req.query.limite || 30);
+app.get('/api/cambios-forever', async (req, res) => {
   const forzar = req.query.forzar === '1';
   try {
-    const datos = await noticiasBlizzard.noticiasDe(version, limite, forzar);
+    const datos = await cambiosForever.listar(forzar);
     res.setHeader('Cache-Control', 'no-store');
     res.json({ success: true, ...datos });
   } catch (err) {
-    /* K-C4: el detalle del error se queda en el log; al cliente, un código. */
-    console.error('[KoRForge Noticias] Error leyendo los foros de Blizzard:', err.message);
-    res.status(502).json({ success: false, code: 'err_news_unavailable' });
+    /* K-C4: el detalle se queda en el log; al cliente, un código. */
+    console.error('[KoRForge Cambios] Error leyendo las notas del parche:', err.message);
+    res.status(502).json({ success: false, code: 'err_changes_unavailable' });
+  }
+});
+
+/* Iconos de las notas: se piden al servidor local, que los descarga y los cachea. No se pide token
+   porque los carga un <img>, que no puede mandar cabeceras; sí se exige host/origen del servidor. */
+app.get('/cambios-img', async (req, res) => {
+  if (!origenDelServidor(req, res)) return;
+  const ruta = String(req.query.p || '');
+  try {
+    const img = await cambiosForever.imagen(ruta);
+    if (!img) {
+      return res.status(404).json({ error: 'Imagen no disponible', code: 'err_img_unavailable' });
+    }
+    res.setHeader('Content-Type', img.tipo);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    res.send(img.cuerpo);
+  } catch (err) {
+    console.error('[KoRForge Cambios] Error sirviendo un icono:', err.message);
+    res.status(502).json({ error: 'Imagen no disponible', code: 'err_img_unavailable' });
   }
 });
 

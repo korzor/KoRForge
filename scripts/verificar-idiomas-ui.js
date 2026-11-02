@@ -79,7 +79,7 @@ function startStaticServer() {
       if (url.pathname === '/api/mod/11/files') return json({ success: true, files: [] });
       if (url.pathname === '/api/mod/11/description') return json({ success: true, html: '<p>Damage meter for WoW.</p>' });
       if (url.pathname === '/api/mod/11/translation') return json({ success: true, translation: {} });
-      if (url.pathname === '/api/noticias') return json({ success: true, noticias: [] });
+      if (url.pathname === '/api/cambios-forever') return json({ success: true, total: 0, parcial: false, articulos: [] });
       if (url.pathname === '/api/app-updates/check') return json({ source: 'github', checked: true, updateAvailable: false, currentVersion: '1.4.7' });
       if (url.pathname === '/api/addons/check-updates') return json({ success: true, updates: [] });
       return json({ success: true });

@@ -448,7 +448,7 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     out.problemas.push('la barra no empieza a la izquierda como el panel lateral/logo (izq ' + s0.izq + ')');
   }
 
-  const pestanas = ['favorites', 'addons', 'backups', 'news', 'search'];
+  const pestanas = ['favorites', 'addons', 'backups', 'changes', 'search'];
   for (const t of pestanas) {
     const boton = document.querySelector('.nav-item[data-tab="' + t + '"]');
     if (!boton) { out.problemas.push('no hay boton de la pestaña ' + t); continue; }
@@ -456,12 +456,13 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     await sleep(700);
     const s = situacion();
     const titulo = document.querySelector('#pane-' + t + ' .page-title');
-    /* El desplegable de orden solo tiene sentido en el catálogo; en Noticias el sitio es de «Actualizar». */
+    /* El desplegable de orden solo tiene sentido en el catálogo; en las notas del parche el sitio
+       es de «Actualizar». */
     const ver = (sel) => { const el = document.querySelector(sel); return !!(el && el.offsetParent !== null); };
     const hayOrden = ver('.cf-sort-wrap');
     const hayOrdenLista = ver('#sortListaWrap');
     const hayBuscar = ver('#btnCfSearch');
-    const hayActualizar = ver('#btnRefreshNews');
+    const hayActualizar = ver('#btnRefreshChanges');
     out.pasos.push('pestaña ' + t + ': barra izq=' + s.izq + ' top=' + s.top + ' | orden=' + hayOrden + ' buscar=' + hayBuscar + ' actualizar=' + hayActualizar);
     if (s.izq !== s0.izq || s.top !== s0.top) out.problemas.push('la barra se mueve al cambiar a la pestaña ' + t + ' (izq ' + s.izq + ', top ' + s.top + ')');
     if (barra.offsetParent === null) out.problemas.push('la barra no se ve en la pestaña ' + t);
@@ -469,8 +470,8 @@ const CHECK_BARRA_COMPARTIDA = `(async () => {
     if (hayOrden !== (t === 'search')) out.problemas.push('el desplegable de orden no cuadra en la pestaña ' + t);
     const tocaOrdenLista = (t === 'favorites' || t === 'addons');
     if (hayOrdenLista !== tocaOrdenLista) out.problemas.push('el desplegable de orden de la lista no cuadra en la pestaña ' + t);
-    if (hayActualizar !== (t === 'news')) out.problemas.push('el botón Actualizar no cuadra en la pestaña ' + t);
-    if (hayBuscar === (t === 'news')) out.problemas.push('el botón Buscar no cuadra en la pestaña ' + t);
+    if (hayActualizar !== (t === 'changes')) out.problemas.push('el botón Actualizar no cuadra en la pestaña ' + t);
+    if (hayBuscar === (t === 'changes')) out.problemas.push('el botón Buscar no cuadra en la pestaña ' + t);
   }
 
   /* El desplegable del catálogo, a la IZQUIERDA del buscador (dueño, 25-10-2026). Se mide ya en

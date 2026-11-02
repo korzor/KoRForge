@@ -1,6 +1,8 @@
-# Titulo: Botón de acción por lote y nuevos addons recomendados para WoW Forever
+# Titulo: Latest Forever Changes: las notas del parche de WoW Forever, dentro de la app
 
-- **Botón de acción directa por lote**: Se sustituye el interruptor por un botón interactivo («Disable all» / «Enable all») que muestra siempre de forma transparente y sin ambigüedades la acción a realizar, manteniendo confirmación modal y estilo homogéneo con el resto de la barra.
-- **Nuevos addons recomendados para WoW Forever**: Se incorporan a la pestaña curada los addons «OneForAll - Forever», «Leatrix Maps», «Manners - Buff Nearby Players» y «ForeverAuras - A WeakAura Fork».
-- **Nuevas categorías en recomendados**: Añadidas las secciones «Combate y auras» y «Utilidades y calidad de vida» traducidas a los 9 idiomas de la interfaz.
-- **Optimizaciones de estabilidad y catálogo**: Actualización de dependencias y registro de versiones.
+- **La pestaña baja al pie y cambia de nombre**: «News» pasa a llamarse «Latest Forever Changes» y se coloca en el panel lateral justo encima de «Recommended Forever Addons», porque ahora es contenido de WoW Forever como los addons recomendados.
+- **Noticias con su formato original**: el texto, los iconos de hechizo y de clase, las líneas de mejoras y nerfeos y las fichas de objetos se copian tal cual de las notas del parche públicas, con permiso del autor. Cada noticia se abre a un clic y la más reciente lo hace sola.
+- **Sin rastro del origen**: no queda ni un enlace (todos los enlaces se convierten en texto), se quitan el nombre y las frases que hablaban de la web de origen, y los iconos los sirve el propio servidor de KoRForge, así que la app no muestra ese dominio.
+- **Actualizar a mano**: el botón «Actualizar» vuelve a pedir las notas al momento. Sin pulsarlo, el servidor guarda las notas 10 minutos y los iconos una semana.
+- **Menos peticiones**: se retira el lector de noticias de los foros de Blizzard, que ya no se usaba, y con él sus tres hosts.
+- **Nueve idiomas**: textos nuevos para la pestaña, el botón y los estados de carga, vacío y error.

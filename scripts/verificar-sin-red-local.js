@@ -44,9 +44,7 @@ const HOSTS_PERMITIDOS = new Set([
   'www.curseforge.com',
   'media.forgecdn.net',      // imágenes de addons
   'edge.forgecdn.net',
-  'us.forums.blizzard.com',  // noticias (foros oficiales)
-  'worldofwarcraft.blizzard.com',
-  'bnetcmsus-a.akamaihd.net',
+  'foreverchanges.pro',      // Latest Forever Changes: feed, notas e iconos (permiso del autor)
   'fonts.googleapis.com',    // tipografías de la interfaz
   'fonts.gstatic.com',
   'translate.googleapis.com', // traducir la descripción de un addon

@@ -319,7 +319,7 @@ function imprimirPlan(version) {
   console.log(`\n${C.bold}${C.cyan}📋 PLAN DE RELEASE — KoRForge v${version}${C.reset}`);
   separador();
   const pasos = [
-    [ 1, 'Verificar i18n (9×569 claves)',          'node scripts/verificar-i18n.js'],
+    [ 1, 'Verificar i18n (9 idiomas)',             'node scripts/verificar-i18n.js'],
     [ 2, 'Proteger build (minificar + CF key)',     'node scripts/proteger-build.js'],
     [ 3, 'Electron-builder NSIS',                  'npx electron-builder --win nsis dir'],
     [ 4, 'Restaurar fuente',                       'node scripts/proteger-build.js --restaurar'],

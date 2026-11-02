@@ -611,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (cur.tabId === 'recommended') renderRecommendedTab(true);
         else if (cur.tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
         else if (cur.tabId === 'backups') { loadBackups(); if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame); }
-        else if (cur.tabId === 'news') cargarNoticias(true);
+        else if (cur.tabId === 'changes') cargarCambios(true);
         else if (cur.tabId === 'settings') loadConfig();
       } else if (cur.type === 'detail') {
         openAddonDetailInternal(cur.modId, cur.modName);
@@ -654,7 +654,7 @@ document.addEventListener('DOMContentLoaded', () => {
       addons: { icon: '📦', text: T('topbar_installed') },
       favorites: { icon: '⭐', text: T('topbar_favorites') },
       backups: { icon: '💾', text: T('topbar_backups') },
-      news: { icon: '📰', text: T('topbar_news') },
+      changes: { icon: '📜', text: T('topbar_changes') },
       settings: { icon: '⚙️', text: T('topbar_settings') }
     };
     return labels[tabId] || { icon: '🔍', text: T('topbar_explorer') };
@@ -693,7 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (tabId === 'backups') { loadBackups(); if (typeof loadWtfAnalysis === 'function') loadWtfAnalysis(currentActiveGame); }
-    if (tabId === 'news') cargarNoticias();
+    if (tabId === 'changes') cargarCambios();
     if (tabId === 'settings') loadConfig();
   }
 
@@ -911,10 +911,8 @@ document.addEventListener('DOMContentLoaded', () => {
       recommendedLastGame = null;
     }
 
-    /* Noticias: son las del cliente elegido, asi que se vacian y, si la pestaña esta a la vista, se
-       piden las del cliente nuevo (dueño, 24-10-2026). */
-    ultimasNoticias = [];
-    if (document.getElementById('pane-news')?.classList.contains('active')) cargarNoticias();
+    /* Las notas del parche son de WoW Forever y no dependen del cliente elegido, asi que no se
+       recargan al cambiar de juego (dueño, 02-11-2026). */
   }
 
   async function switchActiveGame(gameId) {
@@ -1282,10 +1280,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   /* ==========================================================================
-   * Noticias de Blizzard (Desacoplado a public/noticias-ui.js - K-C1).
+   * Latest Forever Changes (Desacoplado a public/cambios-ui.js - dueño, 02-11-2026).
    * ========================================================================== */
-  function cargarNoticias(forzar = false) {
-    if (window.KorforgeNoticias) return window.KorforgeNoticias.cargar(forzar);
+  function cargarCambios(forzar = false) {
+    if (window.KorforgeCambios) return window.KorforgeCambios.cargar(forzar);
   }
 
 

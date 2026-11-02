@@ -37,7 +37,7 @@ La app solo habla con servicios **públicos** y con su propio servidor local:
 |---|---|
 | Catálogo de addons | `api.curseforge.com`, `www.curseforge.com`, `media.forgecdn.net`, `edge.forgecdn.net` |
 | Actualizador y descargas | `api.github.com`, `github.com` |
-| Noticias | `us.forums.blizzard.com`, `worldofwarcraft.blizzard.com`, `bnetcmsus-a.akamaihd.net` |
+| Noticias: Latest Forever Changes | `foreverchanges.pro` (feed, notas del parche e iconos; permiso del autor) |
 | Traducir la descripción de un addon | `translate.googleapis.com` |
 | Tipografías de la interfaz | `fonts.googleapis.com`, `fonts.gstatic.com` |
 | Enlace de donación | `www.buymeacoffee.com` |

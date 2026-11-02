@@ -816,7 +816,7 @@ body.is-maximized .app-sidebar {
 #pane-favorites.active,
 #pane-backups.active,
 #pane-settings.active,
-#pane-news.active {
+#pane-changes.active {
   overflow-y: auto;
   padding-right: 6px;
   padding-bottom: 20px;
@@ -1910,14 +1910,24 @@ input:checked + .slider:before {
   width: 100%;
 }
 
-/* El orden solo tiene sentido en «Buscar Addons»; en Noticias la derecha es «Actualizar». */
+/* El orden solo tiene sentido en «Buscar Addons»; en las notas del parche la derecha es «Actualizar». */
 body:not([data-tab="search"]) #cfSortWrap {
   display: none;
 }
 
-body[data-tab="news"] #btnCfSearch,
+body[data-tab="changes"] #btnCfSearch,
 body[data-tab="recommended"] #btnCfSearch {
   display: none;
+}
+
+/* En las notas del parche no se busca en el catálogo: el buscador compartido se retira y el botón
+   de actualizar se pega a la derecha (dueño, 02-11-2026). */
+body[data-tab="changes"] .cf-search-input-wrap {
+  display: none;
+}
+
+body[data-tab="changes"] .cf-top-toolbar > .cf-toolbar-btns {
+  margin-left: auto;
 }
 
 /* Bloqueo del selector de versión del juego en la pestaña Forever Addons (dueño, 30-10-2026) */
@@ -1955,12 +1965,12 @@ body[data-tab="addons"] .cf-top-toolbar > #sortListaWrap {
   display: flex;
 }
 
-body:not([data-tab="news"]) .btn-news-refresh {
+body:not([data-tab="changes"]) .btn-changes-refresh {
   display: none;
 }
 
-/* Botón «Actualizar» de Noticias: dorado, con su icono y su brillo (dueño: «hazlo más bonito»). */
-.btn-news-refresh {
+/* Botón «Actualizar» de las notas del parche: dorado, con su icono y su brillo. */
+.btn-changes-refresh {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -1978,24 +1988,24 @@ body:not([data-tab="news"]) .btn-news-refresh {
   transition: all 0.15s ease;
 }
 
-.btn-news-refresh svg {
+.btn-changes-refresh svg {
   width: 17px;
   height: 17px;
   transition: transform 0.25s ease;
 }
 
-.btn-news-refresh:hover {
+.btn-changes-refresh:hover {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.44) 0%, rgba(217, 119, 6, 0.26) 100%);
   border-color: var(--c-fbbf24);
   transform: translateY(-1px);
   box-shadow: 0 0 18px rgba(245, 158, 11, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.btn-news-refresh:hover svg {
+.btn-changes-refresh:hover svg {
   transform: rotate(180deg);
 }
 
-.btn-news-refresh:disabled {
+.btn-changes-refresh:disabled {
   opacity: 0.6;
   cursor: default;
   transform: none;
@@ -3297,117 +3307,301 @@ body:not([data-tab="news"]) .btn-news-refresh {
   color: var(--text-faint);
 }
 
-/* ===== Noticias de Blizzard (dueño, 24-10-2026) ==========================================
-   Tarjetas de la pestaña Noticias. El contenido viene de los foros oficiales: aquí solo aspecto. */
-.news-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 14px;
-  padding-bottom: 24px;
-}
+/* ===== Latest Forever Changes (dueño, 02-11-2026) ====================================
+   Notas del parche de WoW Forever. El contenido llega ya saneado del servidor (texto, iconos
+   locales y pliegues por clase): aquí solo se pone el aspecto. */
 
-.news-card {
+.changes-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
+  max-width: 1000px;
+  padding-bottom: 28px;
+}
+
+.changes-warning {
+  margin: 0;
+  padding: 9px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.changes-item {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
+  border-left: 3px solid rgba(245, 158, 11, 0.55);
   border-radius: 12px;
   overflow: hidden;
-  cursor: pointer;
-  transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-.news-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(245, 158, 11, 0.45);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
+.changes-item.is-hotfix { border-left-color: rgba(248, 113, 113, 0.8); }
+.changes-item.is-announced { border-left-color: rgba(96, 165, 250, 0.8); }
 
-.news-card-img {
+.changes-item:hover { border-color: rgba(245, 158, 11, 0.35); }
+.changes-item.is-open { box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35); }
+
+.changes-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   width: 100%;
-  height: 152px;
-  object-fit: cover;
-  display: block;
-  border-bottom: 1px solid var(--border-subtle);
-  background: var(--bg-surface);
+  padding: 14px 16px;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
 }
 
-.news-card-body {
-  padding: 14px 16px 16px;
+.changes-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--accent-gold);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.5);
+}
+
+.changes-item.is-hotfix .changes-dot {
+  background: #f87171;
+  box-shadow: 0 0 8px rgba(248, 113, 113, 0.5);
+}
+
+.changes-item.is-announced .changes-dot {
+  background: #60a5fa;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+.changes-headings {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 3px;
+  min-width: 0;
   flex: 1;
 }
 
-.news-card-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.news-tag {
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  color: var(--accent-gold);
-  background: rgba(245, 158, 11, 0.1);
-  white-space: nowrap;
-}
-
-.news-tag-maintenance {
-  border-color: rgba(96, 165, 250, 0.45);
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.12);
-}
-
-.news-tag-stress {
-  border-color: rgba(168, 85, 247, 0.45);
-  color: #d8b4fe;
-  background: rgba(168, 85, 247, 0.12);
-}
-
-.news-tag-issues {
-  border-color: rgba(239, 68, 68, 0.45);
-  color: #fca5a5;
-  background: rgba(239, 68, 68, 0.12);
-}
-
-.news-date {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--text-faint);
-  white-space: nowrap;
-}
-
-.news-card-title {
-  font-size: 0.95rem;
+.changes-title {
+  font-size: 0.98rem;
   font-weight: 700;
   color: var(--c-fff);
   line-height: 1.3;
 }
 
-.news-card-summary {
-  font-size: 0.82rem;
+.changes-sub {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+/* Flecha del acordeón, dibujada con bordes: nada de SVG ni de espacios de nombres. */
+.changes-chevron {
+  width: 9px;
+  height: 9px;
+  flex-shrink: 0;
+  margin-right: 6px;
+  border-right: 2px solid var(--text-faint);
+  border-bottom: 2px solid var(--text-faint);
+  transform: rotate(45deg);
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+
+.changes-item.is-open .changes-chevron {
+  border-color: var(--accent-gold);
+  transform: rotate(225deg);
+}
+
+.changes-body {
+  padding: 4px 18px 18px;
+  border-top: 1px solid var(--border-subtle);
+  font-size: 0.86rem;
   color: var(--text-muted);
-  line-height: 1.45;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
-.news-card .news-open {
-  align-self: flex-start;
-  margin-top: auto;
+.changes-body p {
+  margin: 10px 0;
+  line-height: 1.55;
 }
 
+.changes-body h3 {
+  margin: 18px 0 8px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-gold);
+}
 
+.changes-body h4 {
+  margin: 12px 0 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--c-fff);
+}
+
+.changes-body h4.pn-spec {
+  margin: 10px 0 3px;
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(245, 158, 11, 0.85);
+}
+
+.changes-body ul {
+  margin: 8px 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.changes-body li {
+  line-height: 1.5;
+}
+
+.changes-body ul.pn-lines > li {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.changes-body .pn-line {
+  flex: 1;
+  min-width: 0;
+}
+
+.changes-body img {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  border-radius: 3px;
+  vertical-align: -3px;
+  margin-right: 6px;
+}
+
+.changes-body summary img {
+  width: 20px;
+  height: 20px;
+  margin-right: 2px;
+}
+
+.changes-body .v2-mark {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  margin-top: 4px;
+  fill: currentColor;
+}
+
+.changes-body .v2-mark.is-buff { color: #4ade80; }
+.changes-body .v2-mark.is-nerf { color: #f87171; }
+.changes-body .v2-mark.is-change { color: #fbbf24; }
+
+.changes-body details {
+  margin: 10px 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.changes-body summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--c-fff);
+}
+
+/* Señal de que la clase se despliega (el triángulo nativo se pierde al usar flex). */
+.changes-body summary::before {
+  content: '▸';
+  color: var(--accent-gold);
+  font-size: 0.85rem;
+  transition: transform 0.15s ease;
+}
+
+.changes-body details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.changes-body small {
+  font-size: 0.72rem;
+  color: var(--text-faint);
+}
+
+/* La etiqueta de estado de cada línea («nuevo», «movido», «eliminado»): en el sitio va pegada al
+   nombre y sin aire, así que aquí se separa y se colorea según lo que diga. */
+.changes-body .pn-line small {
+  margin-left: 7px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.changes-body li.is-new .pn-line small { color: #4ade80; }
+.changes-body li.is-removed .pn-line small { color: #f87171; }
+.changes-body li.is-moved .pn-line small,
+.changes-body li.is-change .pn-line small { color: #60a5fa; }
+
+.changes-body .q1 { color: #e6e6e6; }
+.changes-body .q2 { color: #4ade80; }
+.changes-body .q3 { color: #60a5fa; }
+.changes-body .q4 { color: #c084fc; }
+
+.changes-empty {
+  margin-top: 24px;
+}
+
+/* Pestaña «Latest Forever Changes» en el pie del panel lateral (dueño, 02-11-2026). */
+.btn-forever-changes {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 12px;
+  min-height: 44px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.btn-forever-changes .nav-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-forever-changes .changes-nav-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+.btn-forever-changes:hover {
+  background: var(--bg-card);
+}
+
+.btn-forever-changes.active {
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.02) 100%);
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.btn-forever-changes.active .changes-nav-label {
+  color: var(--accent-gold);
+}
 
 /* Toast Notifications */
 .toast-container {
