@@ -104,16 +104,20 @@ const pad = (n) => String(n).padStart(2, '0');
 const fecha = `${pad(ahora.getDate())}-${pad(ahora.getMonth() + 1)}-${String(ahora.getFullYear()).slice(-2)}`;
 
 /* Los cambios y el titulo se leen de docs/CAMBIOS-ULTIMA.md, igual que en la release de GitHub
-   (scripts/notas-release.js), para que las dos vias cuenten siempre lo mismo. */
+   (scripts/notas-release.js), para que las dos vias cuenten siempre lo mismo.
+   La web pinta estos textos como texto plano (escapeHtml), asi que aqui se quita el marcado de
+   negrita de la nota de cambios: si no, la pagina ensenaria los asteriscos. */
 const { titulo: tituloRelease, cambios } = leerCambios(projectDir);
+const sinMarcado = (texto) => String(texto || '').replace(/\*\*/g, '').replace(/`/g, '').trim();
+const cambiosWeb = cambios.map(sinMarcado);
 
 const registro = [{
   version,
   fecha,
   esUltima: true,
   titulo: tituloRelease,
-  descripcion: cambios[0] || '',
-  cambios,
+  descripcion: cambiosWeb[0] || '',
+  cambios: cambiosWeb,
   descargas: [
     {
       tipo: 'instalador',
