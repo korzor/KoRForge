@@ -32,7 +32,7 @@
 const FEED_URL = 'https://foreverchanges.pro/patch-notes/feed.xml';
 const PAGINA_URL = 'https://foreverchanges.pro/patch-notes';
 const IMAGENES_URL = 'https://foreverchanges.pro';
-const USER_AGENT = 'KoRForge/1.6.4 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.5 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 40;
@@ -66,7 +66,7 @@ const CLASES_PERMITIDAS = new Set([
   'bt-notes', 'bt-note-class', 'bt-note-items', 'bt-note-body', 'bt-note-said',
   'bt-build-body', 'bt-said', 'bt-set-name', 'bt-set-bonus', 'bt-items-note',
   'v2-mark', 'is-buff', 'is-nerf', 'is-change', 'is-new', 'is-removed', 'is-moved',
-  'is-wording', 'is-announced', 'is-current', 'q1', 'q2', 'q3', 'q4'
+  'is-wording', 'is-announced', 'is-current', 'q1', 'q2', 'q3', 'q4', 'emoji'
 ]);
 
 let cache = { cuando: 0, datos: null };
@@ -333,14 +333,23 @@ function clasesDe(valor) {
     .join(' ');
 }
 
-function atributosDe(nombre, attrs) {
+/**
+ * Atributos que sobreviven al saneado. `opciones` permite cambiar de dónde salen las imágenes
+ * (los blue posts del foro usan su propio proxy) y marcar las fotos para que se vean a tamaño normal.
+ */
+function atributosDe(nombre, attrs, opciones = {}) {
   const partes = [];
-  const clase = clasesDe(attrs.class);
-  if (clase) partes.push(`class="${clase}"`);
+  let clase = clasesDe(attrs.class);
 
   if (nombre === 'img') {
-    const src = rutaImagen(attrs.src);
+    const resolver = opciones.imagen || rutaImagen;
+    const src = resolver(attrs.src);
     if (!src) return '';
+    /* Una foto de un blue post se ve entera; un emoji o un avatar, pequeño como siempre. */
+    if (opciones.claseImagen && !/\b(?:emoji|avatar)\b/.test(String(attrs.class || ''))) {
+      clase = clase ? `${clase} ${opciones.claseImagen}` : opciones.claseImagen;
+    }
+    if (clase) partes.push(`class="${clase}"`);
     partes.push(`src="${src}"`);
     partes.push('loading="lazy"');
     partes.push('alt=""');
@@ -348,7 +357,12 @@ function atributosDe(nombre, attrs) {
     const alto = Number(attrs.height);
     if (Number.isFinite(ancho) && ancho > 0 && ancho <= 64) partes.push(`width="${ancho}"`);
     if (Number.isFinite(alto) && alto > 0 && alto <= 64) partes.push(`height="${alto}"`);
-  } else if (nombre === 'svg') {
+    return partes.length ? ' ' + partes.join(' ') : '';
+  }
+
+  if (clase) partes.push(`class="${clase}"`);
+
+  if (nombre === 'svg') {
     const caja = attrs.viewbox || '';
     if (/^0 0 \d{1,3} \d{1,3}$/.test(caja)) partes.push(`viewBox="${caja}"`);
     if (/^\d{1,2}$/.test(attrs.width || '')) partes.push(`width="${attrs.width}"`);
@@ -361,7 +375,7 @@ function atributosDe(nombre, attrs) {
   return partes.length ? ' ' + partes.join(' ') : '';
 }
 
-function pintarNodos(nodos) {
+function pintarNodos(nodos, opciones = {}) {
   let salida = '';
   for (const nodo of nodos) {
     if (nodo.tipo === 'texto') {
@@ -370,15 +384,15 @@ function pintarNodos(nodos) {
       salida += escapar(limpiarTexto(decodificar(nodo.valor)));
       continue;
     }
-    salida += pintarElemento(nodo);
+    salida += pintarElemento(nodo, opciones);
   }
   return salida;
 }
 
-function pintarElemento(el) {
+function pintarElemento(el, opciones = {}) {
   const nombre = el.nombre;
   if (ETIQUETAS_DESCARTADAS.has(nombre)) return '';
-  const hijos = () => pintarNodos(el.hijos);
+  const hijos = () => pintarNodos(el.hijos, opciones);
 
   if (nombre === 'a') {
     /* Nunca queda un enlace: el texto se conserva. En los objetos se conserva el color de calidad. */
@@ -388,22 +402,22 @@ function pintarElemento(el) {
   if (!ETIQUETAS_PERMITIDAS.has(nombre)) return hijos();
 
   if (nombre === 'img') {
-    const attrs = atributosDe('img', el.attrs);
+    const attrs = atributosDe('img', el.attrs, opciones);
     return attrs ? `<img${attrs}>` : '';
   }
   if (nombre === 'br') return '<br>';
   if (nombre === 'path') {
-    const attrs = atributosDe('path', el.attrs);
+    const attrs = atributosDe('path', el.attrs, opciones);
     return `<path${attrs}></path>`;
   }
 
-  const attrs = atributosDe(nombre, el.attrs);
+  const attrs = atributosDe(nombre, el.attrs, opciones);
   return `<${nombre}${attrs}>${hijos()}</${nombre}>`;
 }
 
 /** Convierte el HTML del sitio en HTML propio: sin enlaces, sin scripts y con iconos locales. */
-function sanear(html) {
-  return pintarNodos(aArbol(analizar(html)).hijos);
+function sanear(html, opciones = {}) {
+  return pintarNodos(aArbol(analizar(html)).hijos, opciones);
 }
 
 /* ---------------------------------------------------------------- armado */

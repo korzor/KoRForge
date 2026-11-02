@@ -480,6 +480,26 @@ app.get('/cambios-img', async (req, res) => {
   }
 });
 
+/* Fotos y miniaturas de los blue posts: mismo trato que los iconos de las notas (proxy local con
+   lista cerrada de orígenes y caché en memoria), para no enseñar nunca el dominio del CDN. */
+app.get('/foro-img', async (req, res) => {
+  if (!origenDelServidor(req, res)) return;
+  const ruta = String(req.query.p || '');
+  try {
+    const img = await bluePosts.imagen(ruta);
+    if (!img) {
+      return res.status(404).json({ error: 'Imagen no disponible', code: 'err_img_unavailable' });
+    }
+    res.setHeader('Content-Type', img.tipo);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    res.send(img.cuerpo);
+  } catch (err) {
+    console.error('[KoRForge Blue posts] Error sirviendo una imagen:', err.message);
+    res.status(502).json({ error: 'Imagen no disponible', code: 'err_img_unavailable' });
+  }
+});
+
 // API: Config
 app.get('/api/config', (req, res) => {
   const activeGame = config.activeGame || 'forever';

@@ -33,7 +33,7 @@ const comprobar = (nombre, condicion, detalle = '') => {
 };
 
 const modulo = require(path.join(ROOT, 'modules', 'bluePostsForever.js'));
-const { BASE, BUSQUEDA, sanear, bloqueDeVideo } = modulo._internos;
+const { BASE, BUSQUEDA, sanear, bloqueDeVideo, rutaImagenForo } = modulo._internos;
 
 /* ---------------- 1. Funciones puras ---------------- */
 comprobar('fuente: foro oficial de Blizzard', BASE === 'https://us.forums.blizzard.com/en/wow', BASE);
@@ -58,8 +58,20 @@ const onebox = `<div class="youtube-onebox lazy-video-container" data-video-id="
 const conVideo = sanear(onebox);
 comprobar('vídeo: el onebox se vuelve un botón', /class="bp-video-play" data-video-id="BVyhnixdPQg"/.test(conVideo), conVideo.slice(0, 140));
 comprobar('vídeo: el título va escapado', /Charla &amp; podcast/.test(conVideo), conVideo);
+comprobar('vídeo: la miniatura va por el proxy local', /class="bp-video-poster" src="\/foro-img\?p=%2Fvi%2FBVyhnixdPQg%2Fhq\.jpg"/.test(conVideo), conVideo.slice(0, 220));
 comprobar('vídeo: no queda ni un enlace de YouTube', !/href=|youtube\.com/.test(conVideo));
 comprobar('vídeo: sin id no hay botón', bloqueDeVideo('<div class="youtube-onebox"></div>') === '');
+
+const conFoto = sanear('<p>Foto:</p><img src="https://d2ertrwg9e34np.cloudfront.net/original/1X/abc.jpeg" width="800" height="381"><img src="https://cdn.example/fuera.png"><p>Emoji <img class="emoji" src="/images/emoji/twitter/smile.png" width="20" height="20"></p>');
+comprobar('foto: se sirve por el proxy local', /<img class="bp-img" src="\/foro-img\?p=%2Foriginal%2F1X%2Fabc\.jpeg"/.test(conFoto), conFoto.slice(0, 200));
+comprobar('foto: un host que no es del foro se tira', !/cdn\.example/.test(conFoto));
+comprobar('emoji: se queda pequeño y en línea', /<img class="emoji" src="\/foro-img\?p=%2Fimages%2Femoji%2Ftwitter%2Fsmile\.png"/.test(conFoto));
+
+comprobar('imagen: URL del CDN del foro permitida', rutaImagenForo('https://d2ertrwg9e34np.cloudfront.net/original/1X/x.jpeg') === '/foro-img?p=%2Foriginal%2F1X%2Fx.jpeg');
+comprobar('imagen: host ajeno rechazado', rutaImagenForo('https://evil.example/original/x.jpeg') === '');
+comprobar('imagen: ruta con .. rechazada', rutaImagenForo('/original/../x.jpeg') === '');
+comprobar('imagen: sin extensión de imagen rechazada', rutaImagenForo('/original/1X/abc') === '');
+comprobar('imagen: prefijo que no toca rechazado', rutaImagenForo('/etc/passwd.png') === '');
 
 /* ---------------- 2. Servidor de verdad ---------------- */
 async function probarServidor() {
@@ -118,7 +130,9 @@ async function probarServidor() {
     const textoCuerpo = cuerpo.cuerpo.toString('utf8');
     comprobar('API: el cuerpo responde 200', cuerpo.status === 200, 'HTTP ' + cuerpo.status);
     comprobar('API: el cuerpo no lleva enlaces ni direcciones sueltas', !/href=|<a\s|https?:\/\//i.test(textoCuerpo), textoCuerpo.slice(0, 140));
-    comprobar('API: el cuerpo no lleva imágenes de fuera', !/<img\b/i.test(textoCuerpo));
+    comprobar('API: todas las imágenes van al proxy local',
+      !/src="(?!\/foro-img\?)/.test(textoCuerpo),
+      (textoCuerpo.match(/<img[^>]*>/g) || []).slice(0, 2).join(' '));
 
     const malo = await pedir('/api/blue-posts/no-es-un-numero', token);
     comprobar('API: id que no es número se rechaza', malo.status === 404, 'HTTP ' + malo.status);

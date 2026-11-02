@@ -24,7 +24,7 @@ const { _internos: forever } = require('./cambiosForever');
 
 const BASE = 'https://us.forums.blizzard.com/en/wow';
 const BUSQUEDA = '#wow-forever group:community-manager order:latest';
-const USER_AGENT = 'KoRForge/1.6.4 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.5 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 30;
@@ -66,33 +66,129 @@ function fechaValida(valor) {
   return Number.isFinite(marca) ? new Date(marca).toISOString() : '';
 }
 
+/* ---------------------------------------------------------------- imágenes */
+
+/* Todo lo gráfico que traen los blue posts (fotos de los posts y miniaturas de los vídeos) se pide al
+   propio servidor de KoRForge, igual que los iconos de las notas: la app nunca enseña el dominio del
+   CDN de Blizzard ni el de YouTube. Cada prefijo de ruta decide de qué origen se baja, y no hay más. */
+const ORIGENES_IMAGEN = [
+  { prefijo: '/original/', base: 'https://d2ertrwg9e34np.cloudfront.net', host: 'd2ertrwg9e34np.cloudfront.net' },
+  { prefijo: '/optimized/', base: 'https://d2ertrwg9e34np.cloudfront.net', host: 'd2ertrwg9e34np.cloudfront.net' },
+  { prefijo: '/vi/', base: 'https://img.youtube.com', host: 'img.youtube.com' },
+  { prefijo: '/uploads/', base: 'https://us.forums.blizzard.com', host: 'us.forums.blizzard.com' },
+  { prefijo: '/images/emoji/', base: 'https://us.forums.blizzard.com', host: 'us.forums.blizzard.com' }
+];
+
+const EXTENSION_IMAGEN = /\.(?:jpg|jpeg|png|webp|gif|avif|svg)$/i;
+const MAX_IMAGEN_BYTES = 6 * 1024 * 1024;
+const CACHE_IMAGENES_MAX = 300;
+const cacheImagenes = new Map();
+
+/** Origen al que pertenece una ruta del foro (o null si no está permitida). */
+function origenDeImagen(ruta) {
+  return ORIGENES_IMAGEN.find((o) => ruta.startsWith(o.prefijo)) || null;
+}
+
+/** `src` del foro (URL o ruta) → ruta local `/foro-img?p=…`; '' si no es una imagen permitida. */
+function rutaImagenForo(src) {
+  const limpio = String(src || '').trim();
+  if (!limpio || limpio.includes('..')) return '';
+
+  let ruta = limpio;
+  if (/^https?:\/\//i.test(limpio)) {
+    let url;
+    try { url = new URL(limpio); } catch (_) { return ''; }
+    const host = url.hostname.toLowerCase();
+    if (!ORIGENES_IMAGEN.some((o) => o.host === host)) return '';
+    ruta = url.pathname;
+  } else if (limpio.startsWith('//')) {
+    return '';
+  }
+
+  if (!EXTENSION_IMAGEN.test(ruta)) return '';
+  if (!/^[A-Za-z0-9_\-./]+$/.test(ruta)) return '';
+  if (!origenDeImagen(ruta)) return '';
+  return `/foro-img?p=${encodeURIComponent(ruta)}`;
+}
+
+function tipoDeImagen(ruta) {
+  const ext = (ruta.match(/\.([a-z0-9]+)$/i) || [])[1] || 'jpg';
+  const tipos = {
+    jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp',
+    gif: 'image/gif', avif: 'image/avif', svg: 'image/svg+xml'
+  };
+  return tipos[ext.toLowerCase()] || 'application/octet-stream';
+}
+
+/** Descarga (y cachea) una imagen de los blue posts. Devuelve { cuerpo, tipo } o null. */
+async function imagen(ruta) {
+  const limpia = String(ruta || '');
+  const origen = origenDeImagen(limpia);
+  if (!origen || limpia.includes('..') || !EXTENSION_IMAGEN.test(limpia) || !/^[A-Za-z0-9_\-./]+$/.test(limpia)) return null;
+
+  const guardada = cacheImagenes.get(limpia);
+  if (guardada) return guardada;
+
+  const control = new AbortController();
+  const t = setTimeout(() => control.abort(), TIMEOUT_MS);
+  try {
+    const res = await fetch(`${origen.base}${limpia}`, {
+      signal: control.signal,
+      headers: { 'User-Agent': USER_AGENT, Accept: 'image/*' }
+    });
+    if (!res.ok) return null;
+    const largo = Number(res.headers.get('content-length') || 0);
+    if (largo > MAX_IMAGEN_BYTES) return null;
+    const cuerpo = Buffer.from(await res.arrayBuffer());
+    if (!cuerpo.length || cuerpo.length > MAX_IMAGEN_BYTES) return null;
+
+    const entrada = { cuerpo, tipo: tipoDeImagen(limpia) };
+    if (cacheImagenes.size >= CACHE_IMAGENES_MAX) {
+      cacheImagenes.delete(cacheImagenes.keys().next().value);
+    }
+    cacheImagenes.set(limpia, entrada);
+    return entrada;
+  } catch (_) {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
+
 /* ---------------------------------------------------------------- vídeos */
 
 /* El foro incrusta YouTube como un «onebox»: un div con data-video-id y una miniatura enlazada.
-   Se sustituye por un botón nuestro; el reproductor (iframe) lo monta la interfaz al pulsar. */
+   Se sustituye por un botón con esa miniatura; el reproductor (iframe) lo monta la interfaz al pulsar. */
 const ONEBOX_YT = /<div[^>]*class="[^"]*youtube-onebox[^"]*"[^>]*>[\s\S]*?<\/div>\s*/gi;
 
 function bloqueDeVideo(html) {
-  const id = (String(html).match(/data-video-id="([A-Za-z0-9_-]{6,20})"/) || [])[1] || '';
+  const bruto = String(html);
+  const id = (bruto.match(/data-video-id="([A-Za-z0-9_-]{6,20})"/) || [])[1] || '';
   if (!id) return '';
-  const titulo = (String(html).match(/data-video-title="([^"]*)"/) || [])[1] || '';
+  const titulo = (bruto.match(/data-video-title="([^"]*)"/) || [])[1] || '';
+  const poster = rutaImagenForo((bruto.match(/<img\b[^>]*src="([^"]+)"/i) || [])[1] || '')
+    || `/foro-img?p=${encodeURIComponent(`/vi/${id}/hqdefault.jpg`)}`;
+
   return `<div class="bp-video"><button type="button" class="bp-video-play" data-video-id="${id}">`
+    + `<img class="bp-video-poster" src="${poster}" alt="" loading="lazy">`
+    + `<span class="bp-video-info">`
     + `<span class="bp-video-icon" aria-hidden="true">▶</span>`
     + `<span class="bp-video-title">${escapar(forever.decodificar(titulo))}</span>`
-    + `</button></div>`;
+    + `</span></button></div>`;
 }
 
-/** HTML del foro → HTML propio: sin enlaces, sin imágenes de fuera y con los vídeos como botón. */
+/** HTML del foro → HTML propio: sin enlaces, con las imágenes por el proxy local y los vídeos como botón. */
 function sanear(texto) {
   const bruto = String(texto || '');
+  const opciones = { imagen: rutaImagenForo, claseImagen: 'bp-img' };
   let salida = '';
   let ultimo = 0;
   for (const m of bruto.matchAll(ONEBOX_YT)) {
-    salida += forever.sanear(bruto.slice(ultimo, m.index));
+    salida += forever.sanear(bruto.slice(ultimo, m.index), opciones);
     salida += bloqueDeVideo(m[0]);
     ultimo = m.index + m[0].length;
   }
-  return salida + forever.sanear(bruto.slice(ultimo));
+  return salida + forever.sanear(bruto.slice(ultimo), opciones);
 }
 
 /* ---------------------------------------------------------------- lista */
@@ -179,7 +275,8 @@ function limpiarCache() {
 module.exports = {
   listar,
   publicacion,
+  imagen,
   limpiarCache,
   /* Internos, para la sonda de verificación */
-  _internos: { BASE, BUSQUEDA, sanear, bloqueDeVideo, fechaValida }
+  _internos: { BASE, BUSQUEDA, sanear, bloqueDeVideo, fechaValida, rutaImagenForo, origenDeImagen }
 };
