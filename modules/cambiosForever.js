@@ -32,7 +32,7 @@
 const FEED_URL = 'https://foreverchanges.pro/patch-notes/feed.xml';
 const PAGINA_URL = 'https://foreverchanges.pro/patch-notes';
 const IMAGENES_URL = 'https://foreverchanges.pro';
-const USER_AGENT = 'KoRForge/1.6.5 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.6 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 40;
@@ -389,15 +389,33 @@ function pintarNodos(nodos, opciones = {}) {
   return salida;
 }
 
+/** URL que se puede dejar como enlace: solo http(s) y con un tamaño razonable. '' si no vale. */
+function urlSegura(valor) {
+  const limpio = String(valor || '').trim();
+  if (!limpio || limpio.length > 500) return '';
+  let url;
+  try { url = new URL(limpio); } catch (_) { return ''; }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return '';
+  return url.href;
+}
+
 function pintarElemento(el, opciones = {}) {
   const nombre = el.nombre;
   if (ETIQUETAS_DESCARTADAS.has(nombre)) return '';
   const hijos = () => pintarNodos(el.hijos, opciones);
 
   if (nombre === 'a') {
-    /* Nunca queda un enlace: el texto se conserva. En los objetos se conserva el color de calidad. */
+    /* En las notas nunca queda un enlace (solo se conserva el texto y el color de calidad de los
+       objetos). Los blue posts sí pueden llevar enlaces externos, siempre que sean http(s). */
     const calidad = String(el.attrs.class || '').split(/\s+/).find((c) => /^q[1-4]$/.test(c));
-    return calidad ? `<span class="${calidad}">${hijos()}</span>` : hijos();
+    const contenido = calidad ? `<span class="${calidad}">${hijos()}</span>` : hijos();
+    if (!opciones.enlaces) return contenido;
+
+    const href = urlSegura(el.attrs.href);
+    /* Un enlace que solo envuelve una imagen (el visor del foro) se queda en la imagen. */
+    if (!href || /\.(?:jpg|jpeg|png|webp|gif|avif|svg)$/i.test(href)) return contenido;
+    const seguro = href.replace(/"/g, '%22').replace(/'/g, '%27');
+    return `<a href="${seguro}" target="_blank" rel="noopener noreferrer">${contenido}</a>`;
   }
   if (!ETIQUETAS_PERMITIDAS.has(nombre)) return hijos();
 

@@ -1,7 +1,6 @@
-# Titulo: Blue posts de Blizzard en Latest Forever Changes
+# Titulo: Enlaces, fotos limpias y vídeos que se paran al cerrar
 
-- **Blue posts de WoW: Forever**: la pestaña estrena dos vistas, «Notas del parche» y «Blue posts». La segunda enseña los mensajes de los Community Manager de Blizzard en la categoría de WoW: Forever del foro oficial, con su autor y su fecha, y se leen dentro de la app.
-- **Vídeos dentro de la app**: si un blue post trae un vídeo de YouTube, se queda con su miniatura y se puede ver ahí mismo con el reproductor sin cookies, que solo se carga al pulsar play.
-- **Fotos e iconos dentro de la app**: las imágenes que sube Blizzard se ven a tamaño completo y los emojis, pequeños, servidas por el propio KoRForge para no enseñar ningún dominio.
-- **Sin enlaces ni dominios**: como las notas, los blue posts se leen sin enlaces y sin direcciones sueltas en mitad del texto.
-- **Caché de diez minutos**: la lista se guarda en memoria y el botón «Actualizar» la salta; el cuerpo de cada post solo se pide al abrir su tarjeta.
+- **Enlaces en los blue posts**: los enlaces que traen los mensajes de Blizzard ya se pueden pulsar y se abren en el navegador; antes solo se leía el texto.
+- **Sin pies de foto**: fuera el «image 800×381 94.2 KB» que aparecía debajo de cada imagen y dejaba un hueco en blanco.
+- **Notas del parche cerradas**: abren todas plegadas, como el resto; ya no se despliega sola la más reciente.
+- **El vídeo se para al cerrar**: al plegar una noticia con vídeo se corta la reproducción y vuelve el botón de play; también al cambiar de pestaña.

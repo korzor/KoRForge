@@ -41,16 +41,19 @@ comprobar('fuente: solo la categoría de WoW: Forever', /#wow-forever/.test(BUSQ
 comprobar('fuente: solo el grupo de Community Managers', /group:community-manager/.test(BUSQUEDA), BUSQUEDA);
 
 const sucio = `<p>Hola <a href="https://us.forums.blizzard.com/en/wow/t/1">enlace</a> y <strong>negrita</strong>.</p>
-<div class="lightbox-wrapper"><a class="lightbox" href="https://cdn.example/foto.jpeg"><img src="https://cdn.example/foto.jpeg" alt="image"></a></div>
+<p>Malicioso: <a href="javascript:alert(1)">no</a> y <a href="data:text/html,x">tampoco</a>.</p>
+<div class="lightbox-wrapper"><a class="lightbox" href="https://d2ertrwg9e34np.cloudfront.net/original/1X/foto.jpeg"><img src="https://d2ertrwg9e34np.cloudfront.net/original/1X/foto.jpeg" alt="image"><div class="meta"><span class="filename">image</span><span class="informations">800×381 122 KB</span></div></a></div>
 <blockquote><p>Cita.</p></blockquote>
 <table><thead><tr><th>Dungeon</th><th>Level</th></tr></thead><tbody><tr><td>Dalaran</td><td>28</td></tr></tbody></table>
 <script>alert(1)</script>`;
 
 const limpio = sanear(sucio);
-comprobar('saneado: sin enlaces', !/<a\b/i.test(limpio) && !/href=/i.test(limpio), limpio.slice(0, 120));
-comprobar('saneado: conserva el texto del enlace', /enlace/.test(limpio));
+comprobar('saneado: los enlaces externos se quedan', /<a href="https:\/\/us\.forums\.blizzard\.com\/en\/wow\/t\/1" target="_blank" rel="noopener noreferrer">enlace<\/a>/.test(limpio), limpio.slice(0, 160));
+comprobar('saneado: javascript: y data: fuera', !/javascript:|data:text/i.test(limpio));
 comprobar('saneado: sin scripts', !/<script/i.test(limpio));
-comprobar('saneado: sin imágenes de fuera', !/<img\b/i.test(limpio) && !/cdn\.example/.test(limpio));
+comprobar('saneado: ninguna imagen sale de fuera', !/cdn\.example/.test(limpio) && (limpio.match(/<img\b[^>]*>/g) || []).every((i) => /src="\/foro-img\?/.test(i)), limpio.slice(0, 200));
+comprobar('saneado: el enlace a una imagen se queda en la imagen', /<div><img class="bp-img" src="\/foro-img\?p=%2Foriginal%2F1X%2Ffoto\.jpeg"/.test(limpio), limpio.slice(0, 240));
+comprobar('saneado: sin pie de foto (image / 800×381 / 122 KB)', !/class="(?:filename|informations|meta)"|800×381|122 KB/.test(limpio), limpio.slice(0, 240));
 comprobar('saneado: conserva la cita', /<blockquote>/.test(limpio));
 comprobar('saneado: conserva la tabla', /<table>[\s\S]*<th>Dungeon<\/th>[\s\S]*<td>Dalaran<\/td>/.test(limpio));
 
@@ -129,7 +132,13 @@ async function probarServidor() {
     const cuerpo = await pedir('/api/blue-posts/' + primero.id, token);
     const textoCuerpo = cuerpo.cuerpo.toString('utf8');
     comprobar('API: el cuerpo responde 200', cuerpo.status === 200, 'HTTP ' + cuerpo.status);
-    comprobar('API: el cuerpo no lleva enlaces ni direcciones sueltas', !/href=|<a\s|https?:\/\//i.test(textoCuerpo), textoCuerpo.slice(0, 140));
+    comprobar('API: el cuerpo no lleva direcciones sueltas',
+      !/https?:\/\//i.test(textoCuerpo.replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, '')), textoCuerpo.slice(0, 140));
+    comprobar('API: los enlaces son http(s) y abren fuera',
+      (textoCuerpo.match(/<a\b[^>]*>/g) || []).every((a) => /href="https?:\/\//.test(a) && /target="_blank"/.test(a) && /rel="noopener noreferrer"/.test(a)),
+      (textoCuerpo.match(/<a\b[^>]*>/g) || []).slice(0, 2).join(' '));
+    comprobar('API: sin pie de foto bajo las imágenes',
+      !/class="(?:filename|informations|meta)"|\d{3}×\d{3}\s+\d+(?:[.,]\d+)?\s*KB/i.test(textoCuerpo));
     comprobar('API: todas las imágenes van al proxy local',
       !/src="(?!\/foro-img\?)/.test(textoCuerpo),
       (textoCuerpo.match(/<img[^>]*>/g) || []).slice(0, 2).join(' '));

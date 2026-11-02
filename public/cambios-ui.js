@@ -114,6 +114,8 @@ window.KorforgeCambios = (() => {
         preparado = true;
         alAbrir(cuerpo);
       }
+      /* Al cerrar, el vídeo se para de verdad (se quita el iframe y vuelve el botón). */
+      if (!abierto) pararVideos(cuerpo);
       cuerpo.hidden = !abierto;
     };
 
@@ -123,7 +125,6 @@ window.KorforgeCambios = (() => {
 
     tarjeta.appendChild(boton);
     tarjeta.appendChild(cuerpo);
-    /* La más reciente abre sola; el resto, a un clic. */
     if (abierta) abrir(true);
     return tarjeta;
   }
@@ -134,7 +135,8 @@ window.KorforgeCambios = (() => {
       titulo: articulo.titulo,
       sub: fechaCorta(articulo.fecha),
       tituloLargo: fechaLarga(articulo.fecha),
-      abierta: indice === 0,
+      /* Las notas abren todas cerradas (dueño, 02-11-2026): se abre la que interese. */
+      abierta: false,
       alAbrir: (cuerpo) => {
         /* HTML saneado en el servidor: sin enlaces, sin scripts y con los iconos ya locales. */
         cuerpo.innerHTML = articulo.cuerpo || '';
@@ -188,7 +190,28 @@ window.KorforgeCambios = (() => {
     marco.allowFullscreen = true;
     marco.loading = 'lazy';
     const caja = boton.closest('.bp-video');
-    if (caja) caja.replaceChildren(marco);
+    if (!caja) return;
+    /* Se guarda el botón para poder volver a ponerlo si se cierra la tarjeta. */
+    caja.__boton = boton;
+    caja.replaceChildren(marco);
+  }
+
+  /**
+   * Al cerrar una tarjeta (o salir de la pestaña) se quita el iframe: así el vídeo deja de sonar.
+   * Quitarlo del DOM es lo que corta la reproducción; el botón vuelve a su sitio para poder repetir.
+   */
+  function pararVideos(raiz) {
+    if (!raiz) return;
+    raiz.querySelectorAll('.bp-video').forEach((caja) => {
+      if (!caja.querySelector('.bp-video-frame')) return;
+      const boton = caja.__boton;
+      caja.__boton = null;
+      caja.replaceChildren();
+      if (boton) {
+        caja.appendChild(boton);
+        boton.addEventListener('click', () => montarVideo(boton), { once: true });
+      }
+    });
   }
 
   /* ---------------------------------------------------------------- pintado */
@@ -307,6 +330,10 @@ window.KorforgeCambios = (() => {
     if (boton) boton.addEventListener('click', () => cargar(true));
     document.querySelectorAll('.changes-view').forEach((b) => {
       b.addEventListener('click', () => cambiarVista(b.dataset.view));
+    });
+    /* Si se sale de la pestaña con un vídeo sonando, se corta. */
+    document.querySelectorAll('.nav-item').forEach((b) => {
+      b.addEventListener('click', () => pararVideos(document.getElementById('changesList')));
     });
   });
 

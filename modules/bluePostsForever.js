@@ -24,7 +24,7 @@ const { _internos: forever } = require('./cambiosForever');
 
 const BASE = 'https://us.forums.blizzard.com/en/wow';
 const BUSQUEDA = '#wow-forever group:community-manager order:latest';
-const USER_AGENT = 'KoRForge/1.6.5 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.6 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 30;
@@ -177,10 +177,15 @@ function bloqueDeVideo(html) {
     + `</span></button></div>`;
 }
 
-/** HTML del foro → HTML propio: sin enlaces, con las imágenes por el proxy local y los vídeos como botón. */
+/* Pie de foto del visor del foro: «image» y «800×381 122 KB». No aporta nada, ocupa una línea y deja
+   un hueco feo debajo de cada imagen, así que se tira antes de sanear. */
+const PIE_DE_FOTO = /<div[^>]*class="[^"]*\bmeta\b[^"]*"[^>]*>[\s\S]*?<\/div>/gi;
+const RESTO_DE_PIE = /<span[^>]*class="[^"]*\b(?:filename|informations)\b[^"]*"[^>]*>[\s\S]*?<\/span>/gi;
+
+/** HTML del foro → HTML propio: con enlaces externos, imágenes por el proxy local y vídeos como botón. */
 function sanear(texto) {
-  const bruto = String(texto || '');
-  const opciones = { imagen: rutaImagenForo, claseImagen: 'bp-img' };
+  const bruto = String(texto || '').replace(PIE_DE_FOTO, '').replace(RESTO_DE_PIE, '');
+  const opciones = { imagen: rutaImagenForo, claseImagen: 'bp-img', enlaces: true };
   let salida = '';
   let ultimo = 0;
   for (const m of bruto.matchAll(ONEBOX_YT)) {

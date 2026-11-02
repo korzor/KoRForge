@@ -3748,6 +3748,15 @@ body:not([data-tab="changes"]) .btn-changes-refresh {
   margin: 0 2px;
 }
 
+/* Enlaces externos de los blue posts: se abren en el navegador del sistema, no dentro de la app. */
+.changes-item.is-blue .changes-body a {
+  color: #7cc0ff;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.changes-item.is-blue .changes-body a:hover { color: #a8d5ff; }
+
 .changes-empty {
   margin-top: 24px;
 }
