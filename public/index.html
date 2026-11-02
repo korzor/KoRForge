@@ -261,10 +261,14 @@
           </div>
         </section>
 
-        <!-- View: Latest Forever Changes (dueño, 02-11-2026). Notas del parche y hotfixes de
-             WoW Forever, sacadas de su feed público y con el formato original (texto, iconos e
-             imágenes). Sin enlaces al sitio de origen: solo se lee aquí dentro. -->
+        <!-- View: Latest Forever Changes (dueño, 02-11-2026). Dos vistas: las notas del parche y los
+             blue posts de los Community Manager de Blizzard en el foro oficial de WoW: Forever. Sin
+             enlaces al sitio de origen ni al foro: solo se lee aquí dentro. -->
         <section class="tab-pane" id="pane-changes">
+          <div class="changes-views" id="changesViews" role="tablist">
+            <button type="button" class="changes-view is-active" data-view="notes" role="tab" aria-selected="true" data-i18n="changes_tab_notes">Patch notes</button>
+            <button type="button" class="changes-view" data-view="blue" role="tab" aria-selected="false" data-i18n="changes_tab_blue">Blue posts</button>
+          </div>
           <div class="changes-list" id="changesList">
             <!-- Populated by cambios-ui.js -->
           </div>

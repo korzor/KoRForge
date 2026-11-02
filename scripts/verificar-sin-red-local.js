@@ -45,6 +45,8 @@ const HOSTS_PERMITIDOS = new Set([
   'media.forgecdn.net',      // imágenes de addons
   'edge.forgecdn.net',
   'foreverchanges.pro',      // Latest Forever Changes: feed, notas e iconos (permiso del autor)
+  'us.forums.blizzard.com',  // blue posts de WoW: Forever en el foro oficial (dueño, 02-11-2026)
+  'www.youtube-nocookie.com', // reproductor de los vídeos que traen esos blue posts (sin cookies)
   'fonts.googleapis.com',    // tipografías de la interfaz
   'fonts.gstatic.com',
   'translate.googleapis.com', // traducir la descripción de un addon

@@ -32,7 +32,7 @@
 const FEED_URL = 'https://foreverchanges.pro/patch-notes/feed.xml';
 const PAGINA_URL = 'https://foreverchanges.pro/patch-notes';
 const IMAGENES_URL = 'https://foreverchanges.pro';
-const USER_AGENT = 'KoRForge/1.6.3 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.7.0 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 40;
@@ -48,7 +48,9 @@ const EXTENSIONES_IMAGEN = /\.(?:jpg|jpeg|png|webp|gif|svg)$/i;
    peligrosas se tiran enteras con su contenido. */
 const ETIQUETAS_PERMITIDAS = new Set([
   'p', 'ul', 'ol', 'li', 'div', 'span', 'small', 'b', 'strong', 'em',
-  'section', 'details', 'summary', 'h3', 'h4', 'img', 'svg', 'path', 'title', 'br'
+  'section', 'details', 'summary', 'h3', 'h4', 'img', 'svg', 'path', 'title', 'br',
+  /* Tablas y citas: las usan las notas y también los blue posts del foro de Blizzard. */
+  'blockquote', 'aside', 'table', 'thead', 'tbody', 'tr', 'td', 'th'
 ]);
 const ETIQUETAS_VACIAS = new Set(['img', 'br', 'path']);
 const ETIQUETAS_DESCARTADAS = new Set([
@@ -104,7 +106,10 @@ function escapar(texto) {
 function limpiarTexto(texto) {
   let limpio = String(texto || '')
     .replace(/https?:\/\/\S*foreverchanges\S*/gi, '')
-    .replace(/foreverchanges(?:\.pro)?/gi, '');
+    .replace(/foreverchanges(?:\.pro)?/gi, '')
+    /* Direcciones sueltas en mitad de una frase: no se muestran (los blue posts del foro citan
+       enlaces a mano y así la frase se lee sin dominios). */
+    .replace(/https?:\/\/\S+/gi, '');
 
   /* Las frases que hablan de la web del sitio se van enteras: son una alusión, y dejarlas a medias
      rompería la frase («Según , esto cambia»). */

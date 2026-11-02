@@ -3565,6 +3565,136 @@ body:not([data-tab="changes"]) .btn-changes-refresh {
 .changes-body .q3 { color: #60a5fa; }
 .changes-body .q4 { color: #c084fc; }
 
+/* Dos vistas de la pestaña (dueño, 02-11-2026): notas del parche y blue posts de Blizzard. */
+.changes-views {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.changes-view {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-card);
+  color: var(--text-muted);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.changes-view:hover {
+  border-color: rgba(245, 158, 11, 0.45);
+  color: var(--c-fff);
+}
+
+.changes-view.is-active {
+  border-color: rgba(245, 158, 11, 0.75);
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--accent-gold);
+}
+
+.changes-view:focus-visible {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+/* Blue posts: el mismo acordeón, con el azul de Blizzard. */
+.changes-item.is-blue { border-left-color: rgba(96, 165, 250, 0.85); }
+
+.changes-item.is-blue .changes-dot {
+  background: #60a5fa;
+  box-shadow: 0 0 8px rgba(96, 165, 250, 0.5);
+}
+
+/* Tablas y citas del foro (las traen algunos blue posts). */
+.changes-body table {
+  width: 100%;
+  margin: 12px 0;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+
+.changes-body th,
+.changes-body td {
+  padding: 6px 10px;
+  border: 1px solid var(--border-subtle);
+  text-align: left;
+}
+
+.changes-body th {
+  color: var(--c-fff);
+  background: rgba(255, 255, 255, 0.03);
+  font-weight: 700;
+}
+
+.changes-body blockquote {
+  margin: 12px 0;
+  padding: 8px 14px;
+  border-left: 3px solid rgba(96, 165, 250, 0.6);
+  border-radius: 0 8px 8px 0;
+  background: rgba(96, 165, 250, 0.06);
+}
+
+/* Vídeo de un blue post: botón y, al pulsarlo, el reproductor de YouTube sin cookies. */
+.bp-video { margin: 14px 0; }
+
+.bp-video-play {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(96, 165, 250, 0.35);
+  background: linear-gradient(135deg, rgba(96, 165, 250, 0.14), rgba(96, 165, 250, 0.04));
+  color: var(--c-fff);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.bp-video-play:hover {
+  border-color: rgba(96, 165, 250, 0.7);
+  background: rgba(96, 165, 250, 0.16);
+}
+
+.bp-video-play:focus-visible {
+  outline: 2px solid #60a5fa;
+  outline-offset: 2px;
+}
+
+.bp-video-icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(96, 165, 250, 0.85);
+  color: #0b1220;
+  font-size: 0.85rem;
+}
+
+.bp-video-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.bp-video-frame {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+  border-radius: 10px;
+  background: #000;
+}
+
 .changes-empty {
   margin-top: 24px;
 }

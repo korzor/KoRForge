@@ -431,6 +431,35 @@ app.get('/api/cambios-forever', async (req, res) => {
   }
 });
 
+/* Blue posts de WoW Forever (dueño, 02-11-2026): los mensajes de los Community Manager de Blizzard
+   en la categoría «WoW: Forever» del foro oficial. La lista es corta y barata de pedir; el cuerpo de
+   cada post se pide aparte, solo cuando se abre su tarjeta, para no golpear el foro. */
+const bluePosts = require('./modules/bluePostsForever');
+
+app.get('/api/blue-posts', async (req, res) => {
+  const forzar = req.query.forzar === '1';
+  try {
+    const datos = await bluePosts.listar(forzar);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ success: true, ...datos });
+  } catch (err) {
+    console.error('[KoRForge Blue posts] Error leyendo el foro:', err.message);
+    res.status(502).json({ success: false, code: 'err_blue_unavailable' });
+  }
+});
+
+app.get('/api/blue-posts/:id', async (req, res) => {
+  try {
+    const datos = await bluePosts.publicacion(req.params.id);
+    if (!datos) return res.status(404).json({ success: false, code: 'err_blue_not_found' });
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ success: true, ...datos });
+  } catch (err) {
+    console.error('[KoRForge Blue posts] Error leyendo un post:', err.message);
+    res.status(502).json({ success: false, code: 'err_blue_unavailable' });
+  }
+});
+
 /* Iconos de las notas: se piden al servidor local, que los descarga y los cachea. No se pide token
    porque los carga un <img>, que no puede mandar cabeceras; sí se exige host/origen del servidor. */
 app.get('/cambios-img', async (req, res) => {

@@ -4714,6 +4714,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addonsGrid) renderInstalledAddons('all', document.getElementById('searchInput')?.value || '');
     if (favoritesTabGrid) renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     rellenarOpcionesOrden();
+    if (window.KorforgeCambios) window.KorforgeCambios.repintar();
     if (gamesManagementList && Object.keys(currentGamesData).length) {
       renderGamesManagement(currentGamesData, currentActiveGame);
     }

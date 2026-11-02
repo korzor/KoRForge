@@ -38,6 +38,8 @@ La app solo habla con servicios **públicos** y con su propio servidor local:
 | Catálogo de addons | `api.curseforge.com`, `www.curseforge.com`, `media.forgecdn.net`, `edge.forgecdn.net` |
 | Actualizador y descargas | `api.github.com`, `github.com` |
 | Noticias: Latest Forever Changes | `foreverchanges.pro` (feed, notas del parche e iconos; permiso del autor) |
+| Blue posts de WoW: Forever | `us.forums.blizzard.com` (foro oficial: solo la categoría «WoW: Forever» y solo el grupo Community Manager) |
+| Vídeo de un blue post | `www.youtube-nocookie.com` (reproductor incrustado, sin cookies y solo al pulsar play) |
 | Traducir la descripción de un addon | `translate.googleapis.com` |
 | Tipografías de la interfaz | `fonts.googleapis.com`, `fonts.gstatic.com` |
 | Enlace de donación | `www.buymeacoffee.com` |

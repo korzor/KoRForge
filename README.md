@@ -73,7 +73,8 @@ alternative to heavy commercial clients. It talks straight to the public CurseFo
   import a friend's to see what you are missing.
 - 💾 **WTF vault:** full backups of `WTF/SavedVariables` and macros, restored in one click.
 - 📜 **Latest Forever Changes:** WoW Forever patch notes and hotfixes inside the app, with their
-  spell and class icons and the changes class by class, without leaving KoRForge.
+  spell and class icons and the changes class by class, without leaving KoRForge. Its second view
+  brings Blizzard's blue posts from the official WoW: Forever forum, videos included.
 - 🔁 **Silent self-updater:** notified from GitHub Releases, downloads in the background and restarts
   itself when done, with no windows or wizards.
 - 🌍 **Five languages:** English, Español, Galego, Français, Italiano. Everything switches instantly,
