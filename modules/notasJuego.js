@@ -237,11 +237,22 @@ function parsearLista(html) {
   let ultimo = 0;
   let m;
 
+  /* Blizzard omite los </li> (es HTML válido): al abrir un <li> nuevo o cerrar un <ul> hay que cerrar
+     los que quedaron abiertos en ese nivel. Sin esto, Shaman y Warlock acababan dentro de
+     Death Knight. */
+  const cerrarColgados = (indice) => {
+    while (pilaItems.length >= pilaListas.length) {
+      const item = pilaItems.pop();
+      if (item && !item.hijos) item.etiqueta = html.slice(ultimo, indice);
+    }
+  };
+
   while ((m = re.exec(html))) {
     const cierre = m[1] === '/';
     const tipo = m[2].toLowerCase();
     if (tipo === 'li') {
       if (!cierre) {
+        cerrarColgados(m.index);
         const item = { etiqueta: '', hijos: null };
         const lista = pilaListas[pilaListas.length - 1] || raiz;
         lista.push(item);
@@ -263,6 +274,7 @@ function parsearLista(html) {
       }
       ultimo = m.index + m[0].length;
     } else {
+      cerrarColgados(m.index);
       pilaListas.pop();
       ultimo = m.index + m[0].length;
     }
@@ -273,6 +285,37 @@ function parsearLista(html) {
 /* Texto de un cambio: se sanea como el resto (sin enlaces; los blue posts son otra cosa). */
 function cambiarATexto(html) {
   return forever.sanear('<p>' + String(html || '') + '</p>').replace(/^<p>/, '').replace(/<\/p>$/, '').trim();
+}
+
+/**
+ * Blizzard a veces mete una clase dentro de otra (su HTML anida Shaman y Warlock dentro de
+ * Death Knight). Aquí se sacan al mismo nivel: las clases nunca van dentro de una clase.
+ */
+function aplanarClases(items, destino = []) {
+  for (const item of items) {
+    if (!item.hijos) { destino.push(item); continue; }
+    if (nombreClase(item.etiqueta)) {
+      const clase = { etiqueta: item.etiqueta, hijos: [] };
+      const desbordadas = [];
+      for (const hijo of item.hijos) {
+        if (nombreClase(hijo.etiqueta)) desbordadas.push(hijo);
+        else clase.hijos.push(hijo);
+      }
+      destino.push(clase);
+      if (desbordadas.length) aplanarClases(desbordadas, destino);
+      continue;
+    }
+    /* Sección normal (Classes, Items…): se conserva y sus clases se van al mismo nivel. */
+    const seccion = { etiqueta: item.etiqueta, hijos: [] };
+    const clasesSueltas = [];
+    for (const hijo of item.hijos) {
+      if (nombreClase(hijo.etiqueta)) clasesSueltas.push(hijo);
+      else seccion.hijos.push(hijo);
+    }
+    destino.push(seccion);
+    if (clasesSueltas.length) aplanarClases(clasesSueltas, destino);
+  }
+  return destino;
 }
 
 function pintarItems(items, ctx = {}) {
@@ -366,7 +409,7 @@ function repartirPorJuego(bloques) {
     }
 
     if (bloque.tipo === 'ul') {
-      const html = pintarItems(parsearLista(bloque.html));
+      const html = pintarItems(aplanarClases(parsearLista(bloque.html)));
       if (html.trim()) porJuego[actual].push(html);
     }
   }
@@ -501,5 +544,5 @@ module.exports = {
   listar,
   imagen,
   limpiarCache,
-  _internos: { leerIndice, extraerCuerpo, porFechas, trocear, parsearLista, pintarItems, repartirPorJuego, tarjetasDeArticulo, marcaDeCambio, ramaDe, nombreClase, esFecha, fechaDeTexto, INDICE, RUTA_ICONO }
+  _internos: { leerIndice, extraerCuerpo, porFechas, trocear, parsearLista, pintarItems, repartirPorJuego, tarjetasDeArticulo, marcaDeCambio, ramaDe, nombreClase, esFecha, fechaDeTexto, INDICE, RUTA_ICONO, aplanarClases }
 };

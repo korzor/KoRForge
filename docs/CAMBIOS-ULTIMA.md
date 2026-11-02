@@ -1,5 +1,4 @@
-# Titulo: El pie cabe sin ensanchar la barra
+# Titulo: Cada pestaña del pie con su reborde, y las clases ya no se anidan
 
-- **Etiquetas más cortas**: arriba «Latest Changes» y «Recommended Addons», y debajo el juego elegido (Retail, Classic Era, Classic Prog o Forever), en vez de «Latest Classic Prog Changes» de una tirada.
-- **La barra no se ensancha**: con las etiquetas nuevas la solapa izquierda queda igual que el resto de botones y no hay que redimensionarla.
-- **En los 9 idiomas**: los textos nuevos van traducidos y se adaptan al cambiar de idioma.
+- **Reborde en el panel lateral**: cada pestaña del pie (y las de arriba) lleva un borde fino siempre visible, así se leen como tarjetas y no como texto suelto.
+- **Clases arregladas**: Blizzard mete a veces una clase dentro de otra en su HTML (Shaman y Warlock dentro de Death Knight); ahora se sacan al mismo nivel y se ven todas a la vez sin abrir ninguna.

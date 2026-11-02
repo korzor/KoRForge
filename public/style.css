@@ -634,7 +634,9 @@ body.is-maximized .app-sidebar {
   padding: 8px 12px;
   border-radius: 8px;
   background: transparent;
-  border: 1px solid transparent;
+  /* Reborde mínimo siempre visible, para que cada pestaña se lea como una tarjeta (dueño,
+     02-11-2026). */
+  border: 1px solid rgba(255, 255, 255, 0.06);
   color: var(--text-muted);
   font-size: 0.84rem;
   font-weight: 500;
@@ -646,6 +648,7 @@ body.is-maximized .app-sidebar {
 
 .nav-item:hover {
   background: var(--bg-card);
+  border-color: rgba(245, 158, 11, 0.28);
   color: var(--c-fff);
 }
 

@@ -31,7 +31,7 @@ const comprobar = (nombre, condicion, detalle = '') => {
 };
 
 const modulo = require(path.join(ROOT, 'modules', 'notasJuego.js'));
-const { fechaDeTexto, marcaDeCambio, ramaDe, nombreClase, parsearLista, pintarItems, repartirPorJuego, trocear, tarjetasDeArticulo } = modulo._internos;
+const { fechaDeTexto, marcaDeCambio, ramaDe, nombreClase, parsearLista, pintarItems, repartirPorJuego, trocear, tarjetasDeArticulo, aplanarClases } = modulo._internos;
 
 /* ---------------- 1. Piezas puras ---------------- */
 comprobar('fecha: octubre 30 en UTC (sin restar un día)', fechaDeTexto('October 30, 2026') === '2026-10-30T00:00:00.000Z', fechaDeTexto('October 30, 2026'));
@@ -54,6 +54,12 @@ comprobar('lista: la clase se pliega', /<details class="bt-note-class"/.test(lis
 comprobar('lista: la especialización sale como subtítulo', /<h4 class="pn-spec">Feral<\/h4>/.test(lista));
 comprobar('lista: la flecha de mejora sale verde', /class="v2-mark is-buff"/.test(lista));
 comprobar('lista: el cambio va en su línea', /<span class="pn-line">All damage done increased by 5%\.<\/span>/.test(lista));
+
+/* Blizzard anida clases dentro de clases en su HTML: aquí se sacan al mismo nivel. */
+const anidada = parsearLista('<ul><li><strong>Death Knight</strong><ul><li><strong>Shaman</strong><ul><li>X.</li></ul></li></ul></li></ul>');
+const plana = aplanarClases(anidada);
+comprobar('clases: una clase dentro de otra se saca al mismo nivel',
+  plana.length === 2 && /Shaman/.test(plana[1].etiqueta), JSON.stringify(plana.map((x) => x.etiqueta)));
 
 const cuerpoDemo = `
 <p>Here you'll find a list of hotfixes that address various issues related to World of Warcraft.</p>
