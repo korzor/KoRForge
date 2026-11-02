@@ -678,9 +678,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (tabId === 'addons') loadInstalledAddons();
     if (tabId === 'recommended') {
-      if (currentActiveGame !== 'forever') {
-        switchActiveGame('forever');
-      }
+      /* Ya no se cambia el cliente a Forever al abrir esta pestaña (dueño, 02-11-2026): la lista
+         curada es de Forever y, en los demás, la pestaña lo dice sin mover el selector de arriba. */
       renderRecommendedTab();
     }
     if (tabId === 'favorites') renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
@@ -741,6 +740,8 @@ document.addEventListener('DOMContentLoaded', () => {
       currentActiveGame = data.activeGame || 'forever';
       currentGamesData = data.games || {};
       updateTopbarGamePills(currentActiveGame);
+      actualizarEtiquetasDeJuego();
+      if (window.KorforgeCambios) window.KorforgeCambios.fijarJuego(currentActiveGame);
 
       if (activeGameSelect) activeGameSelect.value = currentActiveGame;
       if (widgetGameIcon) widgetGameIcon.textContent = currentGamesData[currentActiveGame]?.icon || '⚔️';
@@ -911,8 +912,26 @@ document.addEventListener('DOMContentLoaded', () => {
       recommendedLastGame = null;
     }
 
-    /* Las notas del parche son de WoW Forever y no dependen del cliente elegido, asi que no se
-       recargan al cambiar de juego (dueño, 02-11-2026). */
+    /* Las notas y los nombres del pie cambian con el cliente (dueño, 02-11-2026): «Latest Classic Era
+       Changes», «Recommended Classic Era Addons»… */
+    actualizarEtiquetasDeJuego();
+    if (window.KorforgeCambios) window.KorforgeCambios.fijarJuego(currentActiveGame);
+  }
+
+  /* Nombre corto de cada cliente para el pie (el largo, «WoW Classic Progression», no cabe). */
+  const NOMBRE_CORTO_JUEGO = {
+    forever: 'Forever',
+    retail: 'Retail',
+    classic_era: 'Classic Era',
+    classic: 'Classic Prog'
+  };
+
+  function actualizarEtiquetasDeJuego() {
+    const corto = NOMBRE_CORTO_JUEGO[currentActiveGame] || 'Forever';
+    const cambios = document.getElementById('navChangesSub');
+    const addons = document.getElementById('navAddonsSub');
+    if (cambios) cambios.textContent = T('nav_changes_sub_game', { game: corto });
+    if (addons) addons.textContent = T('nav_addons_sub_game', { game: corto });
   }
 
   async function switchActiveGame(gameId) {
@@ -2462,6 +2481,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function renderRecommendedTab(forceRefresh = false) {
     if (!recommendedContent) return;
+
+    /* La lista curada es de WoW Forever (dueño, 02-11-2026): en los demás clientes se dice claro en
+       vez de enseñar addons que no son suyos. */
+    if (currentActiveGame !== 'forever') {
+      recommendedContent.innerHTML = `
+        <div class="empty-state">
+          <span class="empty-icon">✨</span>
+          <h3 class="empty-title">${T('rec_only_forever_title', { game: gameLabel(currentActiveGame) })}</h3>
+          <p class="empty-desc">${T('rec_only_forever_desc')}</p>
+        </div>`;
+      return;
+    }
 
     if (!forceRefresh && recommendedContent.querySelector('.recommended-category')) {
       actualizarEstadoTarjetasRecomendadas();
@@ -4714,6 +4745,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (addonsGrid) renderInstalledAddons('all', document.getElementById('searchInput')?.value || '');
     if (favoritesTabGrid) renderFavoritesTab(favSearchInput ? favSearchInput.value : '');
     rellenarOpcionesOrden();
+    actualizarEtiquetasDeJuego();
     if (window.KorforgeCambios) window.KorforgeCambios.repintar();
     if (gamesManagementList && Object.keys(currentGamesData).length) {
       renderGamesManagement(currentGamesData, currentActiveGame);

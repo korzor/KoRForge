@@ -22,6 +22,25 @@ window.KorforgeCambios = (() => {
   };
   let vista = 'notes';
   let cargando = false;
+  /* Qué juego está elegido arriba: Forever tiene su fuente; el resto, la de Blizzard. */
+  let juegoApi = 'forever';
+
+  const API_DE_JUEGO = {
+    forever: null,
+    retail: 'retail',
+    classic_era: 'classicEra',
+    classic: 'classicProg'
+  };
+
+  function apiDeJuego(clave) {
+    return Object.prototype.hasOwnProperty.call(API_DE_JUEGO, clave) && API_DE_JUEGO[clave] ? API_DE_JUEGO[clave] : 'forever';
+  }
+
+  function urlDeNotas(forzar) {
+    const sufijo = forzar ? '?forzar=1' : '';
+    if (juegoApi === 'forever') return `/api/cambios-forever${sufijo}`;
+    return `/api/notas/${juegoApi}${sufijo}`;
+  }
 
   function tr(clave, vars) {
     return window.T ? window.T(clave, vars) : clave;
@@ -266,7 +285,7 @@ window.KorforgeCambios = (() => {
     try {
       const url = vista === 'blue'
         ? `/api/blue-posts${forzar ? '?forzar=1' : ''}`
-        : `/api/cambios-forever${forzar ? '?forzar=1' : ''}`;
+        : urlDeNotas(forzar);
       const res = await fetch(url);
       const datos = await res.json();
       if (!datos || !datos.success) throw new Error((datos && datos.code) || 'err_changes');
@@ -325,6 +344,37 @@ window.KorforgeCambios = (() => {
     if (VISTAS[vista].cargada) pintar();
   }
 
+  /** El selector de juego de arriba manda: cada juego tiene sus notas y su fuente. */
+  function fijarJuego(clave) {
+    const nuevo = apiDeJuego(clave);
+    if (nuevo === juegoApi) return;
+
+    juegoApi = nuevo;
+    Object.values(VISTAS).forEach((v) => {
+      v.articulos = [];
+      v.cargada = false;
+      v.aviso = false;
+    });
+
+    /* Los blue posts son del foro de WoW: Forever; en los demás juegos no hay vista. */
+    if (juegoApi !== 'forever' && vista === 'blue') vista = 'notes';
+    const botonBlue = document.querySelector('.changes-view[data-view="blue"]');
+    if (botonBlue) botonBlue.hidden = juegoApi !== 'forever';
+    document.querySelectorAll('.changes-view').forEach((b) => {
+      const activa = b.dataset.view === vista;
+      b.classList.toggle('is-active', activa);
+      b.setAttribute('aria-selected', activa ? 'true' : 'false');
+    });
+
+    const lista = document.getElementById('changesList');
+    if (lista) lista.replaceChildren();
+    if (document.getElementById('pane-changes')?.classList.contains('active')) cargar(false);
+  }
+
+  function juegoActual() {
+    return juegoApi;
+  }
+
   document.addEventListener('DOMContentLoaded', () => {
     const boton = document.getElementById('btnRefreshChanges');
     if (boton) boton.addEventListener('click', () => cargar(true));
@@ -337,5 +387,5 @@ window.KorforgeCambios = (() => {
     });
   });
 
-  return { cargar, pintar, limpiar, cambiarVista, repintar };
+  return { cargar, pintar, limpiar, cambiarVista, repintar, fijarJuego, juegoActual };
 })();

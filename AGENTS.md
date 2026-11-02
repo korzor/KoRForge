@@ -38,6 +38,8 @@ La app solo habla con servicios **públicos** y con su propio servidor local:
 | Catálogo de addons | `api.curseforge.com`, `www.curseforge.com`, `media.forgecdn.net`, `edge.forgecdn.net` |
 | Actualizador y descargas | `api.github.com`, `github.com` |
 | Noticias: Latest Forever Changes | `foreverchanges.pro` (feed, notas del parche e iconos; permiso del autor) |
+| Notas de Retail / Classic Era / Classic Prog | `worldofwarcraft.blizzard.com` (portal oficial: índice de notas de parche y hotfixes) |
+| Iconos de clase de esas notas | `render.worldofwarcraft.com` (CDN de iconos de Blizzard) |
 | Blue posts de WoW: Forever | `us.forums.blizzard.com` (foro oficial: solo la categoría «WoW: Forever» y solo el grupo Community Manager) |
 | Fotos de los blue posts | `d2ertrwg9e34np.cloudfront.net` (CDN donde el foro sube las imágenes) |
 | Miniatura y vídeo de un blue post | `img.youtube.com` (miniatura) y `www.youtube-nocookie.com` (reproductor incrustado, sin cookies y solo al pulsar play) |

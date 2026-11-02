@@ -500,6 +500,45 @@ app.get('/foro-img', async (req, res) => {
   }
 });
 
+/* Notas y parches de los demás juegos (dueño, 02-11-2026): Retail, Classic Era y Classic Prog.
+   Forever sigue teniendo su propia fuente, más rica. */
+const notasJuego = require('./modules/notasJuego');
+
+app.get('/api/notas/:juego', async (req, res) => {
+  const juego = String(req.params.juego || '');
+  if (!notasJuego.JUEGOS.includes(juego)) {
+    return res.status(404).json({ success: false, code: 'err_juego_desconocido' });
+  }
+  const forzar = req.query.forzar === '1';
+  try {
+    const datos = await notasJuego.listar(juego, forzar);
+    res.setHeader('Cache-Control', 'no-store');
+    res.json({ success: true, juego, ...datos });
+  } catch (err) {
+    console.error('[KoRForge Notas] Error leyendo las notas:', err.message);
+    res.status(502).json({ success: false, code: 'err_notas_unavailable' });
+  }
+});
+
+/* Iconos de clase de esas notas: los sirve el CDN de Blizzard, proxificado como los demás. */
+app.get('/juego-img', async (req, res) => {
+  if (!origenDelServidor(req, res)) return;
+  const ruta = String(req.query.p || '');
+  try {
+    const img = await notasJuego.imagen(ruta);
+    if (!img) {
+      return res.status(404).json({ error: 'Imagen no disponible', code: 'err_img_unavailable' });
+    }
+    res.setHeader('Content-Type', img.tipo);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Cache-Control', 'public, max-age=604800, immutable');
+    res.send(img.cuerpo);
+  } catch (err) {
+    console.error('[KoRForge Notas] Error sirviendo un icono:', err.message);
+    res.status(502).json({ error: 'Imagen no disponible', code: 'err_img_unavailable' });
+  }
+});
+
 // API: Config
 app.get('/api/config', (req, res) => {
   const activeGame = config.activeGame || 'forever';

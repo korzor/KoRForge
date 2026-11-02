@@ -45,6 +45,8 @@ const HOSTS_PERMITIDOS = new Set([
   'media.forgecdn.net',      // imágenes de addons
   'edge.forgecdn.net',
   'foreverchanges.pro',      // Latest Forever Changes: feed, notas e iconos (permiso del autor)
+  'worldofwarcraft.blizzard.com', // notas y parches de Retail y Classic (portal oficial)
+  'render.worldofwarcraft.com',   // iconos de clase de esas notas
   'us.forums.blizzard.com',  // blue posts de WoW: Forever en el foro oficial (dueño, 02-11-2026)
   'd2ertrwg9e34np.cloudfront.net', // fotos que suben a esos posts (CDN del foro de Blizzard)
   'img.youtube.com',          // miniaturas de los vídeos de esos posts
