@@ -99,6 +99,8 @@
 
       // --- Latest Forever Changes (pestaña lateral) --------------------------
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'Patch notes and hotfixes for WoW Forever',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 Refresh',
@@ -742,6 +744,8 @@
 
       // --- Latest Forever Changes (pestaña lateral) --------------------------
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'Notas del parche y hotfixes de WoW Forever',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 Actualizar',
@@ -1385,6 +1389,8 @@
 
       // --- Latest Forever Changes (pestaña lateral) --------------------------
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'Notas do parche e hotfixes de WoW Forever',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 Actualizar',
@@ -2028,6 +2034,8 @@
 
       // --- Latest Forever Changes (pestaña lateral) --------------------------
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'Notes de patch et correctifs de WoW Forever',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 Actualiser',
@@ -2671,6 +2679,8 @@
 
       // --- Latest Forever Changes (pestaña lateral) --------------------------
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'Note di patch e hotfix di WoW Forever',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 Aggiorna',
@@ -3308,6 +3318,8 @@
       topbar_installed: 'KoRForge / Установленные дополнения',
       topbar_backups: 'KoRForge / Хранилище WTF',
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'Заметки к патчам и хотфиксы WoW Forever',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 Обновить',
@@ -3964,6 +3976,8 @@
       topbar_installed: 'KoRForge / 安装的插件',
       topbar_backups: 'KoRForge / WTF 保险库',
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'WoW Forever 的补丁说明与热修复',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 刷新',
@@ -4620,6 +4634,8 @@
       topbar_installed: 'KoRForge / 설치된 애드온',
       topbar_backups: 'KoRForge / WTF 금고',
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'WoW Forever 패치 노트 및 핫픽스',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 새로 고침',
@@ -5276,6 +5292,8 @@
       topbar_installed: 'KoRForge / インストールされているアドオン',
       topbar_backups: 'KoRForge / なんと保管庫',
       nav_changes: 'Latest Forever Changes',
+      nav_changes_latest: 'Latest',
+      nav_changes_sub: 'Forever Changes',
       nav_changes_hint: 'WoW Forever のパッチノートとホットフィックス',
       topbar_changes: 'KoRForge / Latest Forever Changes',
       changes_refresh: '🔄 更新',

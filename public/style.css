@@ -706,8 +706,9 @@ body.is-maximized .app-sidebar {
 
 
 
-/* Botón Forever Addons (dueño, 30-10-2026) */
-.btn-forever-addons {
+/* Botones «grandes» del pie (dueño, 30-10-2026): Recommended / Forever Addons y Latest / Forever
+   Changes comparten esta pila de dos líneas (arriba gris, abajo dorado). */
+.btn-forever {
   width: 100%;
   display: flex;
   align-items: center;
@@ -718,7 +719,7 @@ body.is-maximized .app-sidebar {
   text-align: left;
 }
 
-.btn-forever-addons .nav-icon {
+.btn-forever .nav-icon {
   width: 26px;
   height: 26px;
   flex-shrink: 0;
@@ -727,13 +728,13 @@ body.is-maximized .app-sidebar {
   justify-content: center;
 }
 
-.btn-forever-addons .nav-icon-img {
+.btn-forever .nav-icon-img {
   width: 26px;
   height: 26px;
   object-fit: contain;
 }
 
-.btn-forever-addons .nav-label-stack {
+.btn-forever .nav-label-stack {
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -742,7 +743,7 @@ body.is-maximized .app-sidebar {
   min-width: 0;
 }
 
-.btn-forever-addons .nav-label-title {
+.btn-forever .nav-label-title {
   font-size: 0.70rem;
   font-weight: 600;
   color: var(--text-faint);
@@ -750,7 +751,7 @@ body.is-maximized .app-sidebar {
   white-space: nowrap;
 }
 
-.btn-forever-addons .nav-label-sub {
+.btn-forever .nav-label-sub {
   font-size: 0.84rem;
   font-weight: 700;
   color: var(--accent-gold);
@@ -758,24 +759,24 @@ body.is-maximized .app-sidebar {
   white-space: nowrap;
 }
 
-.btn-forever-addons:hover {
+.btn-forever:hover {
   background: var(--bg-card);
 }
 
-.btn-forever-addons:hover .nav-label-title {
+.btn-forever:hover .nav-label-title {
   color: var(--text-muted);
 }
 
-.btn-forever-addons.active {
+.btn-forever.active {
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.02) 100%);
   border-color: rgba(245, 158, 11, 0.35);
 }
 
-.btn-forever-addons.active .nav-label-title {
+.btn-forever.active .nav-label-title {
   color: rgba(245, 158, 11, 0.85);
 }
 
-.btn-forever-addons.active .nav-label-sub {
+.btn-forever.active .nav-label-sub {
   color: var(--accent-gold);
   text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
@@ -3560,47 +3561,6 @@ body:not([data-tab="changes"]) .btn-changes-refresh {
 
 .changes-empty {
   margin-top: 24px;
-}
-
-/* Pestaña «Latest Forever Changes» en el pie del panel lateral (dueño, 02-11-2026). */
-.btn-forever-changes {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 5px 12px;
-  min-height: 44px;
-  box-sizing: border-box;
-  text-align: left;
-}
-
-.btn-forever-changes .nav-icon {
-  width: 26px;
-  height: 26px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-forever-changes .changes-nav-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1.2;
-  white-space: normal;
-}
-
-.btn-forever-changes:hover {
-  background: var(--bg-card);
-}
-
-.btn-forever-changes.active {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.14) 0%, rgba(245, 158, 11, 0.02) 100%);
-  border-color: rgba(245, 158, 11, 0.35);
-}
-
-.btn-forever-changes.active .changes-nav-label {
-  color: var(--accent-gold);
 }
 
 /* Toast Notifications */
