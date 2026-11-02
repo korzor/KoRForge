@@ -6,4 +6,4 @@
 - **Actualizar a mano**: el botón «Actualizar» vuelve a pedir las notas al momento. Sin pulsarlo, el servidor guarda las notas 10 minutos y los iconos una semana.
 - **Menos peticiones**: se retira el lector de noticias de los foros de Blizzard, que ya no se usaba, y con él sus tres hosts.
 - **Nueve idiomas**: textos nuevos para la pestaña, el botón y los estados de carga, vacío y error.
-- **Icono nuevo en el pie**: el botón «Recommended / Forever Addons» estrena una diana con una flecha clavada en el centro, dibujada a juego con el resto de iconos.
+- **Icono nuevo en el pie**: el botón «Recommended / Forever Addons» estrena la diana con la flecha clavada del icono «Focused Aim» de WoW, usado con permiso.
