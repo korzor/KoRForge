@@ -929,6 +929,17 @@ ipcMain.handle('korforge:seleccionar-kfg', async () => {
   } catch (_) { return null; }
 });
 
+ipcMain.handle('korforge:seleccionar-carpeta', async (event, titulo) => {
+  try {
+    const { canceled, filePaths } = await dialog.showOpenDialog(win || null, {
+      title: titulo || 'Seleccionar carpeta de World of Warcraft',
+      properties: ['openDirectory']
+    });
+    if (canceled || !filePaths || filePaths.length === 0) return null;
+    return filePaths[0];
+  } catch (_) { return null; }
+});
+
 ipcMain.handle('korforge:guardar-kfg', async (event, nombreSugerido) => {
   try {
     const { canceled, filePath } = await dialog.showSaveDialog({

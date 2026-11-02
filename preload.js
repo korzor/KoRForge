@@ -48,7 +48,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
   // Seleccion y guardado nativo de paquetes KoRForge (.kfg)
   seleccionarArchivoKfg: () => ipcRenderer.invoke('korforge:seleccionar-kfg'),
-  guardarArchivoKfg: (nombreSugerido) => ipcRenderer.invoke('korforge:guardar-kfg', nombreSugerido)
+  guardarArchivoKfg: (nombreSugerido) => ipcRenderer.invoke('korforge:guardar-kfg', nombreSugerido),
+  seleccionarCarpeta: (titulo) => ipcRenderer.invoke('korforge:seleccionar-carpeta', titulo)
 });
 
 /**

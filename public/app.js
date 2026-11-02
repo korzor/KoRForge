@@ -343,6 +343,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const widgetGameIcon = document.getElementById('widgetGameIcon');
   const detectedPathEl = document.getElementById('detectedPath');
   const rootWoWPath = document.getElementById('rootWoWPath');
+  const btnBrowseRootWoW = document.getElementById('btnBrowseRootWoW');
   const btnAutoDetectGames = document.getElementById('btnAutoDetectGames');
   const gamesManagementList = document.getElementById('gamesManagementList');
   let currentGamesData = {};
@@ -1033,14 +1034,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Auto-Detect Game Versions Handler
-  btnAutoDetectGames?.addEventListener('click', async () => {
-    const rootDir = rootWoWPath ? rootWoWPath.value.trim() : '';
+  async function ejecutarAutoDeteccion(rutaPersonalizada) {
+    const rootDir = (typeof rutaPersonalizada === 'string' && rutaPersonalizada.trim())
+      ? rutaPersonalizada.trim()
+      : (rootWoWPath ? rootWoWPath.value.trim() : '');
     if (!rootDir) {
       showToast(T('toast_enter_root'), 'error');
       return;
     }
-    btnAutoDetectGames.disabled = true;
-    btnAutoDetectGames.textContent = T('settings_autodetect_detecting');
+    if (rootWoWPath) rootWoWPath.value = rootDir;
+    if (btnAutoDetectGames) {
+      btnAutoDetectGames.disabled = true;
+      btnAutoDetectGames.textContent = T('settings_autodetect_detecting');
+    }
+    if (btnBrowseRootWoW) btnBrowseRootWoW.disabled = true;
 
     try {
       const res = await fetch('/api/config/auto-detect', {
@@ -1071,8 +1078,33 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       showToast(err.message, 'error');
     } finally {
-      btnAutoDetectGames.disabled = false;
-      btnAutoDetectGames.textContent = T('settings_autodetect_btn');
+      if (btnAutoDetectGames) {
+        btnAutoDetectGames.disabled = false;
+        btnAutoDetectGames.textContent = T('settings_autodetect_btn');
+      }
+      if (btnBrowseRootWoW) btnBrowseRootWoW.disabled = false;
+    }
+  }
+
+  btnAutoDetectGames?.addEventListener('click', () => ejecutarAutoDeteccion());
+
+  btnBrowseRootWoW?.addEventListener('click', async () => {
+    try {
+      if (window.electronAPI && typeof window.electronAPI.seleccionarCarpeta === 'function') {
+        const rutaElegida = await window.electronAPI.seleccionarCarpeta(T('settings_autodetect_dialog_title'));
+        if (rutaElegida) {
+          await ejecutarAutoDeteccion(rutaElegida);
+        }
+      }
+    } catch (err) {
+      console.warn('Error seleccionando carpeta:', err);
+    }
+  });
+
+  rootWoWPath?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      ejecutarAutoDeteccion();
     }
   });
 
