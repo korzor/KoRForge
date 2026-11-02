@@ -24,7 +24,7 @@ const { _internos: forever } = require('./cambiosForever');
 
 const BASE = 'https://us.forums.blizzard.com/en/wow';
 const BUSQUEDA = '#wow-forever group:community-manager order:latest';
-const USER_AGENT = 'KoRForge/1.7.0 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.4 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 30;

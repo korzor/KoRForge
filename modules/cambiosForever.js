@@ -32,7 +32,7 @@
 const FEED_URL = 'https://foreverchanges.pro/patch-notes/feed.xml';
 const PAGINA_URL = 'https://foreverchanges.pro/patch-notes';
 const IMAGENES_URL = 'https://foreverchanges.pro';
-const USER_AGENT = 'KoRForge/1.7.0 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.4 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 40;
