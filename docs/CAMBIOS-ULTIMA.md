@@ -1,5 +1,5 @@
-# Titulo: Notas y blue posts en una sola lista
+# Titulo: Ventana de actualización no intrusiva y arrastrable
 
-- **Una lista, no dos**: desaparecen los botones «Patch notes» y «Blue posts». Las notas del parche y los mensajes de Blizzard se mezclan ordenados por fecha, con el punto azul para los blue posts y el rojo o ámbar para las notas.
-- **También en los demás juegos**: Retail, Classic Era y Classic Prog pierden el botón de vista y enseñan su lista directamente.
-- **Todo igual de plegable**: cada tarjeta se abre a un clic; los blue posts siguen pidiendo su cuerpo solo al abrirse.
+- **Sin forzar primer plano**: la ventana de actualización ya no se queda fija por encima de todo ni secuestra la pantalla mientras instala tras cerrarse la app.
+- **Móvil y arrastrable**: ahora puedes hacer clic en cualquier parte de la tarjeta (fondo, imagen, texto o barra de progreso) y moverla libremente para apartarla.
+- **Visible en la barra de tareas**: aparece identificada como KoRForge en la barra de Windows para poder alternar a ella o minimizarla con comodidad.
