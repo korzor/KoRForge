@@ -32,6 +32,11 @@ public class KorforgeInstalador {
   [StructLayout(LayoutKind.Sequential)] public struct RECT { public int Left; public int Top; public int Right; public int Bottom; }
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h, out RECT r);
   [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+  [DllImport("user32.dll")] public static extern int SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+  [DllImport("user32.dll")] public static extern bool ReleaseCapture();
+  public static void Arrastrar(IntPtr hWnd) {
+    try { ReleaseCapture(); SendMessage(hWnd, 0xA1, 2, 0); } catch {}
+  }
   public static int[] Medir(IntPtr h) {
     if (h == IntPtr.Zero || !IsWindowVisible(h)) return null;
     RECT r;
@@ -121,7 +126,16 @@ $form.FormBorderStyle = 'None'
 $form.StartPosition = 'Manual'
 $form.ClientSize = New-Object System.Drawing.Size($ancho, $alto)
 $form.BackColor = $fondoColor
-$form.TopMost = $true
+# SIN FORZAR PRIMER PLANO (dueno, 03-11-2026: "quitale el que este por encima de todo siempre")
+# La ventana no se fija con TopMost para no tapar otras aplicaciones y se puede arrastrar con el raton.
+$form.TopMost = $false
+$script:manejadorArrastre = {
+  param($s, $e)
+  if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
+    try { [KorforgeInstalador]::Arrastrar($form.Handle) } catch {}
+  }
+}
+$form.Add_MouseDown($script:manejadorArrastre)
 $form.ShowInTaskbar = $true
 $form.Text = 'KoRForge'
 $form.Location = New-Object System.Drawing.Point(
@@ -182,6 +196,7 @@ if (Test-Path -LiteralPath $artePng) {
     $g.Dispose()
     $origen.Dispose()
     $pic.Image = $lienzo
+    $pic.Add_MouseDown($script:manejadorArrastre)
     $form.Controls.Add($pic)
   } catch { }
 }

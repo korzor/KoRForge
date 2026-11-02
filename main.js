@@ -413,7 +413,7 @@ function createSplash() {
       movable: false,
       minimizable: false,
       maximizable: false,
-      alwaysOnTop: true,
+      alwaysOnTop: false,
       skipTaskbar: true,
       focusable: false,
       show: false,
