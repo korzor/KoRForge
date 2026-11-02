@@ -6,15 +6,19 @@
  *
  * DE DONDE SALEN: el dueño pidió estas dos fuentes (y el autor del sitio dio permiso para copiar las
  * noticias enteras):
- *   1. El feed RSS `https://foreverchanges.pro/es/patch-notes/feed.xml`, que manda la lista ordenada
+ *   1. El feed RSS `https://foreverchanges.pro/patch-notes/feed.xml`, que manda la lista ordenada
  *      de noticias (título, fecha y ancla de cada una).
- *   2. La propia página de notas `https://foreverchanges.pro/es/patch-notes`, de donde se toma el
+ *   2. La propia página de notas `https://foreverchanges.pro/patch-notes`, de donde se toma el
  *      cuerpo con formato (párrafos, iconos de hechizo y de clase, pliegues por clase y objetos).
  *      El feed solo trae un resumen en texto plano: sin la página se perderían los iconos.
  *
+ * EN INGLÉS (dueño, 03-11-2026): se usan las URL sin prefijo de idioma, que son las inglesas. En las
+ * españolas (`/es/...`) los hechizos, clases y secciones salían en castellano y el resto en inglés,
+ * así que la pestaña quedaba mezclada. En inglés está todo en el mismo idioma.
+ *
  * QUE SE QUITA: toda alusión al sitio. No queda ni un enlace (los <a> se desenvuelven y sus href se
- * tiran), no se muestran URL suyas, se borra el nombre del sitio del texto y se cambian las dos
- * frases que hablaban de «esta página» o de «la página Razas». El título de cada noticia se queda
+ * tiran), no se muestran URL suyas, se borra el nombre del sitio del texto y se quitan las frases que
+ * hablaban de «esta página», «la página Razas» o «the Races page». El título de cada noticia se queda
  * tal cual, sin añadir de dónde viene.
  *
  * LAS IMÁGENES: no se enlazan contra el sitio. Cada icono se pide al propio servidor de KoRForge
@@ -25,10 +29,10 @@
  */
 'use strict';
 
-const FEED_URL = 'https://foreverchanges.pro/es/patch-notes/feed.xml';
-const PAGINA_URL = 'https://foreverchanges.pro/es/patch-notes';
+const FEED_URL = 'https://foreverchanges.pro/patch-notes/feed.xml';
+const PAGINA_URL = 'https://foreverchanges.pro/patch-notes';
 const IMAGENES_URL = 'https://foreverchanges.pro';
-const USER_AGENT = 'KoRForge/1.6.2 (+https://github.com/korzor/KoRForge)';
+const USER_AGENT = 'KoRForge/1.6.3 (+https://github.com/korzor/KoRForge)';
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const TIMEOUT_MS = 20000;
 const MAX_ARTICULOS = 40;
@@ -114,6 +118,9 @@ function limpiarTexto(texto) {
 
   return limpio
     .replace(/y la p[áa]gina Razas los muestra bajo cada racial/gi, '')
+    /* «The lines below say what changes at launch, and the Races page shows them under each
+       racial.»: se va la coletilla de la página del sitio y se queda la frase útil. */
+    .replace(/,\s*and the [A-Z][\w'-]* page[^.]*\./g, '.')
     .replace(/\s+([,.;:!?])/g, '$1')
     .replace(/[\u200b-\u200d\ufeff]/g, '')
     .replace(/[ \t]{2,}/g, ' ');
@@ -125,7 +132,7 @@ async function descargar(url, acepta) {
   try {
     const res = await fetch(url, {
       signal: control.signal,
-      headers: { 'User-Agent': USER_AGENT, Accept: acepta, 'Accept-Language': 'es' }
+      headers: { 'User-Agent': USER_AGENT, Accept: acepta, 'Accept-Language': 'en' }
     });
     if (!res.ok) return null;
     return await res.text();
@@ -515,5 +522,5 @@ module.exports = {
   listar,
   imagen,
   /* Internos, para la sonda de verificación */
-  _internos: { parsearFeed, extraerSecciones, sanear, decodificar, limpiarTexto, rutaImagen, aTextoPlano }
+  _internos: { FEED_URL, PAGINA_URL, parsearFeed, extraerSecciones, sanear, decodificar, limpiarTexto, rutaImagen, aTextoPlano }
 };

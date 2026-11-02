@@ -33,30 +33,36 @@ const comprobar = (nombre, condicion, detalle = '') => {
 };
 
 const modulo = require(path.join(ROOT, 'modules', 'cambiosForever.js'));
-const { parsearFeed, extraerSecciones, sanear, rutaImagen, limpiarTexto } = modulo._internos;
+const { FEED_URL, PAGINA_URL, parsearFeed, extraerSecciones, sanear, rutaImagen, limpiarTexto } = modulo._internos;
 
 /* ---------------- 1. Funciones puras ---------------- */
+/* La fuente es la inglesa (sin prefijo de idioma): en la /es/ los hechizos y clases salían en
+   castellano y el resto en inglés. */
+comprobar('fuente: feed ingles', FEED_URL === 'https://foreverchanges.pro/patch-notes/feed.xml', FEED_URL);
+comprobar('fuente: pagina inglesa', PAGINA_URL === 'https://foreverchanges.pro/patch-notes', PAGINA_URL);
+comprobar('fuente: sin /es/', !/\/es\//.test(FEED_URL + PAGINA_URL));
+
 const feedDemo = `<?xml version="1.0" encoding="UTF-8"?>
 <rss><channel>
 <item>
-  <title>Hotfix, 30 de octubre de 2026</title>
-  <link>https://foreverchanges.pro/es/patch-notes#hotfix-2026-10-30</link>
+  <title>Hotfix, October 30, 2026</title>
+  <link>https://foreverchanges.pro/patch-notes#hotfix-2026-10-30</link>
   <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
-  <description>Un hotfix &amp; una nota.</description>
+  <description>A hotfix &amp; a note.</description>
 </item>
 <item>
-  <title>Build 1.60.1.70707, 30 de octubre de 2026</title>
-  <link>https://foreverchanges.pro/es/patch-notes#1.60.1.70707</link>
+  <title>Build 1.60.1.70707, October 30, 2026</title>
+  <link>https://foreverchanges.pro/patch-notes#1.60.1.70707</link>
   <pubDate>Fri, 30 Oct 2026 12:00:00 GMT</pubDate>
-  <description>La build del día.</description>
+  <description>The build of the day.</description>
 </item>
 </channel></rss>`;
 
 const items = parsearFeed(feedDemo);
 comprobar('feed: lee las dos noticias', items.length === 2, String(items.length));
-comprobar('feed: titulo y entidades', items[0].titulo === 'Hotfix, 30 de octubre de 2026', items[0].titulo);
+comprobar('feed: titulo y entidades', items[0].titulo === 'Hotfix, October 30, 2026', items[0].titulo);
 comprobar('feed: ancla del enlace', items[0].ancla === 'hotfix-2026-10-30', items[0].ancla);
-comprobar('feed: resumen sin etiquetas', items[0].resumen === 'Un hotfix & una nota.', items[0].resumen);
+comprobar('feed: resumen sin etiquetas', items[0].resumen === 'A hotfix & a note.', items[0].resumen);
 
 const paginaDemo = `<ol class="bt-builds pn-builds">
 <li id="a1"><div class="bt-build-id"><h2><time dateTime="2026-10-30">30 de octubre de 2026</time></h2><span class="pn-version">Hotfix</span></div><div class="bt-build-body"><p>Hola <a href="/es/talents/druid">Druida</a>.</p><script>alert(1)</script><img src="/icon/spell_x.jpg" width="18" height="18"></div></li>
@@ -95,6 +101,10 @@ comprobar('imagen: host externo rechazado', rutaImagen('https://foreverchanges.p
 comprobar('imagen: extensión rara rechazada', rutaImagen('/icon/x.exe') === '');
 comprobar('texto: quita el nombre del sitio', limpiarTexto('Según ForeverChanges, esto cambia.').trim() === 'Según, esto cambia.', JSON.stringify(limpiarTexto('Según ForeverChanges, esto cambia.')));
 comprobar('texto: quita la frase que habla de la web', limpiarTexto('Esto sigue. Hasta entonces los datos de esta web salían de imágenes. Otra frase.').trim() === 'Esto sigue. Otra frase.', JSON.stringify(limpiarTexto('Esto sigue. Hasta entonces los datos de esta web salían de imágenes. Otra frase.')));
+comprobar('texto: quita «this site» en inglés', limpiarTexto("One line. Until the beta client came out, this site's talents were read off footage. Another line.").trim() === 'One line. Another line.',
+  JSON.stringify(limpiarTexto("One line. Until the beta client came out, this site's talents were read off footage. Another line.")));
+comprobar('texto: quita la coletilla de «the Races page»', limpiarTexto('The lines below say what changes at launch, and the Races page shows them under each racial.').trim() === 'The lines below say what changes at launch.',
+  JSON.stringify(limpiarTexto('The lines below say what changes at launch, and the Races page shows them under each racial.')));
 
 /* ---------------- 2. Servidor de verdad ---------------- */
 async function probarServidor() {
