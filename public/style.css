@@ -781,6 +781,12 @@ body.is-maximized .app-sidebar {
   text-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
 }
 
+/* Dueño, 02-11-2026: en Latest Forever Changes la línea de arriba («Latest») se queda gris también
+   con la pestaña abierta; el dorado es solo para el nombre. */
+.btn-forever[data-tab="changes"].active .nav-label-title {
+  color: var(--text-faint);
+}
+
 .btn-settings-nav {
   width: 100%;
 }
