@@ -1,5 +1,5 @@
-# Titulo: Ventana de actualización no intrusiva y arrastrable
+# Titulo: Selector de carpeta raíz con auto-detección automática
 
-- **Sin forzar primer plano**: la ventana de actualización ya no se queda fija por encima de todo ni secuestra la pantalla mientras instala tras cerrarse la app.
-- **Móvil y arrastrable**: ahora puedes hacer clic en cualquier parte de la tarjeta (fondo, imagen, texto o barra de progreso) y moverla libremente para apartarla.
-- **Visible en la barra de tareas**: aparece identificada como KoRForge en la barra de Windows para poder alternar a ella o minimizarla con comodidad.
+- **Examinar carpeta raíz**: nuevo botón «📁 Examinar…» en Ajustes para localizar la carpeta principal de World of Warcraft mediante el explorador nativo.
+- **Auto-detección inmediata**: al seleccionar la carpeta, KoRForge detecta automáticamente todas las versiones instaladas (_forever_, _retail_, _classic_era_, _classic_) sin necesidad de pulsar ningún botón adicional.
+- **Ventana de actualización libre**: la ventana del actualizador tras cerrarse la app ya no fuerza el primer plano, es completamente arrastrable y aparece en la barra de tareas.
