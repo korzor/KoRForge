@@ -72,6 +72,8 @@ alternative to heavy commercial clients. It talks straight to the public CurseFo
 - 🎒 **Addon profiles:** export your setup as a compact `KORP-...` code to share with your guild, and
   import a friend's to see what you are missing.
 - 💾 **WTF vault:** full backups of `WTF/SavedVariables` and macros, restored in one click.
+- 📜 **Latest Forever Changes:** WoW Forever patch notes and hotfixes inside the app, with their
+  spell and class icons and the changes class by class, without leaving KoRForge.
 - 🔁 **Silent self-updater:** notified from GitHub Releases, downloads in the background and restarts
   itself when done, with no windows or wizards.
 - 🌍 **Five languages:** English, Español, Galego, Français, Italiano. Everything switches instantly,
