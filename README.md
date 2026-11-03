@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="korforge-banner.png" alt="KoRForge" width="480" />
+<img src="korforge-banner.png" alt="KoRForge" width="500" />
 
 <br>
 
@@ -26,7 +26,7 @@
 
 <br>
 
-<a href="https://github.com/korzor/KoRForge/releases/latest"><b><font size="4">⬇️</font> Download the latest build / Descargar la última versión</b></a>
+<a href="https://github.com/korzor/KoRForge/releases/latest"><b><font size="6">⬇️</font><br>Download the latest build / Descargar la última versión</b></a>
 
 </div>
 
@@ -48,7 +48,7 @@
 
 <div align="center">
 
-## <font size="6">🇬🇧</font> English
+## <font size="7">🇬🇧</font><br>English
 
 ### What is KoRForge?
 
@@ -61,103 +61,129 @@ while you play.
 
 | Why KoRForge | What you get |
 | :--: | :--: |
-| <font size="5">⚡</font><br>**Near-instant startup** | Minimalist footprint and native speed: open it and play immediately. |
-| <font size="5">🪶</font><br>**Tiny memory footprint** | Stays lean and responsive even with hundreds of addons installed. |
-| <font size="5">🎯</font><br>**Complete all-in-one suite** | Catalog, 1-click installer, updates, profiles, backups and audit tools. |
-| <font size="5">🔒</font><br>**100% Local & Private** | All paths and settings stay strictly on your personal computer. |
-| <font size="5">🐧</font><br>**Windows and Linux** | Native installer on Windows, self-updating AppImage on Linux. |
+| <font size="6">⚡</font><br>**Near-instant startup** | Minimalist footprint and native speed: open it and play immediately. |
+| <font size="6">🪶</font><br>**Tiny memory footprint** | Stays lean and responsive even with hundreds of addons installed. |
+| <font size="6">🎯</font><br>**Complete all-in-one suite** | Catalog, 1-click installer, updates, profiles, backups and audit tools. |
+| <font size="6">🔒</font><br>**100% Local & Private** | All paths and settings stay strictly on your personal computer. |
+| <font size="6">🐧</font><br>**Windows and Linux** | Native installer on Windows, self-updating AppImage on Linux. |
 
 <br>
 
-### <font size="5">✨</font> Features
+### <font size="7">✨</font><br>Features
 
 <p align="center">
-<font size="5">🧩</font><br>
+<font size="7">🧩</font><br>
 <b>True multi-client support</b><br>
 Switch between <b>WoW Forever</b> (1.60.1 / 1.12.1), <b>Retail</b> (The War Within 11.x), <b>Classic Era</b> (1.15.x), and <b>Classic Progression</b> (Cataclysm / Mists) in 1 click, each with isolated addons, directory paths and backups.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🔎</font><br>
+<font size="7">🔎</font><br>
 <b>Integrated online catalog</b><br>
 Real-time search with categories, sorting options, changelogs, full addon details and a 1-click description translator into your language.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">📋</font><br>
+<font size="7">📋</font><br>
 <b>Direct card & detail view</b><br>
 Click anywhere on an installed addon card or tap its circular info button to instantly open its detailed view, screenshots gallery, version selector, dependencies and changelog.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🔄</font><br>
+<font size="7">🔄</font><br>
 <b>One-click bulk update</b><br>
 Automatically detects available updates across your entire library and upgrades them simultaneously with a live progress indicator.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🧠</font><br>
+<font size="7">🧠</font><br>
 <b>Smart dependency resolution</b><br>
 Identifies required libraries (Ace3, LibSharedMedia, etc.) and installs them cleanly without Lua conflicts or duplicate files.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🩺</font><br>
+<font size="7">🩺</font><br>
 <b>Interface compatibility auditor</b><br>
 Inspects <code>.toc</code> headers against your active client version to flag addons as compatible, outdated or incompatible at a glance.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">📜</font><br>
+<font size="7">📜</font><br>
 <b>Latest Changes & Blue Posts</b><br>
 Real-time feed of patch notes and hotfixes organized by class (with official icons and buff/nerf arrows), plus Blizzard Blue Posts with photo previews and integrated YouTube player.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🎒</font><br>
+<font size="7">🎒</font><br>
 <b>Addon profiles & guild sharing</b><br>
 Export your entire setup into a compact <code>KORP-...</code> code to share with your guild, or import a friend's profile to install missing addons in 1 click.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">💾</font><br>
+<font size="7">💾</font><br>
 <b>WTF Vault & backups</b><br>
 Full backups of <code>WTF/SavedVariables</code> and macros, complete <code>.kfg</code> package export and import, and 1-click restore.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">📥</font><br>
+<font size="7">📥</font><br>
 <b>Manual installation</b><br>
 Install addons directly by pasting GitHub repository URLs or direct <code>.zip</code> download links.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">⚙️</font><br>
+<font size="7">⚙️</font><br>
 <b>Clean & responsive settings</b><br>
 Full-width adaptive layout with one-click root folder auto-detection, system startup toggles, and minimize-to-tray.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🔁</font><br>
+<font size="7">🔁</font><br>
 <b>Silent background self-updater</b><br>
 Checks GitHub Releases, downloads in the background and restarts smoothly when completed with SHA-256 integrity verification.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🌍</font><br>
+<font size="7">🌍</font><br>
 <b>Nine languages</b><br>
 English, Español, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語 with live switching.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">👀</font><br>
+<font size="7">👀</font><br>
 <b>Automatic folder discovery</b><br>
 Scans your existing <code>Interface\AddOns</code> folder, keeping track of addons installed manually or by third-party tools.
 </p>
 
 <br>
 
-### <font size="5">⬇️</font> Download & Install
+### <font size="7">⬇️</font><br>Download & Install
 
 Latest official build: **[GitHub Releases](https://github.com/korzor/KoRForge/releases/latest)**
 
@@ -165,8 +191,8 @@ Latest official build: **[GitHub Releases](https://github.com/korzor/KoRForge/re
 
 | Platform | File | How |
 | :--: | :--: | :--: |
-| <font size="5">🪟</font><br>**Windows x64** | `KoRForge-Setup-x.x.x.exe` | Assisted installer with Desktop and Start Menu shortcuts. Clean uninstall from Windows Settings. **Recommended.** |
-| <font size="5">🐧</font><br>**Linux x86_64** | `KoRForge-x.x.x-linux-x86_64.AppImage` | `chmod +x`, double click and go. It updates itself from GitHub Releases. |
+| <font size="6">🪟</font><br>**Windows x64** | `KoRForge-Setup-x.x.x.exe` | Assisted installer with Desktop and Start Menu shortcuts. Clean uninstall from Windows Settings. **Recommended.** |
+| <font size="6">🐧</font><br>**Linux x86_64** | `KoRForge-x.x.x-linux-x86_64.AppImage` | `chmod +x`, double click and go. It updates itself from GitHub Releases. |
 
 <br>
 
@@ -176,7 +202,7 @@ Latest official build: **[GitHub Releases](https://github.com/korzor/KoRForge/re
 
 <br>
 
-### <font size="5">🔐</font> Privacy
+### <font size="7">🔐</font><br>Privacy
 
 <p align="center">
 • No accounts, no passwords and no personal profiles are sent anywhere.<br>
@@ -186,7 +212,7 @@ Latest official build: **[GitHub Releases](https://github.com/korzor/KoRForge/re
 
 <br>
 
-### <font size="5">☕</font> Support the project
+### <font size="7">☕</font><br>Support the project
 
 <p align="center">
 Hi, I'm <b>KoRZoR</b>, an independent developer and a technology and video games enthusiast. I spend my free time building tools with no advertising, no telemetry and no unnecessary background processes, designed to run fast and respect the user's resources.
@@ -204,7 +230,7 @@ If KoRForge saves you time, you can invite me to a coffee. It is simply to suppo
 
 <br>
 
-### <font size="5">📜</font> License and Terms of Use
+### <font size="7">📜</font><br>License and Terms of Use
 
 <p align="center">
 This software is the exclusive property of <b>KoRZoR</b>. Free download and use as an end-user application is granted. Selling, redistributing unofficial copies, modifying the code and creating derivative forks are strictly forbidden. Details are in the <a href="LICENSE">LICENSE</a> file.
@@ -231,7 +257,7 @@ World of Warcraft and Blizzard Entertainment are trademarks or registered tradem
 
 <div align="center">
 
-## <font size="6">🇪🇸</font> Español
+## <font size="7">🇪🇸</font><br>Español
 
 ### ¿Qué es KoRForge?
 
@@ -244,103 +270,129 @@ mientras juegas.
 
 | Por qué KoRForge | Qué te llevas |
 | :--: | :--: |
-| <font size="5">⚡</font><br>**Arranque casi instantáneo** | Huella ultraligera y velocidad nativa: abre y entra al juego sin esperas. |
-| <font size="5">🪶</font><br>**Consumo mínimo de memoria** | Ágil y ligero incluso con cientos de addons instalados en disco. |
-| <font size="5">🎯</font><br>**Suite todo en uno** | Catálogo, instalación en 1 clic, actualización masiva, perfiles, copias y auditoría. |
-| <font size="5">🔒</font><br>**100% Local y Privado** | Todas tus rutas y opciones se quedan estrictamente en tu ordenador. |
-| <font size="5">🐧</font><br>**Windows y Linux** | Instalador nativo para Windows y paquete AppImage autoactualizable para Linux. |
+| <font size="6">⚡</font><br>**Arranque casi instantáneo** | Huella ultraligera y velocidad nativa: abre y entra al juego sin esperas. |
+| <font size="6">🪶</font><br>**Consumo mínimo de memoria** | Ágil y ligero incluso con cientos de addons instalados en disco. |
+| <font size="6">🎯</font><br>**Suite todo en uno** | Catálogo, instalación en 1 clic, actualización masiva, perfiles, copias y auditoría. |
+| <font size="6">🔒</font><br>**100% Local y Privado** | Todas tus rutas y opciones se quedan estrictamente en tu ordenador. |
+| <font size="6">🐧</font><br>**Windows y Linux** | Instalador nativo para Windows y paquete AppImage autoactualizable para Linux. |
 
 <br>
 
-### <font size="5">✨</font> Características
+### <font size="7">✨</font><br>Características
 
 <p align="center">
-<font size="5">🧩</font><br>
+<font size="7">🧩</font><br>
 <b>Multicliente auténtico</b><br>
 Cambia entre <b>WoW Forever</b> (1.60.1 / 1.12.1), <b>Retail</b> (The War Within 11.x), <b>Classic Era</b> (1.15.x) y <b>Classic Progression</b> (Cataclysm / Mists) con un solo clic, cada uno con sus addons, rutas y copias de seguridad independientes.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🔎</font><br>
+<font size="7">🔎</font><br>
 <b>Catálogo online integrado</b><br>
 Búsqueda en tiempo real con filtros por categoría y ordenación, changelogs, ficha técnica completa y traductor instantáneo de descripciones a tu idioma.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">📋</font><br>
+<font size="7">📋</font><br>
 <b>Acceso directo a ficha y tarjetas</b><br>
 Pulsa directamente sobre la tarjeta de un addon instalado o en su botón circular de información para abrir su ficha detallada, galería de capturas a pantalla completa, selector de versiones y dependencias.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🔄</font><br>
+<font size="7">🔄</font><br>
 <b>Actualización masiva en 1 clic (Bulk Update)</b><br>
 Detecta al instante todos los addons con versiones nuevas en el catálogo y los actualiza en lote con barra de progreso en tiempo real.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🧠</font><br>
+<font size="7">🧠</font><br>
 <b>Gestor inteligente de dependencias</b><br>
 Detecta librerías requeridas (Ace3, LibSharedMedia, etc.) y las instala automáticamente sin errores Lua ni archivos duplicados.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🩺</font><br>
+<font size="7">🩺</font><br>
 <b>Auditor de compatibilidad de interfaz</b><br>
 Analiza las cabeceras <code>## Interface</code> de los <code>.toc</code> locales para mostrar si cada addon está actualizado, desfasado o es incompatible con tu cliente activo.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">📜</font><br>
+<font size="7">📜</font><br>
 <b>Últimas Novedades y Blue Posts</b><br>
 Feed unificado de notas de parche y hotfixes organizados por clase (con iconos oficiales y flechas de mejora/nerf), junto a mensajes oficiales de Blizzard con fotos y reproductor de vídeo integrado.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🎒</font><br>
+<font size="7">🎒</font><br>
 <b>Perfiles de addons para hermandades</b><br>
 Exporta tu configuración completa en un código compacto <code>KORP-...</code> para compartir con tus compañeros o importa el perfil de un amigo en 1 clic.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">💾</font><br>
+<font size="7">💾</font><br>
 <b>Bóveda WTF y copias completas</b><br>
 Copias de seguridad de <code>WTF/SavedVariables</code> y macros, exportación/importación de paquetes completos <code>.kfg</code> y restauración en 1 clic.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">📥</font><br>
+<font size="7">📥</font><br>
 <b>Instalación manual</b><br>
 Instala addons directamente pegando la URL de un repositorio de GitHub o un enlace directo a un archivo <code>.zip</code>.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">⚙️</font><br>
+<font size="7">⚙️</font><br>
 <b>Ajustes limpios y adaptables</b><br>
 Diseño moderno de ancho completo que aprovecha tu monitor, con autodetección de carpetas de WoW, arranque con el sistema y minimizado a la bandeja.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🔁</font><br>
+<font size="7">🔁</font><br>
 <b>Autoactualizador silencioso</b><br>
 Comprueba nuevas versiones en GitHub Releases, descarga en segundo plano y se reinicia de forma transparente con verificación SHA-256.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">🌍</font><br>
+<font size="7">🌍</font><br>
 <b>Nueve idiomas integrados</b><br>
 Español, English, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語 con cambio en caliente sin reiniciar la aplicación.
 </p>
 
+<br>
+
 <p align="center">
-<font size="5">👀</font><br>
+<font size="7">👀</font><br>
 <b>Reconoce lo que ya tienes</b><br>
 Escanea tu carpeta <code>Interface\AddOns</code> para que cualquier addon instalado previamente a mano o con otro cliente aparezca listo para usar.
 </p>
 
 <br>
 
-### <font size="5">⬇️</font> Descarga e instalación
+### <font size="7">⬇️</font><br>Descarga e instalación
 
 Última versión oficial: **[Releases de GitHub](https://github.com/korzor/KoRForge/releases/latest)**
 
@@ -348,8 +400,8 @@ Escanea tu carpeta <code>Interface\AddOns</code> para que cualquier addon instal
 
 | Plataforma | Archivo | Cómo |
 | :--: | :--: | :--: |
-| <font size="5">🪟</font><br>**Windows x64** | `KoRForge-Setup-x.x.x.exe` | Instalador asistido, con accesos en Escritorio y Menú Inicio. Desinstalación limpia desde Configuración de Windows. **Recomendado.** |
-| <font size="5">🐧</font><br>**Linux x86_64** | `KoRForge-x.x.x-linux-x86_64.AppImage` | `chmod +x`, doble clic y listo. Se actualiza sola desde GitHub Releases. |
+| <font size="6">🪟</font><br>**Windows x64** | `KoRForge-Setup-x.x.x.exe` | Instalador asistido, con accesos en Escritorio y Menú Inicio. Desinstalación limpia desde Configuración de Windows. **Recomendado.** |
+| <font size="6">🐧</font><br>**Linux x86_64** | `KoRForge-x.x.x-linux-x86_64.AppImage` | `chmod +x`, doble clic y listo. Se actualiza sola desde GitHub Releases. |
 
 <br>
 
@@ -359,7 +411,7 @@ Escanea tu carpeta <code>Interface\AddOns</code> para que cualquier addon instal
 
 <br>
 
-### <font size="5">🔐</font> Privacidad
+### <font size="7">🔐</font><br>Privacidad
 
 <p align="center">
 • No se envían cuentas, contraseñas ni perfiles personales a ningún sitio.<br>
@@ -369,7 +421,7 @@ Escanea tu carpeta <code>Interface\AddOns</code> para que cualquier addon instal
 
 <br>
 
-### <font size="5">☕</font> Apoyar el proyecto
+### <font size="7">☕</font><br>Apoyar el proyecto
 
 <p align="center">
 ¡Hola! Soy <b>KoRZoR</b>, desarrollador independiente y apasionado de la tecnología y los videojuegos. Dedico mi tiempo libre a hacer herramientas sin publicidad, sin telemetría y sin procesos innecesarios, pensadas para ir rápido y respetar los recursos del equipo.
@@ -387,7 +439,7 @@ Si KoRForge te ahorra tiempo, puedes invitarme a un café. Es solo por las horas
 
 <br>
 
-### <font size="5">📜</font> Licencia y Términos de Uso
+### <font size="7">📜</font><br>Licencia y Términos de Uso
 
 <p align="center">
 Este software es propiedad exclusiva de <b>KoRZoR</b>. Se autoriza su descarga y uso gratuito como aplicación final. Queda estrictamente prohibida la venta, la redistribución de copias no oficiales, la modificación del código y la creación de forks derivados. Los detalles están en el archivo <a href="LICENSE">LICENSE</a>.
