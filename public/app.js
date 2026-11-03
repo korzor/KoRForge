@@ -1631,6 +1631,13 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
             </div>
             <div class="installed-card-actions">
+              <button class="installed-btn-action btn-addon-info" data-folder="${addon.folderName}" title="${T('card_info_hint')}" aria-label="${T('card_info_hint')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+              </button>
               <button class="installed-btn-action btn-addon-fav ${esFavorito ? 'is-fav' : ''}" data-folder="${addon.folderName}" title="${esFavorito ? T('card_fav_remove_hint') : T('detail_fav_add')}">
                 <svg class="fav-star-icon" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
               </button>
@@ -1654,6 +1661,32 @@ document.addEventListener('DOMContentLoaded', () => {
       // 1. Card Click: Open Addon in Catalog / Search (ignoring switches and action buttons)
       card.addEventListener('click', (e) => {
         if (e.target.closest('.switch') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action')) return;
+        switchTab('search');
+        if (cfSearchInput) {
+          cfSearchInput.value = addon.actualName || addon.title;
+        }
+        triggerCurseForgeSearch();
+      });
+
+      // 1b. Open Addon Detail / Page in KoRForge
+      const btnInfo = card.querySelector('.btn-addon-info');
+      btnInfo?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        if (addon.modId) {
+          openAddonDetail(addon.modId, addon.title);
+          return;
+        }
+        try {
+          const query = addon.actualName || addon.title;
+          const res = await fetch(`/api/search?gameId=${encodeURIComponent(currentActiveGame)}&searchFilter=${encodeURIComponent(query)}&pageSize=5`);
+          const data = await res.json();
+          const hits = data.mods || [];
+          if (hits.length > 0) {
+            const match = hits.find(h => h.name && h.name.toLowerCase() === query.toLowerCase()) || hits[0];
+            openAddonDetail(match.id, match.name);
+            return;
+          }
+        } catch (_) {}
         switchTab('search');
         if (cfSearchInput) {
           cfSearchInput.value = addon.actualName || addon.title;

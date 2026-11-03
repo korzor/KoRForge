@@ -221,6 +221,7 @@
       toast_fav_error: 'Error updating favorites',
 
       // --- Share ------------------------------------------------------------
+      card_info_hint: 'View addon details',
       card_share_hint: 'Share this addon',
       detail_share: 'Share',
       detail_share_hint: 'Share the author repository (never the CurseForge page)',
@@ -883,6 +884,7 @@
       toast_fav_error: 'Error al actualizar favoritos',
 
       // --- Compartir --------------------------------------------------------
+      card_info_hint: 'Ver ficha del addon',
       card_share_hint: 'Compartir este addon',
       detail_share: 'Compartir',
       detail_share_hint: 'Compartir el repositorio del autor (nunca la página de CurseForge)',
@@ -1545,6 +1547,7 @@
       toast_fav_error: 'Erro ao actualizar favoritos',
 
       // --- Compartir --------------------------------------------------------
+      card_info_hint: 'Ver ficha do addon',
       card_share_hint: 'Compartir este addon',
       detail_share: 'Compartir',
       detail_share_hint: 'Compartir o repositorio do autor (nunca a páxina de CurseForge)',
@@ -2207,6 +2210,7 @@
       toast_fav_error: 'Erreur lors de la mise à jour des favoris',
 
       // --- Partager ---------------------------------------------------------
+      card_info_hint: 'Voir la fiche de l\'addon',
       card_share_hint: 'Partager cet addon',
       detail_share: 'Partager',
       detail_share_hint: 'Partager le dépôt de l’auteur (jamais la page CurseForge)',
@@ -2869,6 +2873,7 @@
       toast_fav_error: 'Errore nell’aggiornamento dei preferiti',
 
       // --- Condividi --------------------------------------------------------
+      card_info_hint: 'Visualizza scheda dell\'addon',
       card_share_hint: 'Condividi questo addon',
       detail_share: 'Condividi',
       detail_share_hint: 'Condividi il repository dell’autore (mai la pagina CurseForge)',
@@ -3519,6 +3524,7 @@
       toast_fav_added: '★ «{name}» добавлен в Избранное',
       toast_fav_removed: '"{name}" удален из Избранного',
       toast_fav_error: 'Ошибка обновления избранного',
+      card_info_hint: 'Посмотреть карточку аддона',
       card_share_hint: 'Поделитесь этим дополнением',
       detail_share: 'Поделиться',
       detail_share_hint: 'Поделитесь репозиторием автора (никогда не страницей CurseForge)',
@@ -4194,6 +4200,7 @@
       toast_fav_added: '★ “{name}”已添加到收藏夹',
       toast_fav_removed: '“ {name} ”已从收藏夹中删除',
       toast_fav_error: '更新收藏夹时出错',
+      card_info_hint: '查看插件详情',
       card_share_hint: '分享这个插件',
       detail_share: '分享',
       detail_share_hint: '共享作者存储库（绝不是 CurseForge 页面）',
@@ -4869,6 +4876,7 @@
       toast_fav_added: '★ " {name} "가 즐겨찾기에 추가되었습니다',
       toast_fav_removed: '" {name} "가 즐겨찾기에서 제거되었습니다.',
       toast_fav_error: '즐겨찾기를 업데이트하는 중에 오류가 발생했습니다.',
+      card_info_hint: '애드온 상세 정보 보기',
       card_share_hint: '이 애드온 공유',
       detail_share: '공유',
       detail_share_hint: '작성자 저장소를 공유하세요(CurseForge 페이지는 절대 아님)',
@@ -5544,6 +5552,7 @@
       toast_fav_added: '★「 {name} 」をお気に入りに追加しました',
       toast_fav_removed: '「 {name} 」がお気に入りから削除されました',
       toast_fav_error: 'お気に入りの更新中にエラーが発生しました',
+      card_info_hint: 'アドオンの詳細を見る',
       card_share_hint: 'このアドオンを共有する',
       detail_share: 'シェアする',
       detail_share_hint: '著者リポジトリを共有します (決して CurseForge ページを共有しないでください)',

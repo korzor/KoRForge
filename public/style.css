@@ -1090,6 +1090,14 @@ body.is-maximized .app-sidebar {
   transition: transform 0.15s ease;
 }
 
+.installed-btn-action.btn-addon-info:hover {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(59, 130, 246, 0.55);
+  color: #60a5fa;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+}
+
 .installed-btn-action.btn-addon-folder:hover {
   background: rgba(245, 158, 11, 0.14);
   border-color: rgba(245, 158, 11, 0.5);
