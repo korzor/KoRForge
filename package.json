@@ -1,6 +1,6 @@
 {
   "name": "korforge",
-  "version": "1.7.2",
+  "version": "1.7.3",
   "description": "KoRForge - Standalone WoW Addon Manager",
   "desktopName": "korforge.desktop",
   "main": "main.js",
@@ -24,7 +24,6 @@
   "keywords": [
     "wow",
     "addons",
-    "curseforge",
     "wow-forever"
   ],
   "author": "KoRZoR",
@@ -47,7 +46,6 @@
     "nsis": {
       "oneClick": false,
       "perMachine": false,
-      "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "KoRForge",

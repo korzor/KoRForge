@@ -1,4 +1,5 @@
-# Titulo: Preservar la posición del icono en el escritorio al actualizar
+# Titulo: Corrección del actualizador y eliminación de referencias a CurseForge
 
-- **Icono en su sitio**: al actualizar o reinstalar la app, el acceso directo conserva su hueco y posición en la cuadrícula del escritorio sin saltar al primer espacio libre.
-- **Instalador y actualizador sincronizados**: las opciones de actualización silenciosa y la ventana de instalación pasan las banderas necesarias a NSIS para mantener intactos los accesos directos.
+- **Preservación del icono en el escritorio**: el acceso directo conserva su hueco y posición en la cuadrícula de Windows sin desplazarse al actualizar o reinstalar.
+- **Actualizador corregido**: resuelto el conflicto de instancia que impedía aplicar la actualización silenciosa desde versiones anteriores.
+- **Interfaz y avisos limpios**: eliminadas todas las menciones a CurseForge en avisos, toasts y banners, unificando la identidad en KoRForge.
