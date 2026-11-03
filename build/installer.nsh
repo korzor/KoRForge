@@ -36,7 +36,7 @@
       ${AndIf} ${FileExists} "$0\KoRForge.exe"
         ; Es una actualizacion o reinstalacion: relanzar con --updated --keep-shortcuts
         ; para no destruir el acceso directo del escritorio y conservar su posicion exacta.
-        ${StdUtils.GetAllParameters} $1
+        ${StdUtils.GetAllParameters} $1 0
         ExecWait '"$EXEPATH" /S --updated --keep-shortcuts $1' $2
         SetErrorLevel $2
         Quit
