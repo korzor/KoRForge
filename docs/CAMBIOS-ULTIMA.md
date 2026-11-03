@@ -1,4 +1,4 @@
-# Titulo: Botón de información para abrir la ficha del addon
+# Titulo: Apertura directa de la ficha del addon desde su tarjeta
 
-- **Ficha del addon en Instalados**: nuevo botón con la «i» rodeada por un círculo en cada tarjeta para acceder directamente a los detalles completos del addon en KoRForge.
-- **Resolución automática**: localiza la ficha del addon en CurseForge tanto si se instaló desde la app como si procede de la carpeta del juego.
+- **Acceso directo a la ficha**: al pulsar sobre la tarjeta de un addon en la pestaña Instalados (fuera de botones y controles), se abre directamente su ficha de detalles en KoRForge.
+- **Mismo comportamiento integrado**: unifica la experiencia con el botón de información con círculo, resolviendo automáticamente los datos del addon y sus dependencias.
