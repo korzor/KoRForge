@@ -52,6 +52,8 @@ modules/_cfkey.generated.js
 # Del repo solo sale lo que ve el usuario: README, LICENSE y la nota de cambios de la version.
 docs/*
 !docs/CAMBIOS-ULTIMA.md
+!docs/captura-1.7.0-blue-posts.png
+!docs/captura-1.6.7-retail.png
 scripts/prueba-linux-wsl.sh
 
 # Exclusivos de la carpeta interna P:\KoRForge

@@ -10,7 +10,7 @@
   <a href="https://github.com/korzor/KoRForge/releases/latest"><img src="https://img.shields.io/github/v/release/korzor/KoRForge?color=f59e0b&label=version" alt="Version"></a>
   <img src="https://img.shields.io/badge/Windows-x64-0078D6?logo=windows&logoColor=white" alt="Windows x64">
   <img src="https://img.shields.io/badge/Linux-x86__64-FCC624?logo=linux&logoColor=black" alt="Linux x86_64">
-  <img src="https://img.shields.io/badge/languages-5-8b5cf6" alt="5 languages">
+  <img src="https://img.shields.io/badge/languages-9-8b5cf6" alt="9 languages">
   <img src="https://img.shields.io/badge/ads-0%25-success" alt="No ads">
   <img src="https://img.shields.io/badge/telemetry-0%25-success" alt="No telemetry">
   <img src="https://img.shields.io/badge/license-proprietary-lightgrey" alt="Proprietary license">
@@ -46,41 +46,42 @@
 ### What is KoRForge?
 
 **KoRForge** is a **standalone** addon manager for World of Warcraft: the modern, lightweight
-alternative to heavy commercial clients. It talks straight to the public CurseForge catalog, with
-**no ads, no telemetry, no overlays** and no background processes eating your RAM while you play.
+alternative to heavy commercial clients. It communicates directly with the public CurseForge catalog,
+with **no ads, no telemetry, no overlays** and no background processes consuming system resources
+while you play.
 
 | Why KoRForge | What you get |
 | :-- | :-- |
-| ⚡ **Near-instant startup** | No bloated Electron stack, no hidden services: open it and play. |
-| 🪶 **Tiny footprint** | Small memory use even with hundreds of addons installed. |
-| 🎯 **One single program** | Catalog, installation, updates, profiles, backups and interface auditing. |
-| 🔒 **Nothing leaves your PC** | Paths and settings stay on your machine. |
-| 🐧 **Windows and Linux** | Installer on Windows, AppImage on Linux, each with its own updater. |
+| ⚡ **Near-instant startup** | Minimalist footprint and native speed: open it and play immediately. |
+| 🪶 **Tiny memory footprint** | Stays lean and responsive even with hundreds of addons installed. |
+| 🎯 **Complete all-in-one suite** | Catalog, 1-click installer, updates, profiles, backups and audit tools. |
+| 🔒 **100% Local & Private** | All paths and settings stay strictly on your personal computer. |
+| 🐧 **Windows and Linux** | Native installer on Windows, self-updating AppImage on Linux. |
+
+<div align="center">
+  <img src="docs/captura-1.7.0-blue-posts.png" alt="KoRForge - Blue Posts & Video Player" width="850" />
+</div>
 
 ### ✨ Features
 
-- 🧩 **True multi-client:** switch WoW versions in one click, each with its own addon list, paths and
-  backups: **WoW Forever** (1.60.1), **Retail** (The War Within 11.x), **Classic Era** (1.15.x) and
-  **Classic Progression** (Cataclysm / Mists / Titan).
-- 🔎 **CurseForge catalog built in:** real-time search, category and sorting filters, full addon page
-  with screenshots, version picker and a one-click description translator.
-- 🔄 **One-click bulk update:** it spots every addon with a newer version and updates them all at once.
-- 🧠 **Smart dependencies:** detects external libraries (Ace3, LibSharedMedia and friends) and installs
-  only the ones actually needed, avoiding Lua errors.
-- 🩺 **Interface auditor:** reads each local `.toc` header and flags addons as compatible, outdated or
-  incompatible at a glance.
-- 🎒 **Addon profiles:** export your setup as a compact `KORP-...` code to share with your guild, and
-  import a friend's to see what you are missing.
-- 💾 **WTF vault:** full backups of `WTF/SavedVariables` and macros, restored in one click.
-- 📜 **Latest Forever Changes:** WoW Forever patch notes and hotfixes inside the app, with their
-  spell and class icons and the changes class by class, without leaving KoRForge. Its second view
-  brings Blizzard's blue posts from the official WoW: Forever forum, videos included.
-- 🔁 **Silent self-updater:** notified from GitHub Releases, downloads in the background and restarts
-  itself when done, with no windows or wizards.
-- 🌍 **Five languages:** English, Español, Galego, Français, Italiano. Everything switches instantly,
-  including tooltips, filters and the tray menu.
-- 👀 **Recognizes what you already have:** it reads your `Interface\AddOns` folder, so addons installed
-  by hand or by another tool show up as installed.
+- 🧩 **True multi-client support:** Switch between **WoW Forever** (1.60.1 / 1.12.1), **Retail** (The War Within 11.x), **Classic Era** (1.15.x), and **Classic Progression** (Cataclysm / Mists) in 1 click, each with isolated addons, directory paths and backups.
+- 🔎 **Integrated CurseForge catalog:** Real-time search with categories, sorting options, changelogs, full addon details and a 1-click description translator into your language.
+- 📋 **Direct card & detail view:** Click anywhere on an installed addon card or tap its circular info button to instantly open its detailed view, screenshots gallery, version selector, dependencies and changelog.
+- 🔄 **One-click bulk update:** Automatically detects available updates across your entire library and upgrades them simultaneously with a live progress indicator.
+- 🧠 **Smart dependency resolution:** Identifies required libraries (Ace3, LibSharedMedia, etc.) and installs them cleanly without Lua conflicts or duplicate files.
+- 🩺 **Interface compatibility auditor:** Inspects `.toc` headers against your active client version to flag addons as compatible, outdated or incompatible at a glance.
+- 📜 **Latest Changes & Blue Posts:** Real-time feed of patch notes and hotfixes organized by class (with official icons and buff/nerf arrows), plus Blizzard Blue Posts with photo previews and integrated YouTube player.
+- 🎒 **Addon profiles & guild sharing:** Export your entire setup into a compact `KORP-...` code to share with your guild, or import a friend's profile to install missing addons in 1 click.
+- 💾 **WTF Vault & backups:** Full backups of `WTF/SavedVariables` and macros, complete `.kfg` package export and import, and 1-click restore.
+- 📥 **Manual installation:** Install addons directly by pasting GitHub repository URLs or direct `.zip` download links.
+- ⚙️ **Clean & responsive settings:** Full-width adaptive layout with one-click root folder auto-detection, system startup toggles, and minimize-to-tray.
+- 🔁 **Silent background self-updater:** Checks GitHub Releases, downloads in the background and restarts smoothly when completed with SHA-256 integrity verification.
+- 🌍 **Nine languages:** English, Español, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語 with live switching.
+- 👀 **Automatic folder discovery:** Scans your existing `Interface\AddOns` folder, keeping track of addons installed manually or by third-party tools.
+
+<div align="center">
+  <img src="docs/captura-1.6.7-retail.png" alt="KoRForge - Patch Notes & Class Changes" width="850" />
+</div>
 
 ### ⬇️ Download & Install
 
@@ -144,39 +145,41 @@ or CurseForge.
 
 **KoRForge** es un gestor de addons **standalone** para World of Warcraft: la alternativa moderna y
 ligera a los clientes comerciales pesados. Habla directamente con el catálogo público de CurseForge,
-**sin publicidad, sin telemetría, sin overlays** y sin procesos en segundo plano comiéndose tu RAM
+**sin publicidad, sin telemetría, sin overlays** y sin procesos en segundo plano consumiendo recursos
 mientras juegas.
 
 | Por qué KoRForge | Qué te llevas |
 | :-- | :-- |
-| ⚡ **Arranque casi instantáneo** | Sin Electron recargado ni servicios ocultos: abre y a jugar. |
-| 🪶 **Consumo mínimo** | Huella de memoria pequeña incluso con cientos de addons. |
-| 🎯 **Un solo programa** | Catálogo, instalación, actualización, perfiles, copias y auditoría de interfaz. |
-| 🔒 **Nada viaja a ningún sitio** | Rutas y configuración se quedan en tu equipo. |
-| 🐧 **Windows y Linux** | Instalador en Windows, AppImage en Linux, con actualizador propio en los dos. |
+| ⚡ **Arranque casi instantáneo** | Huella ultraligera y velocidad nativa: abre y entra al juego sin esperas. |
+| 🪶 **Consumo mínimo de memoria** | Ágil y ligero incluso con cientos de addons instalados en disco. |
+| 🎯 **Suite todo en uno** | Catálogo, instalación en 1 clic, actualización masiva, perfiles, copias y auditoría. |
+| 🔒 **100% Local y Privado** | Todas tus rutas y opciones se quedan estrictamente en tu ordenador. |
+| 🐧 **Windows y Linux** | Instalador nativo para Windows y paquete AppImage autoactualizable para Linux. |
+
+<div align="center">
+  <img src="docs/captura-1.7.0-blue-posts.png" alt="KoRForge - Blue Posts y Reproductor de Vídeo" width="850" />
+</div>
 
 ### ✨ Características
 
-- 🧩 **Multicliente de verdad:** cambia entre tus versiones de WoW con un clic, cada una con sus
-  addons, rutas y copias aisladas: **WoW Forever** (1.60.1), **Retail** (The War Within 11.x),
-  **Classic Era** (1.15.x) y **Classic Progression** (Cataclysm / Mists / Titan).
-- 🔎 **Catálogo CurseForge integrado:** búsqueda en tiempo real, filtros por categoría y orden, ficha
-  completa con capturas, selector de versión y traductor de descripciones con un clic.
-- 🔄 **Actualización masiva en 1 clic:** detecta qué addons tienen versión nueva y los actualiza todos
-  de golpe.
-- 🧠 **Dependencias inteligentes:** detecta librerías externas (Ace3, LibSharedMedia y compañía) e
-  instala solo las que hacen falta, evitando errores Lua.
-- 🩺 **Auditor de interfaz:** lee la cabecera `.toc` de cada addon local y marca si es compatible,
-  está obsoleto o es incompatible de un vistazo.
-- 🎒 **Perfiles de addons:** exporta tu setup como un código compacto `KORP-...` para compartirlo con la
-  hermandad e importa el de un amigo para ver qué te falta.
-- 💾 **Bóveda WTF:** copias completas de `WTF/SavedVariables` y macros, restaurables en un clic.
-- 🔁 **Autoactualizador silencioso:** avisa desde GitHub Releases, descarga en segundo plano y se
-  reinicia sola al terminar, sin ventanas ni asistentes.
-- 🌍 **Nueve idiomas:** Español, English, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語.
-  Todo cambia al instante, incluidos tooltips, filtros y el menú de la bandeja.
-- 👀 **Reconoce lo que ya tienes:** lee tu carpeta `Interface\AddOns`, así que los addons instalados a
-  mano o con otra herramienta aparecen como instalados.
+- 🧩 **Multicliente auténtico:** Cambia entre **WoW Forever** (1.60.1 / 1.12.1), **Retail** (The War Within 11.x), **Classic Era** (1.15.x) y **Classic Progression** (Cataclysm / Mists) con un solo clic, cada uno con sus addons, rutas y copias de seguridad independientes.
+- 🔎 **Catálogo CurseForge integrado:** Búsqueda en tiempo real con filtros por categoría y ordenación, changelogs, ficha técnica completa y traductor instantáneo de descripciones a tu idioma.
+- 📋 **Acceso directo a ficha y tarjetas:** Pulsa directamente sobre la tarjeta de un addon instalado o en su botón circular de información para abrir su ficha detallada, galería de capturas a pantalla completa, selector de versiones y dependencias.
+- 🔄 **Actualización masiva en 1 clic (Bulk Update):** Detecta al instante todos los addons con versiones nuevas en CurseForge y los actualiza en lote con barra de progreso en tiempo real.
+- 🧠 **Gestor inteligente de dependencias:** Detecta librerías requeridas (Ace3, LibSharedMedia, etc.) y las instala automáticamente sin errores Lua ni archivos duplicados.
+- 🩺 **Auditor de compatibilidad de interfaz:** Analiza las cabeceras `## Interface` de los `.toc` locales para mostrar si cada addon está actualizado, desfasado o es incompatible con tu cliente activo.
+- 📜 **Últimas Novedades y Blue Posts:** Feed unificado de notas de parche y hotfixes organizados por clase (con iconos oficiales y flechas de mejora/nerf), junto a mensajes oficiales de Blizzard con fotos y reproductor de vídeo integrado.
+- 🎒 **Perfiles de addons para hermandades:** Exporta tu configuración completa en un código compacto `KORP-...` para compartir con tus compañeros o importa el perfil de un amigo en 1 clic.
+- 💾 **Bóveda WTF y copias completas:** Copias de seguridad de `WTF/SavedVariables` y macros, exportación/importación de paquetes completos `.kfg` y restauración en 1 clic.
+- 📥 **Instalación manual:** Instala addons directamente pegando la URL de un repositorio de GitHub o un enlace directo a un archivo `.zip`.
+- ⚙️ **Ajustes limpios y adaptables:** Diseño moderno de ancho completo que aprovecha tu monitor, con autodetección de carpetas de WoW, arranque con el sistema y minimizado a la bandeja.
+- 🔁 **Autoactualizador silencioso:** Comprueba nuevas versiones en GitHub Releases, descarga en segundo plano y se reinicia de forma transparente con verificación SHA-256.
+- 🌍 **Nueve idiomas integrados:** Español, English, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語 con cambio en caliente sin reiniciar la aplicación.
+- 👀 **Reconoce lo que ya tienes:** Escanea tu carpeta `Interface\AddOns` para que cualquier addon instalado previamente a mano o con otro cliente aparezca listo para usar.
+
+<div align="center">
+  <img src="docs/captura-1.6.7-retail.png" alt="KoRForge - Notas de Parche y Cambios por Clase" width="850" />
+</div>
 
 ### ⬇️ Descarga e instalación
 
