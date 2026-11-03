@@ -1,5 +1,4 @@
-# Titulo: Selector de carpeta raíz con auto-detección automática
+# Titulo: Botón de información para abrir la ficha del addon
 
-- **Examinar carpeta raíz**: nuevo botón «📁 Examinar…» en Ajustes para localizar la carpeta principal de World of Warcraft mediante el explorador nativo.
-- **Auto-detección inmediata**: al seleccionar la carpeta, KoRForge detecta automáticamente todas las versiones instaladas (_forever_, _retail_, _classic_era_, _classic_) sin necesidad de pulsar ningún botón adicional.
-- **Ventana de actualización libre**: la ventana del actualizador tras cerrarse la app ya no fuerza el primer plano, es completamente arrastrable y aparece en la barra de tareas.
+- **Ficha del addon en Instalados**: nuevo botón con la «i» rodeada por un círculo en cada tarjeta para acceder directamente a los detalles completos del addon en KoRForge.
+- **Resolución automática**: localiza la ficha del addon en CurseForge tanto si se instaló desde la app como si procede de la carpeta del juego.
