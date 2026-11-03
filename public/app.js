@@ -3112,7 +3112,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   btnBrowserOpenExternal?.addEventListener('click', () => {
-    const targetUrl = currentWebUrl || 'https://www.curseforge.com';
+    const targetUrl = currentWebUrl;
+    if (!targetUrl) return;
     if (window.electronAPI?.openExternal) {
       window.electronAPI.openExternal(targetUrl);
     } else {

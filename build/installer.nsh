@@ -27,22 +27,7 @@
 ; queda sin poder instalar.
 
 !macro customInit
-  ${If} ${Silent}
-    ${IfNot} ${isUpdated}
-      ; Si corre en silencio sin --updated (ej. lanzado manual por linea de comandos),
-      ; comprobar si KoRForge ya esta instalado previamente en el sistema.
-      ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"
-      ${If} $0 != ""
-      ${AndIf} ${FileExists} "$0\KoRForge.exe"
-        ; Es una actualizacion o reinstalacion: relanzar con --updated --keep-shortcuts
-        ; para no destruir el acceso directo del escritorio y conservar su posicion exacta.
-        ${StdUtils.GetAllParameters} $1 0
-        ExecWait '"$EXEPATH" /S --updated --keep-shortcuts $1' $2
-        SetErrorLevel $2
-        Quit
-      ${EndIf}
-    ${EndIf}
-  ${Else}
+  ${IfNot} ${Silent}
     CreateDirectory "$TEMP\korforge-instalador"
     SetOutPath "$TEMP\korforge-instalador"
     ; OJO CON EL NOMBRE: `instalando.ps1` busca `kf-instalando.png` a su lado. Si aquí se suelta con
