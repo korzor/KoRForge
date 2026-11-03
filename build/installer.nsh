@@ -15,9 +15,11 @@
 ;      $PLUGINSDIR, que se borra al salir) y la lanza oculta tras wscript, sin consola.
 ;   2. Si wscript la ha lanzado, este proceso se aparta (`Quit`).
 ;   3. La ventana, cuando el usuario pulsa "Instalar", ejecuta ESTE MISMO instalador en silencio con
-;      la carpeta elegida: `KoRForge-x.y.z-Windows.exe /S /D=<ruta>`. El trabajo de verdad (archivos,
-;      accesos directos, desinstalador y registro) lo sigue haciendo NSIS: aqui no se reimplementa
-;      nada. El `/D=` de NSIS no admite comillas y tiene que ir al final, y asi se pasa.
+;      la carpeta elegida: `KoRForge-x.y.z-Windows.exe /S --updated --keep-shortcuts /D=<ruta>`.
+;      El trabajo de verdad (archivos, accesos directos, desinstalador y registro) lo sigue haciendo
+;      NSIS: aqui no se reimplementa nada. El `/D=` de NSIS no admite comillas y tiene que ir al final.
+;      Las banderas `--updated` y `--keep-shortcuts` aseguran que el desinstalador previo NO borre el
+;      acceso directo del escritorio, de modo que Windows conserve su posicion y hueco original.
 ;   4. Con `KORFORGE_SIN_ABRIR` puesta, el instalador silencioso NO reabre la app: la abre el boton de
 ;      la ventana. Sin esa variable (actualizacion automatica) se comporta como siempre.
 ;
@@ -25,7 +27,22 @@
 ; queda sin poder instalar.
 
 !macro customInit
-  ${IfNot} ${Silent}
+  ${If} ${Silent}
+    ${IfNot} ${isUpdated}
+      ; Si corre en silencio sin --updated (ej. lanzado manual por linea de comandos),
+      ; comprobar si KoRForge ya esta instalado previamente en el sistema.
+      ReadRegStr $0 HKCU "${INSTALL_REGISTRY_KEY}" "InstallLocation"
+      ${If} $0 != ""
+      ${AndIf} ${FileExists} "$0\KoRForge.exe"
+        ; Es una actualizacion o reinstalacion: relanzar con --updated --keep-shortcuts
+        ; para no destruir el acceso directo del escritorio y conservar su posicion exacta.
+        ${StdUtils.GetAllParameters} $1
+        ExecWait '"$EXEPATH" /S --updated --keep-shortcuts $1' $2
+        SetErrorLevel $2
+        Quit
+      ${EndIf}
+    ${EndIf}
+  ${Else}
     CreateDirectory "$TEMP\korforge-instalador"
     SetOutPath "$TEMP\korforge-instalador"
     ; OJO CON EL NOMBRE: `instalando.ps1` busca `kf-instalando.png` a su lado. Si aquí se suelta con
@@ -52,6 +69,14 @@
 !macroend
 
 !macro customInstall
+  ; Si el acceso directo del escritorio ya existe, asegurar que apunta a $INSTDIR\KoRForge.exe
+  ; SIN borrarlo previamente (sobreescribir el .lnk in-situ actualiza la ruta sin emitir evento de
+  ; borrado en el Shell de Windows, conservando intacto el hueco del icono en el escritorio).
+  ${If} ${FileExists} "$newDesktopLink"
+    CreateShortCut "$newDesktopLink" "$INSTDIR\KoRForge.exe" "" "$INSTDIR\KoRForge.exe" 0 "" "" "${APP_DESCRIPTION}"
+    WinShell::SetLnkAUMI "$newDesktopLink" "${APP_ID}"
+  ${EndIf}
+
   ; Marca para la tarjeta de la actualizacion automatica (modules/updater.js), que se cierra al
   ; verla: la ventana del instalador no la necesita, se guia por el proceso del instalador.
   ${IfNot} ${Silent}

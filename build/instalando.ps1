@@ -1,4 +1,4 @@
-﻿# Ventana del instalador de KoRForge: TODO el proceso pasa aqui.
+# Ventana del instalador de KoRForge: TODO el proceso pasa aqui.
 #
 # POR QUE EXISTE (dueno, 24-10-2026): *"el instalador no te permite elegir ruta de instalacion...
 # me parece mal"* y *"ya que tenemos la ventana hecha del progreso, no podriamos hacer que todo el
@@ -384,7 +384,7 @@ $btnInstalar.Add_Click({
     $psi = New-Object System.Diagnostics.ProcessStartInfo
     $psi.FileName = $script:instaladorExe
     # `/D=` SIN comillas y al FINAL: asi lo exige NSIS aunque la ruta lleve espacios.
-    $psi.Arguments = "/S /D=$ruta"
+    $psi.Arguments = "/S --updated --keep-shortcuts /D=$ruta"
     $psi.UseShellExecute = $false
     $psi.CreateNoWindow = $true
     $psi.WindowStyle = 'Hidden'

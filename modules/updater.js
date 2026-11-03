@@ -802,7 +802,7 @@ function buildApplyScript(installerPath, appExePath, targetVersion, opciones = {
     "  $env:KORFORGE_SIN_ABRIR = '1'",
     '  $procesoInstalador = $null',
     '  $inicio = Get-Date',
-    "  try { $procesoInstalador = Start-Process -FilePath $installer -ArgumentList '/S' -WindowStyle Hidden -PassThru } catch { Log ('Paso 3: no se pudo lanzar el instalador: ' + $_.Exception.Message) }",
+    "  try { $procesoInstalador = Start-Process -FilePath $installer -ArgumentList '/S --updated --keep-shortcuts' -WindowStyle Hidden -PassThru } catch { Log ('Paso 3: no se pudo lanzar el instalador: ' + $_.Exception.Message) }",
     '  Remove-Item Env:\\KORFORGE_SIN_ABRIR -ErrorAction SilentlyContinue',
     '  $limite = $inicio.AddMinutes(5)',
     '  $terminado = $false',
@@ -1023,7 +1023,7 @@ function applyUpdateAndRestart(electronApp = null, lang = 'en') {
     /* Respaldo: instalador directo y marca en disco para que la app enseñe la tarjeta al arrancar. */
     marcarActualizacionEnCurso(currentDownload.version);
     try {
-      const hijo = spawn(installerPath, ['/S'], { detached: true, stdio: 'ignore', windowsHide: true, shell: true });
+      const hijo = spawn(installerPath, ['/S', '--updated', '--keep-shortcuts'], { detached: true, stdio: 'ignore', windowsHide: true, shell: true });
       hijo.unref();
     } catch (err) {
       console.warn('[KoRForge Updater] No se pudo lanzar el instalador:', err.message);
