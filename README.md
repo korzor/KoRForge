@@ -58,10 +58,6 @@ while you play.
 | 🔒 **100% Local & Private** | All paths and settings stay strictly on your personal computer. |
 | 🐧 **Windows and Linux** | Native installer on Windows, self-updating AppImage on Linux. |
 
-<div align="center">
-  <img src="docs/captura-1.7.0-blue-posts.png" alt="KoRForge - Blue Posts & Video Player" width="850" />
-</div>
-
 ### ✨ Features
 
 - 🧩 **True multi-client support:** Switch between **WoW Forever** (1.60.1 / 1.12.1), **Retail** (The War Within 11.x), **Classic Era** (1.15.x), and **Classic Progression** (Cataclysm / Mists) in 1 click, each with isolated addons, directory paths and backups.
@@ -78,10 +74,6 @@ while you play.
 - 🔁 **Silent background self-updater:** Checks GitHub Releases, downloads in the background and restarts smoothly when completed with SHA-256 integrity verification.
 - 🌍 **Nine languages:** English, Español, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語 with live switching.
 - 👀 **Automatic folder discovery:** Scans your existing `Interface\AddOns` folder, keeping track of addons installed manually or by third-party tools.
-
-<div align="center">
-  <img src="docs/captura-1.6.7-retail.png" alt="KoRForge - Patch Notes & Class Changes" width="850" />
-</div>
 
 ### ⬇️ Download & Install
 
@@ -155,10 +147,6 @@ mientras juegas.
 | 🔒 **100% Local y Privado** | Todas tus rutas y opciones se quedan estrictamente en tu ordenador. |
 | 🐧 **Windows y Linux** | Instalador nativo para Windows y paquete AppImage autoactualizable para Linux. |
 
-<div align="center">
-  <img src="docs/captura-1.7.0-blue-posts.png" alt="KoRForge - Blue Posts y Reproductor de Vídeo" width="850" />
-</div>
-
 ### ✨ Características
 
 - 🧩 **Multicliente auténtico:** Cambia entre **WoW Forever** (1.60.1 / 1.12.1), **Retail** (The War Within 11.x), **Classic Era** (1.15.x) y **Classic Progression** (Cataclysm / Mists) con un solo clic, cada uno con sus addons, rutas y copias de seguridad independientes.
@@ -175,10 +163,6 @@ mientras juegas.
 - 🔁 **Autoactualizador silencioso:** Comprueba nuevas versiones en GitHub Releases, descarga en segundo plano y se reinicia de forma transparente con verificación SHA-256.
 - 🌍 **Nueve idiomas integrados:** Español, English, Galego, Français, Italiano, Русский, 中文, 한국어, 日本語 con cambio en caliente sin reiniciar la aplicación.
 - 👀 **Reconoce lo que ya tienes:** Escanea tu carpeta `Interface\AddOns` para que cualquier addon instalado previamente a mano o con otro cliente aparezca listo para usar.
-
-<div align="center">
-  <img src="docs/captura-1.6.7-retail.png" alt="KoRForge - Notas de Parche y Cambios por Clase" width="850" />
-</div>
 
 ### ⬇️ Descarga e instalación
 

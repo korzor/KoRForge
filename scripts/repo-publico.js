@@ -35,7 +35,7 @@ const tagVersion = `v${version}`;
 
 /* Lo unico que se publica: presentacion, aviso legal para IAs, licencia, nota de la version y el
    banner que pinta el README (sin el, GitHub enseña el enlace roto). Nada de codigo. */
-const FICHEROS = ['README.md', 'AGENTS.md', 'LICENSE', 'docs/CAMBIOS-ULTIMA.md', 'korforge-banner.png', 'docs/captura-1.7.0-blue-posts.png', 'docs/captura-1.6.7-retail.png'];
+const FICHEROS = ['README.md', 'AGENTS.md', 'LICENSE', 'docs/CAMBIOS-ULTIMA.md', 'korforge-banner.png'];
 
 /** Ejecuta git y devuelve la salida sin espacios sobrantes. */
 function git(args, opciones = {}) {
