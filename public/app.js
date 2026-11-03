@@ -805,7 +805,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="game-manage-icon">${g.icon}</span>
             <div>
               <h4 class="game-manage-title">${g.name}</h4>
-              <span class="game-manage-sub">${gameSubtitle} • ${T('game_typical_folder', { folder: g.subfolder })}</span>
+              ${gameSubtitle ? `<span class="game-manage-sub">${gameSubtitle}</span>` : ''}
             </div>
           </div>
           <div class="game-manage-actions-top">

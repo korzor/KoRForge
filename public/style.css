@@ -1318,6 +1318,22 @@ input:checked + .slider:before {
   border-color: var(--accent-gold);
 }
 
+#pane-settings .input-group {
+  margin-bottom: 0;
+  gap: 8px;
+}
+
+#pane-settings .input-group input {
+  padding: 8px 12px;
+  font-size: 0.82rem;
+}
+
+#pane-settings .input-group .btn {
+  padding: 8px 14px;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
 .install-console {
   background: #06080b;
   border: 1px solid var(--border-subtle);
@@ -1367,39 +1383,42 @@ input:checked + .slider:before {
 .settings-grid {
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  max-width: 900px;
+  gap: 16px;
+  width: 100%;
+  max-width: none;
 }
 
 .settings-card {
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
-  padding: 22px 24px;
+  padding: 18px 20px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .settings-card-header {
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .settings-card-header h3 {
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 700;
   color: var(--c-fff);
-  margin-bottom: 4px;
+  margin: 0;
 }
 
 .settings-options-list {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-option-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 10px 14px;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
@@ -1413,18 +1432,18 @@ input:checked + .slider:before {
 .option-info {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   padding-right: 20px;
 }
 
 .option-title {
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   color: var(--c-fff);
 }
 
 .option-desc {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   line-height: 1.35;
 }
@@ -1445,55 +1464,48 @@ input:checked + .slider:before {
 
 /* Multi-Game Management in Settings */
 .autodetect-box {
-  background: rgba(245, 158, 11, 0.05);
+  background: rgba(245, 158, 11, 0.04);
   border: 1px solid rgba(245, 158, 11, 0.2);
   border-radius: 10px;
-  padding: 16px 18px;
-  margin-bottom: 20px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
 }
 
 .autodetect-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 6px;
+  gap: 8px;
+  margin-bottom: 10px;
 }
 
 .autodetect-badge {
-  font-size: 0.85rem;
+  font-size: 0.86rem;
   font-weight: 700;
   color: var(--accent-gold);
 }
 
 .autodetect-tip {
-  font-size: 0.8rem;
-  color: var(--text-faint);
-  background: rgba(255, 255, 255, 0.05);
-  padding: 2px 8px;
-  border-radius: 4px;
+  display: none;
 }
 
 .autodetect-desc {
-  font-size: 0.82rem;
-  color: var(--text-muted);
-  line-height: 1.45;
-  margin-bottom: 12px;
+  display: none;
 }
 
 .games-management-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .game-manage-item {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: 10px;
-  padding: 16px 18px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
   transition: all 0.2s ease;
 }
 
@@ -1516,30 +1528,31 @@ input:checked + .slider:before {
 .game-manage-badge {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .game-manage-icon {
-  font-size: 1.4rem;
-  width: 38px;
-  height: 38px;
+  font-size: 1.3rem;
+  width: 36px;
+  height: 36px;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-subtle);
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .game-manage-title {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--c-fff);
   margin-bottom: 2px;
 }
 
 .game-manage-sub {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
 }
@@ -1548,12 +1561,12 @@ input:checked + .slider:before {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--status-green);
   background: rgba(16, 185, 129, 0.12);
   border: 1px solid rgba(16, 185, 129, 0.3);
-  padding: 4px 10px;
+  padding: 3px 10px;
   border-radius: 9999px;
   font-family: var(--font-mono);
 }
@@ -1566,6 +1579,7 @@ input:checked + .slider:before {
 
 .game-path-input {
   flex: 1;
+  min-width: 0;
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: 6px;
@@ -1583,7 +1597,7 @@ input:checked + .slider:before {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-faint);
   font-family: var(--font-mono);
 }
@@ -1600,12 +1614,12 @@ input:checked + .slider:before {
    El botón va en su propia fila, debajo de Guardar/Abrir, y se ve como algo que aparta el cliente
    (no destructivo: en el disco no se toca nada). */
 .game-manage-unlink-row {
-  margin-top: 2px;
+  margin-top: 1px;
 }
 
 .btn-unlink-game {
-  font-size: 0.78rem;
-  padding: 5px 12px;
+  font-size: 0.75rem;
+  padding: 4px 10px;
   color: var(--text-muted);
 }
 
@@ -1623,8 +1637,8 @@ input:checked + .slider:before {
 
 .about-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
 }
 
 .about-item {

@@ -603,12 +603,6 @@
 
         <!-- View: Configuración -->
         <section class="tab-pane" id="pane-settings">
-          <div class="content-header">
-            <div>
-              <h2 class="page-title" data-i18n="settings_title">KoRForge Settings</h2>
-              <p class="page-subtitle" data-i18n="settings_subtitle">System preferences, window behaviour and World of Warcraft directories.</p>
-            </div>
-          </div>
 
           <div class="settings-grid">
 
@@ -616,7 +610,6 @@
             <div class="settings-card">
               <div class="settings-card-header">
                 <h3 data-i18n="settings_app_card">🖥️ Application Behavior</h3>
-                <p class="settings-desc" data-i18n="settings_app_desc">Control system startup, the system tray and the interface language.</p>
               </div>
 
               <div class="settings-options-list">
@@ -682,16 +675,13 @@
             <div class="settings-card full-width" id="settingsCardGames">
               <div class="settings-card-header">
                 <h3 data-i18n="settings_wow_card">🎮 World of Warcraft Versions and Directories</h3>
-                <p class="settings-desc" data-i18n="settings_wow_desc">Manage your clients (Forever, Retail, Classic).</p>
               </div>
 
               <!-- Sub-bloque 1: Auto-Detección con Carpeta Raíz General -->
               <div class="autodetect-box">
                 <div class="autodetect-header">
                   <span class="autodetect-badge" data-i18n="settings_autodetect_title">🔍 Root Directory Auto-Detection</span>
-                  <span class="autodetect-tip" data-i18n="settings_autodetect_tip">Recommended if your clients share the same parent folder</span>
                 </div>
-                <p class="autodetect-desc" data-i18n-html="settings_autodetect_desc">Enter the main World of Warcraft folder.</p>
                 <div class="input-group">
                   <input type="text" id="rootWoWPath" placeholder="C:\Program Files (x86)\World of Warcraft" aria-label="Ruta raíz de World of Warcraft" data-i18n-aria-label="aria_game_path">
                   <button class="btn btn-secondary" id="btnBrowseRootWoW" data-i18n="settings_autodetect_browse">📁 Browse…</button>
@@ -709,7 +699,6 @@
             <div class="settings-card">
               <div class="settings-card-header">
                 <h3 data-i18n="settings_manual_card">📥 Install Addon Manually (GitHub or ZIP)</h3>
-                <p class="settings-desc" data-i18n-html="settings_manual_desc">Paste the URL of a GitHub repository or a direct link to a ZIP file.</p>
               </div>
 
               <div class="input-group">
@@ -729,7 +718,6 @@
               </div>
               <div class="settings-card-header text-center">
                 <h3 data-i18n="settings_about_card">⚡ About KoRForge</h3>
-                <p class="settings-desc" data-i18n="settings_about_desc">Ultra-fast manager designed for the WoW Forever community.</p>
               </div>
               <div class="about-grid">
                 <div class="about-item">
