@@ -1658,20 +1658,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
 
-      // 1. Card Click: Open Addon in Catalog / Search (ignoring switches and action buttons)
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.switch') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action')) return;
-        switchTab('search');
-        if (cfSearchInput) {
-          cfSearchInput.value = addon.actualName || addon.title;
-        }
-        triggerCurseForgeSearch();
-      });
-
-      // 1b. Open Addon Detail / Page in KoRForge
-      const btnInfo = card.querySelector('.btn-addon-info');
-      btnInfo?.addEventListener('click', async (e) => {
-        e.stopPropagation();
+      // 1. Abrir la ficha del addon en KoRForge (o buscarlo si no se conoce el ID)
+      const openThisAddonDetail = async () => {
         if (addon.modId) {
           openAddonDetail(addon.modId, addon.title);
           return;
@@ -1692,6 +1680,19 @@ document.addEventListener('DOMContentLoaded', () => {
           cfSearchInput.value = addon.actualName || addon.title;
         }
         triggerCurseForgeSearch();
+      };
+
+      // 1a. Click en la tarjeta: abrir ficha del addon en KoRForge (ignorando switches y botones de acción)
+      card.addEventListener('click', (e) => {
+        if (e.target.closest('.switch') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action')) return;
+        openThisAddonDetail();
+      });
+
+      // 1b. Abrir ficha del addon mediante el botón con el círculo
+      const btnInfo = card.querySelector('.btn-addon-info');
+      btnInfo?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openThisAddonDetail();
       });
 
       // 2. Toggle Switch
