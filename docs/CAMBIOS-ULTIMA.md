@@ -1,4 +1,5 @@
-# Titulo: Apertura directa de la ficha del addon desde su tarjeta
+# Titulo: Rediseño limpio y ancho adaptable de la pestaña Ajustes
 
-- **Acceso directo a la ficha**: al pulsar sobre la tarjeta de un addon en la pestaña Instalados (fuera de botones y controles), se abre directamente su ficha de detalles en KoRForge.
-- **Mismo comportamiento integrado**: unifica la experiencia con el botón de información con círculo, resolviendo automáticamente los datos del addon y sus dependencias.
+- **Sin títulos ni leyendas redundantes**: se eliminan textos explicativos repetitivos en Ajustes para una interfaz limpia, directa y despejada.
+- **Ancho completo adaptable**: la sección de Ajustes ahora aprovecha todo el ancho de la ventana adaptándose dinámicamente al tamaño y redimensión.
+- **Gestión de WoW optimizada**: bloque de autodetección simplificado y botones más compactos y ordenados para guardar, abrir y administrar clientes.
