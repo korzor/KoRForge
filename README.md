@@ -105,7 +105,7 @@ designed to run fast and respect the user's resources.
 If KoRForge saves you time, you can invite me to a coffee. It is simply to support the working hours
 behind it, nothing else.
 
-<p>
+<p align="center">
   <a href="https://www.buymeacoffee.com/korzor" target="_blank">
     <img src="https://img.shields.io/badge/%E2%98%95%20Buy%20me%20a%20coffee-BD5FFF?style=for-the-badge&labelColor=BD5FFF&color=FFDD00" alt="Buy me a coffee">
   </a>
@@ -195,7 +195,7 @@ innecesarios, pensadas para ir rápido y respetar los recursos del equipo.
 Si KoRForge te ahorra tiempo, puedes invitarme a un café. Es solo por las horas de trabajo que hay
 detrás, nada más.
 
-<p>
+<p align="center">
   <a href="https://www.buymeacoffee.com/korzor" target="_blank">
     <img src="https://img.shields.io/badge/%E2%98%95%20Invita%20a%20un%20caf%C3%A9-BD5FFF?style=for-the-badge&labelColor=BD5FFF&color=FFDD00" alt="Invita a un café">
   </a>
