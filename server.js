@@ -967,14 +967,43 @@ app.post('/api/addons/uninstall-all', (req, res) => {
 
 app.post('/api/addons/toggle', (req, res) => {
   try {
-    const { folderName, gameId } = req.body;
+    const { folderName, gameId, childFolders } = req.body;
     if (!folderName) return res.status(400).json({ error: 'folderName requerido', code: 'err_folder_required' });
     if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
       return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
     }
     const dir = getAddonsDir(gameId);
     if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
+
     const result = scanner.toggleAddon(dir, folderName);
+
+    // Cuando se deshabilita el addon padre, deshabilitar también todos sus módulos hijos
+    if (!result.enabled) {
+      let submodulesToDisable = Array.isArray(childFolders) ? childFolders : [];
+      if (submodulesToDisable.length === 0) {
+        const scanned = scanner.scanAddons(dir, gameId);
+        const baseName = folderName.replace(/\.disabled$/i, '').toLowerCase();
+        const parentAddon = scanned.find(a => 
+          (a.actualName && a.actualName.toLowerCase() === baseName) ||
+          (a.folderName && a.folderName.replace(/\.disabled$/i, '').toLowerCase() === baseName)
+        );
+        if (parentAddon && Array.isArray(parentAddon.submodules)) {
+          submodulesToDisable = parentAddon.submodules;
+        }
+      }
+
+      for (const childName of submodulesToDisable) {
+        if (!childName) continue;
+        const cleanChild = String(childName).replace(/\.disabled$/i, '');
+        const enabledChildPath = path.join(dir, cleanChild);
+        if (fs.existsSync(enabledChildPath) && nombresSeguros.esNombreDeCarpetaValido(cleanChild) && nombresSeguros.estaDentroDe(dir, enabledChildPath)) {
+          try {
+            scanner.toggleAddon(dir, cleanChild);
+          } catch (_) {}
+        }
+      }
+    }
+
     res.json(result);
   } catch (err) {
     res.status(500).json({ error: 'Error interno', code: 'err_internal' });

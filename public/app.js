@@ -1829,7 +1829,11 @@ document.addEventListener('DOMContentLoaded', () => {
           const res = await fetch('/api/addons/toggle', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ folderName: addon.folderName, gameId: currentActiveGame })
+            body: JSON.stringify({
+              folderName: addon.folderName,
+              gameId: currentActiveGame,
+              childFolders: addon.submodules || []
+            })
           });
           const resData = await res.json();
           if (resData.newName) {
