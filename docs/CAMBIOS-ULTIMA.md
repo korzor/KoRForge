@@ -1,5 +1,5 @@
-# Titulo: Corrección del actualizador y eliminación de referencias a CurseForge
+# Titulo: Limpieza a fondo de datos WTF y SavedVariables al desinstalar
 
-- **Preservación del icono en el escritorio**: el acceso directo conserva su hueco y posición en la cuadrícula de Windows sin desplazarse al actualizar o reinstalar.
-- **Actualizador corregido**: resuelto el conflicto de instancia que impedía aplicar la actualización silenciosa desde versiones anteriores.
-- **Interfaz y avisos limpios**: eliminadas todas las menciones a CurseForge en avisos, toasts y banners, unificando la identidad en KoRForge.
+- **Borrado íntegro de SavedVariables**: al desinstalar un addon y confirmar el borrado de sus datos, se eliminan todos los archivos vinculados (.lua, .lua.bak, .bak, .old y .tmp) tanto de cuenta como de personaje, subcarpetas y módulos del paquete.
+- **Detección completa de configuración**: se incluyen los nombres de carpeta y todos los archivos .toc del addon, asegurando que siempre se detecte la configuración y se ofrezca la opción de borrado.
+- **Protección estricta del cliente y otros addons**: garantizada la protección de ficheros de sistema de World of Warcraft y de cualquier otro addon que continúe instalado.
