@@ -385,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let favoriteMods = [];
   let installedAddons = [];
   let showSubmodules = localStorage.getItem('korforge_show_submodules') === 'true';
+  let currentInstalledFilter = 'all';
   let availableAddonUpdates = [];
   try {
     Object.defineProperty(window, 'availableAddonUpdates', {
@@ -1530,6 +1531,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (wrapSubmodulesEl) {
       wrapSubmodulesEl.style.display = hasAnySubmodules ? 'inline-flex' : 'none';
     }
+    currentInstalledFilter = filter;
     if (toggleSubmodulesEl) {
       toggleSubmodulesEl.checked = showSubmodules;
       if (!toggleSubmodulesEl.dataset.bound) {
@@ -1537,7 +1539,16 @@ document.addEventListener('DOMContentLoaded', () => {
         toggleSubmodulesEl.addEventListener('change', (e) => {
           showSubmodules = !!e.target.checked;
           localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
-          renderInstalledAddons(currentInstalledFilter, document.getElementById('cfSearchInput')?.value || '');
+          const term = document.getElementById('cfSearchInput')?.value || document.getElementById('searchInput')?.value || '';
+          renderInstalledAddons(currentInstalledFilter, term);
+        });
+        wrapSubmodulesEl?.addEventListener('click', (e) => {
+          if (e.target.closest('.switch')) return;
+          showSubmodules = !toggleSubmodulesEl.checked;
+          toggleSubmodulesEl.checked = showSubmodules;
+          localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
+          const term = document.getElementById('cfSearchInput')?.value || document.getElementById('searchInput')?.value || '';
+          renderInstalledAddons(currentInstalledFilter, term);
         });
       }
     }
@@ -1730,7 +1741,8 @@ document.addEventListener('DOMContentLoaded', () => {
         localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
         const toggleEl = document.getElementById('toggleShowSubmodules');
         if (toggleEl) toggleEl.checked = showSubmodules;
-        renderInstalledAddons(currentInstalledFilter, document.getElementById('cfSearchInput')?.value || '');
+        const term = document.getElementById('cfSearchInput')?.value || document.getElementById('searchInput')?.value || '';
+        renderInstalledAddons(currentInstalledFilter, term);
       });
 
       card.addEventListener('click', (e) => {

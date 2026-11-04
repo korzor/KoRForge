@@ -5375,6 +5375,7 @@ select:focus-visible {
 
 /* --- Interruptor y tarjetas de módulos / dependencias (dueño, 04-11-2026) --- */
 .submodules-toggle-wrap {
+  cursor: pointer;
   height: 38px;
   display: inline-flex;
   align-items: center;
