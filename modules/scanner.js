@@ -169,7 +169,8 @@ function auditDependencies(rawDeps, allInstalledFolderNames) {
   const required = rawDeps
     .split(/[\s,]+/)
     .map(s => s.trim())
-    .filter(s => s.length > 0);
+    // Modulos internos de Blizzard (Blizzard_*) son nativos del cliente WoW y no addons descargables
+    .filter(s => s.length > 0 && !s.toLowerCase().startsWith('blizzard_'));
 
   const missing = [];
   for (const dep of required) {
@@ -257,7 +258,7 @@ function scanAddons(addonsDir, gameId = 'forever') {
       dependencies: depsAudit.required,
       missingDependencies: depsAudit.missing,
       hasMissingDeps: depsAudit.isMissingAny,
-      optionalDeps: (tocMeta?.optionalDeps || '').split(/[\s,]+/).filter(Boolean),
+      optionalDeps: (tocMeta?.optionalDeps || '').split(/[\s,]+/).filter(s => s && !s.toLowerCase().startsWith('blizzard_')),
       savedVariables: tocMeta?.savedVariables || [],
       icon: tocMeta?.icon || '',
       enabled: !isExplicitlyDisabled,
