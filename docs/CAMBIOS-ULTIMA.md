@@ -1,4 +1,5 @@
-# Titulo: Actualización instantánea del interruptor de módulos
+# Titulo: Despliegue individual de submódulos y botón Open all Modules
 
-- **Reactividad inmediata del interruptor de módulos**: al accionar el interruptor o pulsar sobre la etiqueta/pastilla de módulos en Mis Addons, la lista se actualiza al instante sin necesidad de cambiar de pestaña.
-- **Acceso rápido y fluido**: alternancia inmediata entre la vista compacta (solo addons principales) y la vista expandida (con submódulos de tono atenuado).
+- **Despliegue individual de módulos por addon**: la pastilla morada ahora indica "Open X modules" (o "Close X modules"), permitiendo expandir y colapsar exclusivamente los submódulos de ese addon específico directamente debajo de su tarjeta.
+- **Interruptor global «Open all Modules»**: renombrado el interruptor general a "Open all Modules" / "Abrir todos los módulos", alternando entre abrir o cerrar todos los módulos de todos los addons de una sola vez.
+- **Agrupación natural bajo el addon padre**: los submódulos se posicionan ordenadamente e inmediatamente a continuación de su addon principal.
