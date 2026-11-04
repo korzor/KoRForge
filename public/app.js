@@ -384,6 +384,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Application Data State
   let favoriteMods = [];
   let installedAddons = [];
+  let showSubmodules = localStorage.getItem('korforge_show_submodules') === 'true';
   let availableAddonUpdates = [];
   try {
     Object.defineProperty(window, 'availableAddonUpdates', {
@@ -1523,6 +1524,35 @@ document.addEventListener('DOMContentLoaded', () => {
     addonsGrid.innerHTML = '';
     const term = searchTerm.toLowerCase().trim();
 
+    const toggleSubmodulesEl = document.getElementById('toggleShowSubmodules');
+    const wrapSubmodulesEl = document.getElementById('wrapToggleSubmodules');
+    const hasAnySubmodules = Array.isArray(installedAddons) && installedAddons.some(a => a && (a.isSubmodule || a.submoduleCount > 0));
+    if (wrapSubmodulesEl) {
+      wrapSubmodulesEl.style.display = hasAnySubmodules ? 'inline-flex' : 'none';
+    }
+    if (toggleSubmodulesEl) {
+      toggleSubmodulesEl.checked = showSubmodules;
+      if (!toggleSubmodulesEl.dataset.bound) {
+        toggleSubmodulesEl.dataset.bound = 'true';
+        toggleSubmodulesEl.addEventListener('change', (e) => {
+          showSubmodules = !!e.target.checked;
+          localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
+          renderInstalledAddons(currentInstalledFilter, document.getElementById('cfSearchInput')?.value || '');
+        });
+      }
+    }
+
+    if (addonCountBadge && Array.isArray(installedAddons)) {
+      const mainCount = installedAddons.filter(a => a && !a.isSubmodule).length;
+      const totalCount = installedAddons.length;
+      addonCountBadge.textContent = showSubmodules ? totalCount : mainCount;
+      if (totalCount !== mainCount) {
+        addonCountBadge.title = T('addons_badge_hint', { count: totalCount, main: mainCount, sub: totalCount - mainCount });
+      } else {
+        addonCountBadge.title = String(totalCount);
+      }
+    }
+
     if (installedAddonsNoPath) {
       addonsGrid.innerHTML = `
         <div class="empty-state">
@@ -1547,6 +1577,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const actualLower = String(addon.actualName || addon.folderName || '').toLowerCase();
       const matchesSearch = !term || titleLower.includes(term) || notesLower.includes(term) || actualLower.includes(term);
       if (!matchesSearch) return false;
+
+      if (!showSubmodules && addon.isSubmodule && !term) return false;
 
       if (filter === 'enabled') return !!addon.enabled;
       if (filter === 'disabled') return !addon.enabled;
@@ -1580,11 +1612,17 @@ document.addEventListener('DOMContentLoaded', () => {
     listaOrdenada.forEach(addon => {
       const addonIcon = getInstalledAddonIcon(addon);
       const card = document.createElement('div');
-      card.className = `cf-card installed-addon-card ${addon.enabled ? 'is-enabled' : 'is-disabled'}`;
+      card.className = `cf-card installed-addon-card ${addon.enabled ? 'is-enabled' : 'is-disabled'}${addon.isSubmodule ? ' is-submodule' : ''}`;
 
       const compat = addon.compatibility;
       const compatHtml = compat
         ? `<span class="compat-badge ${compat.status}" title="${compatLabel(compat)}">${compatBadge(compat)}</span>`
+        : '';
+      const modulesPillHtml = (!addon.isSubmodule && addon.submoduleCount > 0)
+        ? `<button type="button" class="addon-submodules-badge" data-action="toggle-submodules" title="${T('card_submodules_list_hint', { count: addon.submoduleCount, list: (addon.submodules || []).join(', ') })}">🧩 ${T('card_submodules_count', { count: addon.submoduleCount })}</button>`
+        : '';
+      const submoduleParentHtml = (addon.isSubmodule && addon.parentName)
+        ? `<span class="submodule-parent-tag" title="${T('card_submodule_parent_hint', { parent: addon.parentName })}">↳ ${addon.parentName}</span>`
         : '';
       const missingDepsHtml = (addon.missingDependencies && addon.missingDependencies.length > 0)
         ? `<div class="missing-deps-alert" title="${T('missing_deps_hint')}">${T('missing_deps_label', { deps: `<strong>${addon.missingDependencies.join(', ')}</strong>` })}</div>`
@@ -1619,6 +1657,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span class="ver-label">${T('card_ver_label')}</span> <span class="ver-val">${prefixV}${dispAddonVer}</span>
               </div>
               ${compatHtml}
+              ${modulesPillHtml}
+              ${submoduleParentHtml}
             </div>
             <p class="cf-summary" title="${addon.notes || ''}">${addon.notes || T('addon_notes_fallback')}</p>
             ${missingDepsHtml}
@@ -1683,8 +1723,18 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       // 1a. Click en la tarjeta: abrir ficha del addon en KoRForge (ignorando switches y botones de acción)
+      const btnSubmodules = card.querySelector('.addon-submodules-badge');
+      btnSubmodules?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showSubmodules = !showSubmodules;
+        localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
+        const toggleEl = document.getElementById('toggleShowSubmodules');
+        if (toggleEl) toggleEl.checked = showSubmodules;
+        renderInstalledAddons(currentInstalledFilter, document.getElementById('cfSearchInput')?.value || '');
+      });
+
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.switch') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action')) return;
+        if (e.target.closest('.switch') || e.target.closest('.addon-submodules-badge') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action')) return;
         openThisAddonDetail();
       });
 

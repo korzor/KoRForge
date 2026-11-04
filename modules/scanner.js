@@ -327,7 +327,112 @@ function scanAddons(addonsDir, gameId = 'forever') {
     };
   });
 
-  return addons;
+  // Pass 3: Detect parent-child relationships (modules, submodules and suite dependencies)
+  const gameReg = registry.getGameRegistry(gameId) || {};
+  const parentMap = {}; // childLower -> parentName
+  const childrenMap = {}; // parentLower -> Set of childNames
+
+  // 1. Paquetes multicarpetas del registro de instalación
+  for (const entry of Object.values(gameReg)) {
+    if (Array.isArray(entry.folders) && entry.folders.length > 1) {
+      const primaryFolder = entry.folders[0];
+      const primaryLower = primaryFolder.toLowerCase();
+      if (!childrenMap[primaryLower]) childrenMap[primaryLower] = new Set();
+      for (let i = 1; i < entry.folders.length; i++) {
+        const childFolder = entry.folders[i];
+        const childLower = childFolder.toLowerCase();
+        parentMap[childLower] = primaryFolder;
+        childrenMap[primaryLower].add(childFolder);
+      }
+    }
+  }
+
+  // 2. Dependencias registradas entre addons (ej. Baganator -> Syndicator)
+  for (const entry of Object.values(gameReg)) {
+    if (Array.isArray(entry.dependencies) && entry.dependencies.length > 0) {
+      const pFolder = (Array.isArray(entry.folders) && entry.folders[0]) || '';
+      const pLower = pFolder.toLowerCase();
+      for (const dep of entry.dependencies) {
+        const depModId = typeof dep === 'object' ? dep.modId : dep;
+        const depEntry = Object.values(gameReg).find(e => Number(e.modId) === Number(depModId));
+        if (depEntry && Array.isArray(depEntry.folders)) {
+          for (const depFolder of depEntry.folders) {
+            const dLower = depFolder.toLowerCase();
+            if (!parentMap[dLower] && dLower !== pLower) {
+              parentMap[dLower] = pFolder || entry.name;
+              if (pLower) {
+                if (!childrenMap[pLower]) childrenMap[pLower] = new Set();
+                childrenMap[pLower].add(depFolder);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // 3. Heurística para suites, submódulos no registrados o carpetas sueltas
+  for (const addon of rawAddons) {
+    const aLower = addon.actualName.toLowerCase();
+    if (parentMap[aLower]) continue;
+
+    for (const cand of rawAddons) {
+      if (cand === addon) continue;
+      const cLower = cand.actualName.toLowerCase();
+      if (parentMap[cLower]) continue; // el candidato ya es un submódulo
+
+      // Prefijo típico de suites: Details_*, BigWigs_*, DBM-*, Polestar_*, Spoken_*, etc.
+      const isPrefixed = aLower.startsWith(cLower + '_') || aLower.startsWith(cLower + '-');
+      // Sufijos habituales: ItemRackOptions, HealBotTips, etc.
+      const isSuffix = (aLower.startsWith(cLower) && (aLower.endsWith('options') || aLower.endsWith('config') || aLower.endsWith('talents') || aLower.endsWith('itemref') || aLower.endsWith('tips') || aLower.endsWith('extraskins')));
+      // TOC X-Part-Of o Group
+      const isPartOf = addon.partOf && (addon.partOf.toLowerCase() === cLower || addon.partOf.toLowerCase() === cand.title.toLowerCase());
+      const isSameGroup = addon.group && cand.group && addon.group.toLowerCase() === cand.group.toLowerCase() && aLower !== cand.group.toLowerCase();
+
+      if (isPrefixed || isSuffix || isPartOf || isSameGroup) {
+        parentMap[aLower] = cand.actualName;
+        if (!childrenMap[cLower]) childrenMap[cLower] = new Set();
+        childrenMap[cLower].add(addon.actualName);
+        break;
+      }
+    }
+  }
+
+  // 4. Librerías sueltas (Lib*, Ace*, etc.) declaradas como dependencia por otro addon instalado
+  for (const addon of rawAddons) {
+    const aLower = addon.actualName.toLowerCase();
+    if (parentMap[aLower]) continue;
+    if (/^(lib|ace\d*|callbackhandler)/i.test(addon.actualName)) {
+      const parentAddon = rawAddons.find(p => 
+        p !== addon && !parentMap[p.actualName.toLowerCase()] &&
+        Array.isArray(p.dependencies) && p.dependencies.some(d => d.toLowerCase() === aLower)
+      );
+      if (parentAddon) {
+        parentMap[aLower] = parentAddon.actualName;
+        const pLower = parentAddon.actualName.toLowerCase();
+        if (!childrenMap[pLower]) childrenMap[pLower] = new Set();
+        childrenMap[pLower].add(addon.actualName);
+      }
+    }
+  }
+
+  // Integrar en cada addon la información de módulos y dependencias
+  const finalAddons = addons.map(addon => {
+    const aLower = addon.actualName.toLowerCase();
+    const isSub = !!parentMap[aLower];
+    const parentName = parentMap[aLower] || '';
+    const myChildren = childrenMap[aLower] ? Array.from(childrenMap[aLower]) : [];
+
+    return {
+      ...addon,
+      isSubmodule: isSub,
+      parentName,
+      submoduleCount: myChildren.length,
+      submodules: myChildren
+    };
+  });
+
+  return finalAddons;
 }
 
 function toggleAddon(addonsDir, folderName) {
