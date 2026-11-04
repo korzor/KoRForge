@@ -1,4 +1,5 @@
-# Titulo: Corrección de dependencias internas de Blizzard (Blizzard_*)
+# Titulo: Agrupación de módulos y dependencias en Mis Addons
 
-- **Módulos nativos de Blizzard ignorados en dependencias**: se reconocen y filtran automáticamente los componentes internos de World of Warcraft (`Blizzard_*`, como `Blizzard_MapCanvas`), evitando falsas alertas de dependencias ausentes.
-- **Identificación limpia en addons**: addons como GuildMap y similares se muestran directamente como compatibles y listos para usar sin requerir descargas externas inexistentes.
+- **Interruptor de módulos y dependencias**: nuevo control en la pestaña Mis Addons para mostrar u ocultar submódulos y dependencias secundarias, evitando listas infladas al instalar addons con múltiples paquetes.
+- **Pastilla de módulos en el addon principal**: los addons con submódulos (como Polestar, Spoken, Details, TipTac, EllesmereUI, etc.) integran una pastilla distintiva con el número de módulos que los componen.
+- **Diseño diferenciado para módulos secundarios**: las tarjetas de submódulos se muestran con un tono más apagado y una indicación de su addon padre para localizarlos de un vistazo.
