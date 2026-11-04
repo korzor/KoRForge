@@ -390,6 +390,37 @@ function describeUninstall(addonsDir, scannedAddons, folderName, gameId = 'forev
   const dependents = [];
   const savedVariables = [];
 
+  // Nombres base y carpetas del addon: candidatos naturales de SavedVariables
+  if (base && !savedVariables.includes(base)) savedVariables.push(base);
+  for (const n of nombres) {
+    const limpio = String(n).replace(/\.disabled$/i, '');
+    if (limpio && !savedVariables.includes(limpio)) savedVariables.push(limpio);
+  }
+  for (const e of existentes) {
+    const limpio = String(e).replace(/\.disabled$/i, '');
+    if (limpio && !savedVariables.includes(limpio)) savedVariables.push(limpio);
+  }
+
+  // Leer TODOS los .toc de cada carpeta del pack para extraer cualquier SavedVariables declarada
+  for (const cand of existentes) {
+    const dirCarpeta = path.join(addonsDir, cand);
+    try {
+      if (fs.existsSync(dirCarpeta)) {
+        const archivos = fs.readdirSync(dirCarpeta);
+        for (const arch of archivos) {
+          if (arch.toLowerCase().endsWith('.toc')) {
+            const meta = parseTocFile(path.join(dirCarpeta, arch));
+            if (meta && Array.isArray(meta.savedVariables)) {
+              for (const sv of meta.savedVariables) {
+                if (sv && !savedVariables.includes(sv)) savedVariables.push(sv);
+              }
+            }
+          }
+        }
+      }
+    } catch (_) {}
+  }
+
   for (const addon of scannedAddons || []) {
     const carpeta = String(addon.actualName || addon.folderName || '').toLowerCase();
 
@@ -450,6 +481,8 @@ module.exports = {
   toggleAddon,
   deleteAddon,
   describeUninstall,
+  carpetasDelAddon,
+  parseTocFile,
   auditCompatibility,
   auditDependencies
 };

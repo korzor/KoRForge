@@ -282,35 +282,14 @@ function getWtfDir(gameId) {
 }
 
 /**
- * Borra los ficheros de datos guardados (SavedVariables) de un addon dentro de WTF.
- * Barre cuentas y personajes: Name.lua, Name.lua.bak y Name.bak de cada nombre pedido.
+ * Borra los ficheros y carpetas de datos guardados (SavedVariables) de un addon dentro de WTF.
+ * Barre cuentas y personajes: .lua, .lua.bak, .bak, .old, .tmp y subcarpetas.
  * Devuelve las rutas borradas (relativas a WTF) para poder decirlo en el aviso.
  */
-function borrarSavedVariables(gameId, nombres) {
+function borrarSavedVariables(gameId, nombres, folderName = '') {
   const wtf = getWtfDir(gameId);
-  if (!wtf || !fs.existsSync(wtf)) return [];
-
-  const buscados = new Set((nombres || []).map(n => String(n).toLowerCase()));
-  if (buscados.size === 0) return [];
-
-  const borrados = [];
-  const recorrer = (dir) => {
-    let entradas;
-    try { entradas = fs.readdirSync(dir, { withFileTypes: true }); } catch (_) { return; }
-    for (const e of entradas) {
-      const ruta = path.join(dir, e.name);
-      if (e.isDirectory()) { recorrer(ruta); continue; }
-      const m = e.name.match(/^(.+?)\.lua(\.bak)?$/i);
-      if (!m || !buscados.has(m[1].toLowerCase())) continue;
-      try {
-        fs.unlinkSync(ruta);
-        borrados.push(path.relative(wtf, ruta));
-      } catch (_) { /* fichero en uso: se deja y se sigue con los demás */ }
-    }
-  };
-
-  recorrer(wtf);
-  return borrados;
+  const addonsDir = getAddonsDir(gameId);
+  return wtfCleaner.borrarSavedVariablesDeAddon(wtf, addonsDir, folderName, gameId, nombres);
 }
 
 /** Nombre visible de un juego, para los mensajes de error. */
@@ -1033,8 +1012,8 @@ app.delete('/api/addons/:folderName', (req, res) => {
     const result = scanner.deleteAddon(dir, folderName, gameId);
 
     const borrarDatos = String(req.query.deleteSaved || '') === '1';
-    const savedVariablesDeleted = (borrarDatos && info.savedVariables.length > 0)
-      ? borrarSavedVariables(gameId, info.savedVariables)
+    const savedVariablesDeleted = borrarDatos
+      ? wtfCleaner.borrarSavedVariablesDeAddon(getWtfDir(gameId), dir, folderName, gameId, info.savedVariables)
       : [];
 
     res.json({ ...result, savedVariablesDeleted });

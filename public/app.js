@@ -1763,7 +1763,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!seguir) return;
 
         let borrarDatos = false;
-        if (info && Array.isArray(info.savedVariables) && info.savedVariables.length > 0) {
+        if (!info || (Array.isArray(info.savedVariables) && info.savedVariables.length > 0)) {
           borrarDatos = await askConfirm({
             title: T('modal_confirm_title'),
             mensaje: T('confirm_uninstall_savedvars', { name: addon.title }),

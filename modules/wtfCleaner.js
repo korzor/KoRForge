@@ -29,17 +29,26 @@ const ARCHIVOS_SISTEMA_IGNORADOS = new Set([
   'config.wtf',
   'config-cache.wtf',
   'config-cache.old',
+  'config-cache.bak',
   'bindings-cache.wtf',
   'bindings-cache.old',
+  'bindings-cache.bak',
   'macros-cache.txt',
   'macros-cache.old',
+  'macros-cache.bak',
   'chat-cache.txt',
   'chat-cache.old',
+  'chat-cache.bak',
   'layout-local.txt',
+  'editmode-cache.txt',
+  'cufprofiles.txt',
+  'blocked-cache.txt',
   'addons.txt',
   'savedvariables.lua',
   'savedvariables.lua.bak'
 ]);
+
+const REGEX_SAVED_VARIABLES = /^(.+?)\.(lua(\.(bak|old|tmp))?|bak|old|tmp)$/i;
 
 function esVariableDeSistema(nombreBase) {
   if (!nombreBase) return true;
@@ -92,7 +101,7 @@ function recolectarFicherosSavedVariables(wtfDir) {
       const idxSaved = partesActuales.findIndex(p => p.toLowerCase() === 'savedvariables');
       if (idxSaved === -1) continue;
 
-      const match = ent.name.match(/^(.+?)\.lua(\.bak)?$/i);
+      const match = ent.name.match(REGEX_SAVED_VARIABLES);
       if (!match) continue;
 
       const nombreBase = match[1];
@@ -461,7 +470,7 @@ function cleanWtf(wtfDir, addonsDir, gameId = 'forever', options = {}) {
 
       // Verificaciones estrictas de contención y extensión
       if (!nombresSeguros.estaDentroDe(wtfDir, fullPath)) continue;
-      if (!/\.lua(\.bak)?$/i.test(fullPath)) continue;
+      if (!REGEX_SAVED_VARIABLES.test(fullPath)) continue;
 
       try {
         if (fs.existsSync(fullPath)) {
@@ -493,8 +502,202 @@ function cleanWtf(wtfDir, addonsDir, gameId = 'forever', options = {}) {
   };
 }
 
+/**
+ * Borra a fondo y con total seguridad todos los ficheros y carpetas de SavedVariables
+ * asociados a un addon al desinstalarlo.
+ *
+ * Cubre:
+ * - Nombre de carpeta del addon, nombre base (sin .disabled) y todos los módulos del paquete.
+ * - Todas las SavedVariables y SavedVariablesPerCharacter declaradas en TODOS los .toc del paquete.
+ * - Variaciones de archivo: .lua, .lua.bak, .bak, .lua.old, .old, .lua.tmp, .tmp.
+ * - Subcarpetas creadas por el addon dentro de SavedVariables.
+ * - Todos los niveles de WTF: Account/<CUENTA>/SavedVariables, Account/<CUENTA>/<REINO>/<PJ>/SavedVariables y WTF/SavedVariables.
+ *
+ * Seguridad estricta:
+ * - Protege cualquier fichero/carpeta de sistema de WoW (Config.wtf, Blizzard_*, etc.).
+ * - Protege ficheros asociados a cualquier OTRO addon que siga instalado en Interface/AddOns.
+ */
+function borrarSavedVariablesDeAddon(wtfDir, addonsDir, folderName, gameId = 'forever', nombresManuales = []) {
+  if (!wtfDir || !fs.existsSync(wtfDir)) return [];
+
+  // 1. Identificar carpetas del pack del addon
+  const carpetasPack = new Set();
+  const baseLimpio = String(folderName || '').replace(/\.disabled$/i, '').trim().toLowerCase();
+  if (baseLimpio) carpetasPack.add(baseLimpio);
+
+  if (addonsDir && fs.existsSync(addonsDir)) {
+    try {
+      const infoPack = scanner.carpetasDelAddon(addonsDir, folderName, gameId);
+      if (infoPack.base) carpetasPack.add(String(infoPack.base).toLowerCase());
+      for (const n of infoPack.nombres || []) {
+        const c = String(n).replace(/\.disabled$/i, '').trim().toLowerCase();
+        if (c) carpetasPack.add(c);
+      }
+      for (const e of infoPack.existentes || []) {
+        const c = String(e).replace(/\.disabled$/i, '').trim().toLowerCase();
+        if (c) carpetasPack.add(c);
+      }
+    } catch (_) {}
+  }
+
+  // Si está registrado en installedRegistry con múltiples carpetas
+  try {
+    const regItems = Object.values(registry.getGameRegistry(gameId) || {});
+    const regEntry = regItems.find(r =>
+      (r.name && r.name.toLowerCase() === baseLimpio) ||
+      (Array.isArray(r.folders) && r.folders.some(f => carpetasPack.has(String(f).toLowerCase().replace(/\.disabled$/, ''))))
+    );
+    if (regEntry && Array.isArray(regEntry.folders)) {
+      for (const f of regEntry.folders) {
+        const c = String(f).toLowerCase().replace(/\.disabled$/, '').trim();
+        if (c) carpetasPack.add(c);
+      }
+    }
+  } catch (_) {}
+
+  // 2. Construir lista de nombres candidatos
+  const candidatos = new Set([...carpetasPack]);
+  for (const n of nombresManuales || []) {
+    const c = String(n).trim().toLowerCase();
+    if (c) candidatos.add(c);
+  }
+
+  // Leer todos los .toc de las carpetas del pack para extraer SavedVariables declaradas
+  if (addonsDir && fs.existsSync(addonsDir)) {
+    for (const f of carpetasPack) {
+      for (const sufijo of ['', '.disabled']) {
+        const dirCarpeta = path.join(addonsDir, f + sufijo);
+        if (!fs.existsSync(dirCarpeta)) continue;
+        try {
+          const archivos = fs.readdirSync(dirCarpeta);
+          for (const arch of archivos) {
+            if (arch.toLowerCase().endsWith('.toc')) {
+              const meta = scanner.parseTocFile(path.join(dirCarpeta, arch));
+              if (meta && Array.isArray(meta.savedVariables)) {
+                for (const sv of meta.savedVariables) {
+                  if (sv) candidatos.add(String(sv).trim().toLowerCase());
+                }
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    }
+  }
+
+  // 3. Construir lista de nombres PROTEGIDOS (addons que siguen instalados en Interface/AddOns)
+  const protegidos = new Set();
+  if (addonsDir && fs.existsSync(addonsDir)) {
+    try {
+      const entradasAddons = fs.readdirSync(addonsDir, { withFileTypes: true });
+      for (const ent of entradasAddons) {
+        if (!ent.isDirectory()) continue;
+        const nombreCarpeta = ent.name.toLowerCase().replace(/\.disabled$/, '');
+        if (carpetasPack.has(nombreCarpeta)) continue; // Pertenece al addon que se borra
+
+        protegidos.add(nombreCarpeta);
+
+        // Extraer también las SavedVariables de ese otro addon para jamás borrarlas
+        const rutaOtro = path.join(addonsDir, ent.name);
+        try {
+          const tocs = fs.readdirSync(rutaOtro).filter(f => f.toLowerCase().endsWith('.toc'));
+          for (const t of tocs) {
+            const meta = scanner.parseTocFile(path.join(rutaOtro, t));
+            if (meta && Array.isArray(meta.savedVariables)) {
+              for (const sv of meta.savedVariables) {
+                if (sv) protegidos.add(String(sv).trim().toLowerCase());
+              }
+            }
+          }
+        } catch (_) {}
+      }
+    } catch (_) {}
+  }
+
+  // 4. Explorar WTF y encontrar ficheros y carpetas coincidentes
+  const ficherosABorrar = [];
+  const carpetasABorrar = [];
+
+  function explorarWtf(dir, partesRelativas) {
+    let entradas;
+    try {
+      entradas = fs.readdirSync(dir, { withFileTypes: true });
+    } catch (_) {
+      return;
+    }
+
+    const idxSaved = partesRelativas.findIndex(p => p.toLowerCase() === 'savedvariables');
+    const dentroDeSaved = idxSaved !== -1;
+
+    for (const ent of entradas) {
+      const rutaCompleta = path.join(dir, ent.name);
+      const partesActuales = [...partesRelativas, ent.name];
+
+      if (ent.isDirectory()) {
+        if (dentroDeSaved) {
+          const lowerDirName = ent.name.toLowerCase();
+          const esDelAddon = candidatos.has(lowerDirName) ||
+            [...carpetasPack].some(c => c.length >= 3 && (lowerDirName.startsWith(c + '_') || lowerDirName.startsWith(c + '-')));
+
+          if (esDelAddon && !protegidos.has(lowerDirName) && !esVariableDeSistema(lowerDirName)) {
+            explorarWtf(rutaCompleta, partesActuales);
+            carpetasABorrar.push(rutaCompleta);
+            continue;
+          }
+        }
+        explorarWtf(rutaCompleta, partesActuales);
+        continue;
+      }
+
+      if (!ent.isFile()) continue;
+      if (!dentroDeSaved) continue;
+
+      const m = ent.name.match(REGEX_SAVED_VARIABLES);
+      if (!m) continue;
+
+      const nombreBase = m[1].toLowerCase();
+      if (esVariableDeSistema(nombreBase)) continue;
+      if (protegidos.has(nombreBase)) continue;
+
+      const coincideExacto = candidatos.has(nombreBase);
+      const coincidePrefijo = [...carpetasPack].some(c =>
+        c.length >= 3 && (nombreBase.startsWith(c + '_') || nombreBase.startsWith(c + '-'))
+      );
+
+      if (coincideExacto || coincidePrefijo) {
+        ficherosABorrar.push(rutaCompleta);
+      }
+    }
+  }
+
+  explorarWtf(wtfDir, []);
+
+  // 5. Borrado efectivo
+  const borrados = [];
+
+  for (const rutaFichero of ficherosABorrar) {
+    if (!nombresSeguros.estaDentroDe(wtfDir, rutaFichero)) continue;
+    try {
+      fs.unlinkSync(rutaFichero);
+      borrados.push(path.relative(wtfDir, rutaFichero).replace(/\\/g, '/'));
+    } catch (_) {}
+  }
+
+  for (const rutaDir of carpetasABorrar) {
+    if (!nombresSeguros.estaDentroDe(wtfDir, rutaDir)) continue;
+    try {
+      fs.rmSync(rutaDir, { recursive: true, force: true });
+      borrados.push(path.relative(wtfDir, rutaDir).replace(/\\/g, '/'));
+    } catch (_) {}
+  }
+
+  return borrados;
+}
+
 module.exports = {
   scanWtf,
   cleanWtf,
-  formatearTamano
+  borrarSavedVariablesDeAddon,
+  formatearTamano,
+  esVariableDeSistema
 };
