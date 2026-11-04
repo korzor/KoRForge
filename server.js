@@ -49,6 +49,21 @@ function resolveConfigFile() {
 }
 const CONFIG_FILE = resolveConfigFile();
 
+const PARENT_STATES_FILE = path.join(USER_DATA_DIR, 'parent-child-states.json');
+function loadParentStates() {
+  try {
+    if (fs.existsSync(PARENT_STATES_FILE)) {
+      return JSON.parse(fs.readFileSync(PARENT_STATES_FILE, 'utf8'));
+    }
+  } catch (_) {}
+  return {};
+}
+function saveParentStates(data) {
+  try {
+    fs.writeFileSync(PARENT_STATES_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch (_) {}
+}
+
 const STARTUP_LNK = path.join(
   process.env.APPDATA || '',
   'Microsoft', 'Windows', 'Start Menu', 'Programs', 'Startup',
@@ -972,35 +987,78 @@ app.post('/api/addons/toggle', (req, res) => {
     if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
       return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
     }
-    const dir = getAddonsDir(gameId);
+    const gKey = gameId || config.activeGame || 'forever';
+    const dir = getAddonsDir(gKey);
     if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
 
     const result = scanner.toggleAddon(dir, folderName);
 
-    // Cuando se deshabilita el addon padre, deshabilitar también todos sus módulos hijos
-    if (!result.enabled) {
-      let submodulesToDisable = Array.isArray(childFolders) ? childFolders : [];
-      if (submodulesToDisable.length === 0) {
-        const scanned = scanner.scanAddons(dir, gameId);
-        const baseName = folderName.replace(/\.disabled$/i, '').toLowerCase();
-        const parentAddon = scanned.find(a => 
-          (a.actualName && a.actualName.toLowerCase() === baseName) ||
-          (a.folderName && a.folderName.replace(/\.disabled$/i, '').toLowerCase() === baseName)
-        );
-        if (parentAddon && Array.isArray(parentAddon.submodules)) {
-          submodulesToDisable = parentAddon.submodules;
-        }
+    // Obtener los submódulos del addon si es un addon padre (o vacío si es hijo/independiente)
+    let submodules = Array.isArray(childFolders) ? childFolders : [];
+    const baseName = folderName.replace(/\.disabled$/i, '').toLowerCase();
+    if (submodules.length === 0) {
+      const scanned = scanner.scanAddons(dir, gKey);
+      const parentAddon = scanned.find(a => 
+        (a.actualName && a.actualName.toLowerCase() === baseName) ||
+        (a.folderName && a.folderName.replace(/\.disabled$/i, '').toLowerCase() === baseName)
+      );
+      if (parentAddon && Array.isArray(parentAddon.submodules)) {
+        submodules = parentAddon.submodules;
       }
+    }
 
-      for (const childName of submodulesToDisable) {
+    const parentKey = `${gKey}:${baseName}`;
+
+    // Si se conmuta un módulo hijo directamente, actualizar el estado guardado del padre si existiera
+    const parentStates = loadParentStates();
+    let modifiedParentStates = false;
+    for (const [pKey, savedChildren] of Object.entries(parentStates)) {
+      if (!Array.isArray(savedChildren)) continue;
+      const cleanCurrent = folderName.replace(/\.disabled$/i, '').toLowerCase();
+      const idx = savedChildren.findIndex(c => String(c).toLowerCase() === cleanCurrent);
+      if (!result.enabled && idx !== -1) {
+        // Si el usuario desactiva manualmente el módulo hijo, no debe reactivarse automáticamente al habilitar el padre
+        savedChildren.splice(idx, 1);
+        modifiedParentStates = true;
+      }
+    }
+    if (modifiedParentStates) saveParentStates(parentStates);
+
+    if (!result.enabled) {
+      // Cuando se deshabilita el addon padre:
+      // Recordar cuáles de sus submódulos estaban actualmente habilitados y deshabilitarlos.
+      const activeChildren = [];
+      for (const childName of submodules) {
         if (!childName) continue;
         const cleanChild = String(childName).replace(/\.disabled$/i, '');
         const enabledChildPath = path.join(dir, cleanChild);
         if (fs.existsSync(enabledChildPath) && nombresSeguros.esNombreDeCarpetaValido(cleanChild) && nombresSeguros.estaDentroDe(dir, enabledChildPath)) {
+          activeChildren.push(cleanChild);
           try {
             scanner.toggleAddon(dir, cleanChild);
           } catch (_) {}
         }
+      }
+      parentStates[parentKey] = activeChildren;
+      saveParentStates(parentStates);
+    } else {
+      // Cuando se rehabilita el addon padre:
+      // Activar sus módulos SOLO si estaban habilitados cuando se deshabilitó el padre.
+      // Si no lo estaban (o estaban desactivados manualmente), respetarlos desactivados.
+      const rememberedActive = parentStates[parentKey];
+      if (Array.isArray(rememberedActive)) {
+        for (const childName of rememberedActive) {
+          if (!childName) continue;
+          const cleanChild = String(childName).replace(/\.disabled$/i, '');
+          const disabledChildPath = path.join(dir, `${cleanChild}.disabled`);
+          if (fs.existsSync(disabledChildPath) && nombresSeguros.esNombreDeCarpetaValido(cleanChild) && nombresSeguros.estaDentroDe(dir, disabledChildPath)) {
+            try {
+              scanner.toggleAddon(dir, `${cleanChild}.disabled`);
+            } catch (_) {}
+          }
+        }
+        delete parentStates[parentKey];
+        saveParentStates(parentStates);
       }
     }
 

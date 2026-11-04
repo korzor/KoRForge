@@ -30,8 +30,7 @@ const pkg = JSON.parse(fs.readFileSync(path.join(projectDir, 'package.json'), 'u
 const version = pkg.version;
 const sinBuild = process.argv.includes('--no-build');
 
-const centolosDir = process.env.CENTOLOS_DIR
-  || path.join(process.env.USERPROFILE || process.env.HOME || '.', 'centolos');
+const centolosDir = process.env.CENTOLOS_DIR || (fs.existsSync('P:\\centolos') ? 'P:\\centolos' : path.join(process.env.USERPROFILE || process.env.HOME || '.', 'centolos'));
 const releasesDir = path.join(centolosDir, 'public', 'wow', 'releases');
 const registroPath = path.join(centolosDir, 'data', 'korforge-releases.json');
 
@@ -82,7 +81,7 @@ for (const f of fs.readdirSync(releasesDir)) {
   /* Limpia versiones anteriores y tambien los nombres antiguos (KoRForge-Setup-*.exe y
      KoRForge-*-linux-x86_64.AppImage), que ya no se publican. */
   if (!/^KoRForge-.*\.(exe|zip|AppImage)$/i.test(f)) continue;
-  fs.unlinkSync(path.join(releasesDir, f));
+  try { fs.unlinkSync(path.join(releasesDir, f)); } catch (e) { console.warn("  aviso al eliminar " + f + ": " + e.message); }
   console.log(`  fuera de la web (version anterior o retirada): ${f}`);
 }
 
