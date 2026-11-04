@@ -1,5 +1,4 @@
-# Titulo: Despliegue individual de submódulos y botón Open all Modules
+# Titulo: Deshabilitación en cascada de módulos hijos al deshabilitar el addon padre
 
-- **Despliegue individual de módulos por addon**: la pastilla morada ahora indica "Open X modules" (o "Close X modules"), permitiendo expandir y colapsar exclusivamente los submódulos de ese addon específico directamente debajo de su tarjeta.
-- **Interruptor global «Open all Modules»**: renombrado el interruptor general a "Open all Modules" / "Abrir todos los módulos", alternando entre abrir o cerrar todos los módulos de todos los addons de una sola vez.
-- **Agrupación natural bajo el addon padre**: los submódulos se posicionan ordenadamente e inmediatamente a continuación de su addon principal.
+- **Desactivación en cascada**: al deshabilitar un addon principal (como Baganator, Spoken, Polestar, etc.), sus módulos secundarios y dependencias vinculadas (como Syndicator) se deshabilitan automáticamente.
+- **Coherencia y limpieza en el cliente**: se asegura que ninguna librería o módulo secundario quede activo en el juego cuando su addon matriz ha sido apagado.
