@@ -386,6 +386,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let installedAddons = [];
   let showSubmodules = localStorage.getItem('korforge_show_submodules') === 'true';
   let currentInstalledFilter = 'all';
+  const expandedSubmoduleParents = new Set();
   let availableAddonUpdates = [];
   try {
     Object.defineProperty(window, 'availableAddonUpdates', {
@@ -1534,10 +1535,15 @@ document.addEventListener('DOMContentLoaded', () => {
     currentInstalledFilter = filter;
     if (toggleSubmodulesEl) {
       toggleSubmodulesEl.checked = showSubmodules;
+      const lblToggleSubmodulesText = document.getElementById('lblToggleSubmodulesText');
+      if (lblToggleSubmodulesText) {
+        lblToggleSubmodulesText.textContent = showSubmodules ? T('addons_toggle_submodules_close') : T('addons_toggle_submodules');
+      }
       if (!toggleSubmodulesEl.dataset.bound) {
         toggleSubmodulesEl.dataset.bound = 'true';
         toggleSubmodulesEl.addEventListener('change', (e) => {
           showSubmodules = !!e.target.checked;
+          expandedSubmoduleParents.clear();
           localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
           const term = document.getElementById('cfSearchInput')?.value || document.getElementById('searchInput')?.value || '';
           renderInstalledAddons(currentInstalledFilter, term);
@@ -1546,6 +1552,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (e.target.closest('.switch')) return;
           showSubmodules = !toggleSubmodulesEl.checked;
           toggleSubmodulesEl.checked = showSubmodules;
+          expandedSubmoduleParents.clear();
           localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
           const term = document.getElementById('cfSearchInput')?.value || document.getElementById('searchInput')?.value || '';
           renderInstalledAddons(currentInstalledFilter, term);
@@ -1589,7 +1596,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const matchesSearch = !term || titleLower.includes(term) || notesLower.includes(term) || actualLower.includes(term);
       if (!matchesSearch) return false;
 
-      if (!showSubmodules && addon.isSubmodule && !term) return false;
+      const pKey = String(addon.parentName || '').toLowerCase();
+      const isParentExpanded = showSubmodules || expandedSubmoduleParents.has(pKey);
+      if (addon.isSubmodule && !term && !isParentExpanded) return false;
 
       if (filter === 'enabled') return !!addon.enabled;
       if (filter === 'disabled') return !addon.enabled;
@@ -1597,7 +1606,42 @@ document.addEventListener('DOMContentLoaded', () => {
       return true;
     });
 
-    const listaOrdenada = ordenarInstalados(filtered);
+    // Separar principales y submódulos para intercalar cada grupo de submódulos debajo de su padre
+    const principales = [];
+    const submodulosPorPadre = new Map();
+
+    for (const addon of filtered) {
+      if (addon.isSubmodule) {
+        const pKey = String(addon.parentName || '').toLowerCase();
+        if (!submodulosPorPadre.has(pKey)) submodulosPorPadre.set(pKey, []);
+        submodulosPorPadre.get(pKey).push(addon);
+      } else {
+        principales.push(addon);
+      }
+    }
+
+    const principalesOrdenados = ordenarInstalados(principales);
+    const listaOrdenada = [];
+    const padresProcesados = new Set();
+
+    for (const principal of principalesOrdenados) {
+      listaOrdenada.push(principal);
+      const pKey = String(principal.actualName || principal.folderName || principal.title || '').toLowerCase();
+      padresProcesados.add(pKey);
+
+      const hijos = submodulosPorPadre.get(pKey);
+      if (hijos && hijos.length > 0) {
+        hijos.sort((a, b) => String(a.title || a.actualName || '').localeCompare(String(b.title || b.actualName || '')));
+        listaOrdenada.push(...hijos);
+      }
+    }
+
+    for (const [pKey, hijos] of submodulosPorPadre.entries()) {
+      if (!padresProcesados.has(pKey)) {
+        hijos.sort((a, b) => String(a.title || a.actualName || '').localeCompare(String(b.title || b.actualName || '')));
+        listaOrdenada.push(...hijos);
+      }
+    }
     if (listaOrdenada.length === 0) {
       addonsGrid.innerHTML = `
         <div class="empty-state">
@@ -1629,8 +1673,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const compatHtml = compat
         ? `<span class="compat-badge ${compat.status}" title="${compatLabel(compat)}">${compatBadge(compat)}</span>`
         : '';
+      const addonParentKey = String(addon.actualName || addon.folderName || '').toLowerCase();
+      const isParentExpanded = showSubmodules || expandedSubmoduleParents.has(addonParentKey);
+      const pillLabel = isParentExpanded
+        ? T('card_submodules_close', { count: addon.submoduleCount })
+        : T('card_submodules_open', { count: addon.submoduleCount });
       const modulesPillHtml = (!addon.isSubmodule && addon.submoduleCount > 0)
-        ? `<button type="button" class="addon-submodules-badge" data-action="toggle-submodules" title="${T('card_submodules_list_hint', { count: addon.submoduleCount, list: (addon.submodules || []).join(', ') })}">🧩 ${T('card_submodules_count', { count: addon.submoduleCount })}</button>`
+        ? `<button type="button" class="addon-submodules-badge ${isParentExpanded ? 'is-expanded' : 'is-collapsed'}" data-action="toggle-submodules" title="${T('card_submodules_list_hint', { count: addon.submoduleCount, list: (addon.submodules || []).join(', ') })}">🧩 ${pillLabel}</button>`
         : '';
       const submoduleParentHtml = (addon.isSubmodule && addon.parentName)
         ? `<span class="submodule-parent-tag" title="${T('card_submodule_parent_hint', { parent: addon.parentName })}">↳ ${addon.parentName}</span>`
@@ -1737,10 +1786,25 @@ document.addEventListener('DOMContentLoaded', () => {
       const btnSubmodules = card.querySelector('.addon-submodules-badge');
       btnSubmodules?.addEventListener('click', (e) => {
         e.stopPropagation();
-        showSubmodules = !showSubmodules;
-        localStorage.setItem('korforge_show_submodules', showSubmodules ? 'true' : 'false');
-        const toggleEl = document.getElementById('toggleShowSubmodules');
-        if (toggleEl) toggleEl.checked = showSubmodules;
+        const pKey = String(addon.actualName || addon.folderName || '').toLowerCase();
+        if (showSubmodules) {
+          showSubmodules = false;
+          localStorage.setItem('korforge_show_submodules', 'false');
+          if (toggleSubmodulesEl) toggleSubmodulesEl.checked = false;
+          expandedSubmoduleParents.clear();
+          for (const a of installedAddons) {
+            if (a && !a.isSubmodule && a.submoduleCount > 0) {
+              const k = String(a.actualName || a.folderName || '').toLowerCase();
+              if (k !== pKey) expandedSubmoduleParents.add(k);
+            }
+          }
+        } else {
+          if (expandedSubmoduleParents.has(pKey)) {
+            expandedSubmoduleParents.delete(pKey);
+          } else {
+            expandedSubmoduleParents.add(pKey);
+          }
+        }
         const term = document.getElementById('cfSearchInput')?.value || document.getElementById('searchInput')?.value || '';
         renderInstalledAddons(currentInstalledFilter, term);
       });
