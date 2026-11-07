@@ -49,6 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
   window.fmtNumber = fmtNumber;
   window.relDate = relDate;
 
+  function escapeHtml(str) {
+    return String(str || '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
   // K8 (CSP): fallback de imágenes rotas sin handlers inline (script-src 'self' los bloquearía).
   document.addEventListener('error', (e) => {
     const img = e.target;
@@ -1750,6 +1754,13 @@ document.addEventListener('DOMContentLoaded', () => {
               <button class="installed-btn-action btn-addon-folder" data-folder="${addon.folderName}" title="${T('card_open_folder_hint', { folder: addon.folderName })}">
                 <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
+              <button class="installed-btn-action btn-addon-clear-data" data-folder="${addon.folderName}" data-title="${addon.title}" title="${T('card_clear_saved_data_hint')}" aria-label="${T('card_clear_saved_data_hint')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 20h16"/>
+                  <path d="M14 4l6 6-10 10H4v-6L14 4z"/>
+                  <path d="M11 7l6 6"/>
+                </svg>
+              </button>
               <button class="installed-btn-action btn-addon-trash" data-folder="${addon.folderName}" data-title="${addon.title}" title="${T('card_uninstall_hint')}">
                 <svg viewBox="0 0 24 24"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
@@ -1860,6 +1871,43 @@ document.addEventListener('DOMContentLoaded', () => {
           showToast(T('toast_addon_folder_open', { name: addon.title }));
         } catch (err) {
           showToast(T('toast_addon_folder_error'), 'error');
+        }
+      });
+
+      // 3b. Borrar datos guardados (SavedVariables) y configuración del addon y sus módulos
+      const btnClearData = card.querySelector('.btn-addon-clear-data');
+      btnClearData?.addEventListener('click', async (e) => {
+        e.stopPropagation();
+        const confirmar = await askConfirm({
+          title: T('modal_confirm_clear_saved_data_title'),
+          sub: T('card_clear_saved_data_hint'),
+          mensaje: T('confirm_clear_saved_data', { name: addon.title }),
+          okLabel: T('modal_yes_delete'),
+          cancelLabel: T('modal_cancel')
+        });
+        if (!confirmar) return;
+
+        try {
+          const res = await fetch('/api/addons/clear-saved-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              folderName: addon.folderName,
+              gameId: currentActiveGame
+            })
+          });
+          const resData = await res.json();
+          if (resData.success) {
+            if (resData.deletedCount > 0) {
+              showToast(T('toast_saved_data_cleared', { name: addon.title, count: resData.deletedCount }), 'success');
+            } else {
+              showToast(T('toast_saved_data_none', { name: addon.title }), 'info');
+            }
+          } else {
+            showToast(T('toast_clear_saved_data_error'), 'error');
+          }
+        } catch (err) {
+          showToast(T('toast_clear_saved_data_error'), 'error');
         }
       });
 
@@ -4497,33 +4545,87 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (bulkUpdateModal) abrirModalDialogo(bulkUpdateModal);
     if (bulkProgressFill) bulkProgressFill.style.width = '0%';
-    if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_progress', { done: 0, total: availableAddonUpdates.length });
+    if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_starting');
     if (bulkUpdateResultsList) bulkUpdateResultsList.innerHTML = '';
     if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'none';
     if (btnCloseBulkModalX) btnCloseBulkModalX.style.display = 'none';
 
     try {
-      const res = await fetch('/api/addons/update-all', {
+      const res = await fetch('/api/addons/update-all?stream=1', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/x-ndjson'
+        },
         body: JSON.stringify({
           updates: availableAddonUpdates,
           gameId: currentActiveGame
         })
       });
 
-      const data = await res.json();
-      if (bulkProgressFill) bulkProgressFill.style.width = '100%';
-      if (bulkProgressInfo) {
-        bulkProgressInfo.textContent = T('bulk_done', { updated: data.updatedCount, failed: data.failedCount });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `HTTP ${res.status}`);
       }
 
-      if (bulkUpdateResultsList && Array.isArray(data.results)) {
-        bulkUpdateResultsList.innerHTML = data.results.map(r => `
-          <div style="padding: 4px 0; color: ${r.success ? '#4ade80' : '#f87171'};">
-            ${r.success ? '✓' : '✗'} <strong>${r.name}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? mensajeDeError(r) : r.error})`}
-          </div>
-        `).join('');
+      let finalData = null;
+
+      if (res.body && typeof res.body.getReader === 'function') {
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (!line.trim()) continue;
+            let evt;
+            try { evt = JSON.parse(line); } catch (_) { continue; }
+
+            if (evt.type === 'item_start') {
+              if (bulkProgressFill) bulkProgressFill.style.width = `${evt.percent}%`;
+              if (bulkProgressInfo) {
+                bulkProgressInfo.textContent = T('bulk_updating_item', {
+                  name: evt.name,
+                  current: evt.current,
+                  total: evt.total
+                });
+              }
+            } else if (evt.type === 'item_done') {
+              if (bulkProgressFill) bulkProgressFill.style.width = `${evt.percent}%`;
+              if (bulkUpdateResultsList && evt.result) {
+                const r = evt.result;
+                const row = document.createElement('div');
+                row.style.padding = '4px 0';
+                row.style.color = r.success ? '#4ade80' : '#f87171';
+                row.innerHTML = `${r.success ? '✓' : '✗'} <strong>${escapeHtml(r.name)}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? mensajeDeError(r) : escapeHtml(r.error)})`}`;
+                bulkUpdateResultsList.appendChild(row);
+                bulkUpdateResultsList.scrollTop = bulkUpdateResultsList.scrollHeight;
+              }
+            } else if (evt.type === 'done') {
+              finalData = evt;
+            }
+          }
+        }
+      } else {
+        finalData = await res.json();
+        if (bulkUpdateResultsList && Array.isArray(finalData.results)) {
+          bulkUpdateResultsList.innerHTML = finalData.results.map(r => `
+            <div style="padding: 4px 0; color: ${r.success ? '#4ade80' : '#f87171'};">
+              ${r.success ? '✓' : '✗'} <strong>${escapeHtml(r.name)}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? mensajeDeError(r) : escapeHtml(r.error)})`}
+            </div>
+          `).join('');
+        }
+      }
+
+      if (bulkProgressFill) bulkProgressFill.style.width = '100%';
+      if (bulkProgressInfo && finalData) {
+        bulkProgressInfo.textContent = T('bulk_done', { updated: finalData.updatedCount || 0, failed: finalData.failedCount || 0 });
       }
 
       availableAddonUpdates = [];
@@ -4535,6 +4637,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_error', { message: err.message });
       if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'inline-flex';
+      if (btnCloseBulkModalX) btnCloseBulkModalX.style.display = 'block';
     }
   });
 

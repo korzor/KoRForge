@@ -877,11 +877,43 @@ app.post('/api/addons/update-all', async (req, res) => {
     }
 
     const listToUpdate = Array.isArray(updates) ? updates : [];
-    const results = [];
+    const isStream = req.headers.accept?.includes('application/x-ndjson') || req.query.stream === '1';
 
-    for (const item of listToUpdate) {
+    if (isStream) {
+      res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+      res.setHeader('Transfer-Encoding', 'chunked');
+      res.setHeader('Cache-Control', 'no-cache, no-transform');
+      if (typeof res.flushHeaders === 'function') res.flushHeaders();
+    }
+
+    const sendEvent = (obj) => {
+      if (isStream) {
+        try { res.write(JSON.stringify(obj) + '\n'); } catch (_) {}
+      }
+    };
+
+    const results = [];
+    const total = listToUpdate.length;
+
+    sendEvent({ type: 'start', total });
+
+    for (let i = 0; i < total; i++) {
+      const item = listToUpdate[i];
+      if (!item.downloadUrl || !item.modId) continue;
+
+      const current = i + 1;
+      const startPercent = Math.round((i / total) * 100);
+
+      sendEvent({
+        type: 'item_start',
+        current,
+        total,
+        name: item.name,
+        version: item.newVersion,
+        percent: startPercent
+      });
+
       try {
-        if (!item.downloadUrl || !item.modId) continue;
         console.log(`[KoRForge Bulk] Actualizando ${item.name} (${item.newVersion})...`);
         const installRes = await installer.installFromUrl(item.downloadUrl, dir, item.name, { targetGame });
         registry.recordInstallation(targetGame, {
@@ -891,21 +923,56 @@ app.post('/api/addons/update-all', async (req, res) => {
           fileId: item.newFileId,
           folders: installRes.installedFolders
         });
-        results.push({ name: item.name, success: true, folders: installRes.installedFolders });
+        const resObj = { name: item.name, success: true, folders: installRes.installedFolders };
+        results.push(resObj);
+        const endPercent = Math.round((current / total) * 100);
+        sendEvent({
+          type: 'item_done',
+          current,
+          total,
+          name: item.name,
+          success: true,
+          percent: endPercent,
+          result: resObj
+        });
       } catch (err) {
         const code = err.code || (err.message && err.message.includes('err_incompatible_toc') ? 'err_incompatible_toc' : 'err_update_failed');
-        results.push({ name: item.name, success: false, code, error: err.message });
+        const resObj = { name: item.name, success: false, code, error: err.message };
+        results.push(resObj);
+        const endPercent = Math.round((current / total) * 100);
+        sendEvent({
+          type: 'item_done',
+          current,
+          total,
+          name: item.name,
+          success: false,
+          code,
+          error: err.message,
+          percent: endPercent,
+          result: resObj
+        });
       }
     }
 
-    res.json({
+    const summary = {
       success: true,
       updatedCount: results.filter(r => r.success).length,
       failedCount: results.filter(r => !r.success).length,
       results
-    });
+    };
+
+    if (isStream) {
+      sendEvent({ type: 'done', ...summary });
+      res.end();
+    } else {
+      res.json(summary);
+    }
   } catch (err) {
-    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+    } else {
+      try { res.write(JSON.stringify({ type: 'error', error: err.message }) + '\n'); res.end(); } catch (_) {}
+    }
   }
 });
 
@@ -1104,6 +1171,34 @@ app.delete('/api/addons/:folderName', (req, res) => {
       : [];
 
     res.json({ ...result, savedVariablesDeleted });
+  } catch (err) {
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+  }
+});
+
+app.post('/api/addons/clear-saved-data', (req, res) => {
+  try {
+    const { folderName, gameId } = req.body;
+    if (!folderName) return res.status(400).json({ error: 'folderName requerido', code: 'err_folder_required' });
+    if (!nombresSeguros.esNombreDeCarpetaValido(folderName)) {
+      return res.status(400).json({ error: 'Nombre de carpeta no válido', code: 'err_invalid_name' });
+    }
+    const gKey = gameId || config.activeGame || 'forever';
+    const dir = getAddonsDir(gKey);
+    const wtf = getWtfDir(gKey);
+    if (!dir || !fs.existsSync(dir)) return res.status(400).json({ error: 'Ruta no configurada o inaccesible para este juego', code: 'err_path_unavailable' });
+    if (!wtf || !fs.existsSync(wtf)) return res.status(400).json({ error: 'Ruta WTF no disponible', code: 'err_no_wtf_path' });
+
+    const scanned = scanner.scanAddons(dir, gKey);
+    const info = scanner.describeUninstall(dir, scanned, folderName, gKey);
+    const deletedFiles = borrarSavedVariables(gKey, info.savedVariables, folderName);
+
+    res.json({
+      success: true,
+      folderName,
+      deletedCount: Array.isArray(deletedFiles) ? deletedFiles.length : 0,
+      deletedFiles: deletedFiles || []
+    });
   } catch (err) {
     res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
