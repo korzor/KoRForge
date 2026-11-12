@@ -50,6 +50,39 @@ function resolveConfigFile() {
 const CONFIG_FILE = resolveConfigFile();
 
 const PARENT_STATES_FILE = path.join(USER_DATA_DIR, 'parent-child-states.json');
+const ROLLBACK_ROOT = path.join(USER_DATA_DIR, 'addon-rollback');
+const rollbackSessions = new Map();
+try { if (fs.existsSync(ROLLBACK_ROOT)) fs.rmSync(ROLLBACK_ROOT, { recursive: true, force: true }); } catch (_) {}
+
+function getIgnoredModIds(gameId = 'forever') {
+  const map = config.ignoredAddonUpdates && typeof config.ignoredAddonUpdates === 'object' ? config.ignoredAddonUpdates : {};
+  const list = Array.isArray(map[gameId]) ? map[gameId] : [];
+  return new Set(list.map(Number).filter(Boolean));
+}
+
+function setAddonUpdateIgnored(gameId = 'forever', modId, ignored = true) {
+  const id = Number(modId);
+  if (!id) return;
+  if (!config.ignoredAddonUpdates || typeof config.ignoredAddonUpdates !== 'object') {
+    config.ignoredAddonUpdates = {};
+  }
+  const set = getIgnoredModIds(gameId);
+  if (ignored) set.add(id); else set.delete(id);
+  config.ignoredAddonUpdates[gameId] = Array.from(set);
+  saveConfig(config);
+}
+
+async function runPool(items, concurrency, worker) {
+  let idx = 0;
+  const workers = Array.from({ length: Math.min(concurrency, Math.max(items.length, 1)) }, async () => {
+    while (true) {
+      const i = idx++;
+      if (i >= items.length) break;
+      await worker(items[i], i);
+    }
+  });
+  await Promise.all(workers);
+}
 function loadParentStates() {
   try {
     if (fs.existsSync(PARENT_STATES_FILE)) {
@@ -770,13 +803,17 @@ app.get('/api/addons', (req, res) => {
       return res.json({ addons: [], count: 0, noPath: !dir, dirNotExists: !!dir && !fs.existsSync(dir), gameId });
     }
     const addons = scanner.scanAddons(dir, gameId);
+    const ignoredSet = getIgnoredModIds(gameId);
+    for (const a of addons) {
+      a.updateIgnored = !!(a.modId && ignoredSet.has(Number(a.modId)));
+    }
     res.json({ addons, count: addons.length, gameId });
   } catch (err) {
     res.status(500).json({ error: 'Error interno', code: 'err_internal' });
   }
 });
 
-// API: Check for Addons Updates (El Botón Mágico)
+// API: Check for Addons Updates (El Botón Mágico, paralelo)
 app.get('/api/addons/check-updates', async (req, res) => {
   try {
     const gameId = req.query.gameId || config.activeGame || 'forever';
@@ -786,12 +823,15 @@ app.get('/api/addons/check-updates', async (req, res) => {
     }
 
     const addons = scanner.scanAddons(dir, gameId);
+    const ignoredSet = getIgnoredModIds(gameId);
+    const enabledAddons = addons.filter(a => a.enabled);
     const updates = [];
     let checkedCount = 0;
+    let regMutex = Promise.resolve();
 
-    for (const addon of addons) {
-      if (!addon.enabled) continue;
+    await runPool(enabledAddons, 5, async (addon) => {
       let modId = addon.modId;
+      if (modId && ignoredSet.has(Number(modId))) return;
 
       if (!modId) {
         try {
@@ -802,25 +842,28 @@ app.get('/api/addons/check-updates', async (req, res) => {
             pageSize: 3
           });
           if (searchRes && searchRes.length > 0) {
-            const match = searchRes.find(m => 
+            const match = searchRes.find(m =>
               m.slug.toLowerCase() === addon.actualName.toLowerCase() ||
               m.name.toLowerCase() === addon.actualName.toLowerCase() ||
               m.name.toLowerCase().includes(addon.actualName.toLowerCase())
             ) || searchRes[0];
             if (match) {
               modId = match.id;
-              registry.recordInstallation(gameId, {
-                modId: match.id,
-                name: match.name,
-                version: addon.version,
-                folders: [addon.actualName]
+              regMutex = regMutex.then(() => {
+                registry.recordInstallation(gameId, {
+                  modId: match.id,
+                  name: match.name,
+                  version: addon.version,
+                  folders: [addon.actualName]
+                });
               });
+              await regMutex;
             }
           }
         } catch (_) {}
       }
 
-      if (modId) {
+      if (modId && !ignoredSet.has(Number(modId))) {
         checkedCount++;
         try {
           const latestFile = await curseforge.getLatestFile(modId, gameId);
@@ -852,7 +895,7 @@ app.get('/api/addons/check-updates', async (req, res) => {
           }
         } catch (_) {}
       }
-    }
+    });
 
     res.json({
       updates,
@@ -866,8 +909,29 @@ app.get('/api/addons/check-updates', async (req, res) => {
   }
 });
 
-// API: Bulk Update Addons (El Botón Mágico)
+// API: Ignore / Unignore addon updates
+app.post('/api/addons/ignore-update', (req, res) => {
+  try {
+    const { modId, gameId, ignored } = req.body || {};
+    const targetGame = gameId || config.activeGame || 'forever';
+    if (!modId) {
+      return res.status(400).json({ error: 'Falta modId', code: 'err_missing_params' });
+    }
+    setAddonUpdateIgnored(targetGame, modId, ignored !== false);
+    res.json({ success: true, modId: Number(modId), ignored: ignored !== false, gameId: targetGame });
+  } catch (err) {
+    res.status(500).json({ error: 'Error interno', code: 'err_internal' });
+  }
+});
+
+// API: Bulk Update Addons (descargas en paralelo + cancelación limpia + snapshot para rollback)
 app.post('/api/addons/update-all', async (req, res) => {
+  const abortController = new AbortController();
+  let streamFinished = false;
+  req.on('close', () => {
+    if (!streamFinished) abortController.abort();
+  });
+
   try {
     const { updates, gameId } = req.body;
     const targetGame = gameId || config.activeGame || 'forever';
@@ -876,7 +940,7 @@ app.post('/api/addons/update-all', async (req, res) => {
       return res.status(400).json({ error: 'Ruta de WoW no disponible', code: 'err_no_wow_path' });
     }
 
-    const listToUpdate = Array.isArray(updates) ? updates : [];
+    const listToUpdate = (Array.isArray(updates) ? updates : []).filter(u => u && u.downloadUrl && u.modId);
     const isStream = req.headers.accept?.includes('application/x-ndjson') || req.query.stream === '1';
 
     if (isStream) {
@@ -887,92 +951,244 @@ app.post('/api/addons/update-all', async (req, res) => {
     }
 
     const sendEvent = (obj) => {
-      if (isStream) {
+      if (isStream && !res.writableEnded) {
         try { res.write(JSON.stringify(obj) + '\n'); } catch (_) {}
       }
     };
 
+    // Limpiar snapshots antiguos y preparar nueva sesión de rollback
+    const sessionId = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    rollbackSessions.clear();
+    try { if (fs.existsSync(ROLLBACK_ROOT)) fs.rmSync(ROLLBACK_ROOT, { recursive: true, force: true }); } catch (_) {}
+    const sessionDir = path.join(ROLLBACK_ROOT, sessionId);
+    const sessionData = { gameId: targetGame, dir, items: new Map() };
+    rollbackSessions.set(sessionId, sessionData);
+
     const results = [];
     const total = listToUpdate.length;
+    let completedCount = 0;
+    let startedCount = 0;
+    let installMutex = Promise.resolve();
+    const CONCURRENCY = 4;
 
-    sendEvent({ type: 'start', total });
+    sendEvent({ type: 'start', total, sessionId });
 
-    for (let i = 0; i < total; i++) {
-      const item = listToUpdate[i];
-      if (!item.downloadUrl || !item.modId) continue;
+    await runPool(listToUpdate, CONCURRENCY, async (item) => {
+      if (abortController.signal.aborted) {
+        const resObj = { modId: item.modId, name: item.name, success: false, cancelled: true };
+        results.push(resObj);
+        return;
+      }
 
-      const current = i + 1;
-      const startPercent = Math.round((i / total) * 100);
-
+      const currentStart = ++startedCount;
       sendEvent({
         type: 'item_start',
-        current,
+        modId: item.modId,
+        current: currentStart,
         total,
         name: item.name,
         version: item.newVersion,
-        percent: startPercent
+        percent: Math.round((completedCount / Math.max(total, 1)) * 100)
       });
 
+      let tempZipPath = null;
       try {
-        console.log(`[KoRForge Bulk] Actualizando ${item.name} (${item.newVersion})...`);
-        const installRes = await installer.installFromUrl(item.downloadUrl, dir, item.name, { targetGame });
-        registry.recordInstallation(targetGame, {
+        console.log(`[KoRForge Bulk] Descargando ${item.name} (${item.newVersion})...`);
+        const dl = await installer.downloadAddonZip(item.downloadUrl, { signal: abortController.signal });
+        tempZipPath = dl.tempZipPath;
+
+        const installOutcome = await (installMutex = installMutex.then(async () => {
+          if (abortController.signal.aborted) {
+            const abortErr = new Error('Actualización cancelada');
+            abortErr.name = 'AbortError';
+            throw abortErr;
+          }
+
+          // Snapshot previo para poder revertir
+          const prevEntry = registry.findByModId(targetGame, item.modId);
+          const prevCopy = prevEntry ? JSON.parse(JSON.stringify(prevEntry)) : null;
+          const candidateFolders = (prevEntry && Array.isArray(prevEntry.folders) && prevEntry.folders.length > 0)
+            ? prevEntry.folders
+            : (item.folderName ? [item.folderName] : []);
+          const snapshotDir = path.join(sessionDir, String(item.modId));
+          const backedUpFolders = [];
+
+          for (const folder of candidateFolders) {
+            const safeFolder = path.basename(String(folder));
+            const srcPath = path.join(dir, safeFolder);
+            if (fs.existsSync(srcPath)) {
+              fs.mkdirSync(snapshotDir, { recursive: true });
+              fs.cpSync(srcPath, path.join(snapshotDir, safeFolder), { recursive: true });
+              backedUpFolders.push(safeFolder);
+            }
+          }
+
+          const installedFolders = await installer.installFromZip(tempZipPath, dir, item.name, { targetGame });
+          registry.recordInstallation(targetGame, {
+            modId: item.modId,
+            name: item.name,
+            version: item.newVersion,
+            fileId: item.newFileId,
+            folders: installedFolders
+          });
+
+          sessionData.items.set(String(item.modId), {
+            modId: Number(item.modId),
+            name: item.name,
+            previousEntry: prevCopy,
+            previousFolders: backedUpFolders,
+            installedFolders,
+            snapshotDir,
+            reverted: false
+          });
+
+          return { installedFolders, canRollback: backedUpFolders.length > 0 };
+        }));
+
+        completedCount++;
+        const resObj = {
           modId: item.modId,
           name: item.name,
-          version: item.newVersion,
-          fileId: item.newFileId,
-          folders: installRes.installedFolders
-        });
-        const resObj = { name: item.name, success: true, folders: installRes.installedFolders };
+          success: true,
+          folders: installOutcome.installedFolders,
+          canRollback: installOutcome.canRollback,
+          sessionId
+        };
         results.push(resObj);
-        const endPercent = Math.round((current / total) * 100);
         sendEvent({
           type: 'item_done',
-          current,
+          modId: item.modId,
+          current: completedCount,
           total,
           name: item.name,
           success: true,
-          percent: endPercent,
+          canRollback: installOutcome.canRollback,
+          sessionId,
+          percent: Math.round((completedCount / Math.max(total, 1)) * 100),
           result: resObj
         });
       } catch (err) {
-        const code = err.code || (err.message && err.message.includes('err_incompatible_toc') ? 'err_incompatible_toc' : 'err_update_failed');
-        const resObj = { name: item.name, success: false, code, error: err.message };
-        results.push(resObj);
-        const endPercent = Math.round((current / total) * 100);
-        sendEvent({
-          type: 'item_done',
-          current,
-          total,
-          name: item.name,
-          success: false,
-          code,
-          error: err.message,
-          percent: endPercent,
-          result: resObj
-        });
+        const isAborted = err.name === 'AbortError' || abortController.signal.aborted;
+        completedCount++;
+        if (isAborted) {
+          const resObj = { modId: item.modId, name: item.name, success: false, cancelled: true };
+          results.push(resObj);
+          sendEvent({
+            type: 'item_done',
+            modId: item.modId,
+            current: completedCount,
+            total,
+            name: item.name,
+            success: false,
+            cancelled: true,
+            percent: Math.round((completedCount / Math.max(total, 1)) * 100),
+            result: resObj
+          });
+        } else {
+          const code = err.code || (err.message && err.message.includes('err_incompatible_toc') ? 'err_incompatible_toc' : 'err_update_failed');
+          const resObj = { modId: item.modId, name: item.name, success: false, code, error: err.message };
+          results.push(resObj);
+          sendEvent({
+            type: 'item_done',
+            modId: item.modId,
+            current: completedCount,
+            total,
+            name: item.name,
+            success: false,
+            code,
+            error: err.message,
+            percent: Math.round((completedCount / Math.max(total, 1)) * 100),
+            result: resObj
+          });
+        }
+      } finally {
+        if (tempZipPath) {
+          try { if (fs.existsSync(tempZipPath)) fs.unlinkSync(tempZipPath); } catch (_) {}
+        }
       }
-    }
+    });
 
+    streamFinished = true;
     const summary = {
       success: true,
+      sessionId,
+      cancelled: abortController.signal.aborted,
       updatedCount: results.filter(r => r.success).length,
-      failedCount: results.filter(r => !r.success).length,
+      failedCount: results.filter(r => !r.success && !r.cancelled).length,
+      cancelledCount: results.filter(r => r.cancelled).length,
       results
     };
 
     if (isStream) {
       sendEvent({ type: 'done', ...summary });
-      res.end();
+      if (!res.writableEnded) res.end();
     } else {
       res.json(summary);
     }
   } catch (err) {
+    streamFinished = true;
     if (!res.headersSent) {
       res.status(500).json({ error: 'Error interno', code: 'err_internal' });
     } else {
       try { res.write(JSON.stringify({ type: 'error', error: err.message }) + '\n'); res.end(); } catch (_) {}
     }
+  }
+});
+
+// API: Rollback updated addons from latest session
+app.post('/api/addons/rollback', (req, res) => {
+  try {
+    const { sessionId, modId } = req.body || {};
+    const session = sessionId ? rollbackSessions.get(sessionId) : null;
+    if (!session) {
+      return res.status(404).json({ error: 'Sesión de reversión no disponible', code: 'err_no_rollback' });
+    }
+    if (!session.dir || !fs.existsSync(session.dir)) {
+      return res.status(400).json({ error: 'Ruta de WoW no disponible', code: 'err_no_wow_path' });
+    }
+
+    const targets = (modId && modId !== 'all')
+      ? [session.items.get(String(modId))].filter(Boolean)
+      : Array.from(session.items.values());
+
+    const revertedModIds = [];
+    for (const item of targets) {
+      if (item.reverted) continue;
+      if (!item.previousFolders || item.previousFolders.length === 0) continue;
+
+      for (const folder of item.installedFolders || []) {
+        const safeFolder = path.basename(String(folder));
+        const targetPath = path.join(session.dir, safeFolder);
+        if (fs.existsSync(targetPath)) {
+          fs.rmSync(targetPath, { recursive: true, force: true });
+        }
+      }
+
+      for (const folder of item.previousFolders) {
+        const safeFolder = path.basename(String(folder));
+        const backupPath = path.join(item.snapshotDir, safeFolder);
+        const restorePath = path.join(session.dir, safeFolder);
+        if (fs.existsSync(backupPath)) {
+          fs.cpSync(backupPath, restorePath, { recursive: true });
+        }
+      }
+
+      if (item.previousEntry) {
+        registry.recordInstallation(session.gameId, item.previousEntry);
+      } else {
+        for (const folder of item.installedFolders || []) {
+          registry.removeByFolderName(session.gameId, folder);
+        }
+      }
+
+      item.reverted = true;
+      revertedModIds.push(item.modId);
+    }
+
+    res.json({ success: true, revertedCount: revertedModIds.length, revertedModIds });
+  } catch (err) {
+    console.error('[KoRForge Rollback] Error:', err.message);
+    res.status(500).json({ error: 'Error al revertir cambios', code: 'err_rollback_failed' });
   }
 });
 

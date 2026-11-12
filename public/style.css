@@ -5497,3 +5497,99 @@ select:focus-visible {
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* --- Modal de actualización masiva: selector, cancelar, revertir e ignorar --- */
+.bulk-modal-dialog { max-width: 600px; }
+.bulk-select-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-size: 0.85rem;
+}
+.bulk-select-all-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+.bulk-selected-count { color: #94a3b8; font-size: 0.82rem; }
+.bulk-addon-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.bulk-addon-row:last-child { border-bottom: none; }
+.bulk-addon-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1;
+}
+.bulk-addon-check { width: 16px; height: 16px; cursor: pointer; flex-shrink: 0; }
+.bulk-addon-info { min-width: 0; flex: 1; }
+.bulk-addon-name {
+  font-weight: 600;
+  color: #f1f5f9;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bulk-addon-versions {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+.bulk-addon-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.bulk-addon-status { font-size: 0.8rem; font-weight: 600; }
+.bulk-addon-status.is-ok { color: #4ade80; }
+.bulk-addon-status.is-err { color: #f87171; }
+.bulk-addon-status.is-running { color: #38bdf8; }
+.bulk-addon-status.is-cancelled { color: #fbbf24; }
+.bulk-addon-status.is-reverted { color: #c084fc; }
+.btn-bulk-row-action {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.btn-bulk-row-action:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
+.btn-bulk-rollback { border-color: rgba(192, 132, 252, 0.45); color: #d8b4fe; }
+.btn-bulk-rollback:hover { background: rgba(192, 132, 252, 0.18); }
+.bulk-modal-footer { gap: 8px; }
+.btn-card-ignored-updates {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: #cbd5e1;
+  cursor: pointer;
+}
+.btn-card-ignored-updates:hover {
+  background: rgba(148, 163, 184, 0.25);
+  color: #fff;
+}

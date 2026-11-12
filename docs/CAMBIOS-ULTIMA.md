@@ -1,4 +1,7 @@
-# Titulo: Progreso en tiempo real en actualización masiva y borrado de datos guardados de addon
+# Titulo: Actualización masiva en paralelo con selector, cancelación, reversión e ignorar addons
 
-- **Progreso en tiempo real al actualizar en 1 clic**: la barra de progreso ya no permanece a 0% durante la actualización masiva; ahora se transmite en tiempo real mostrando exactamente qué addon se está descargando/instalando, su avance porcentual incremental (0% a 100%) y el resultado de cada addon a medida que se completa.
-- **Botón para borrar datos guardados del addon (WTF)**: nuevo botón de borrado de configuración en cada tarjeta de la pestaña de Instalados, permitiendo eliminar de forma selectiva todos los archivos `SavedVariables` y configuraciones vinculadas del addon y sus submódulos con confirmación previa y respaldo en la bóveda WTF.
+- **Descargas en paralelo (hasta 4x más rápido, ideal para 4G)**: tanto la comprobación de actualizaciones como la actualización masiva descargan varios addons de forma simultánea, manteniendo la escritura segura y ordenada en disco.
+- **Selector de addons a actualizar**: la ventana de actualización masiva permite elegir con casillas qué addons actualizar (con botón de seleccionar todos/ninguno) y muestra la versión instalada frente a la nueva.
+- **Botón único para Cancelar o Cerrar**: mientras hay descargas en curso, el botón permite cancelar de forma segura entre addons sin dejar carpetas a medias; al terminar o en reposo, el mismo botón cierra la ventana.
+- **Revertir cambios (Rollback)**: antes de actualizar cada addon se guarda una copia local temporal para poder revertir individualmente (o todos a la vez) a la versión anterior si algo no te convence.
+- **Ignorar actualizaciones de un addon**: nuevo botón para ignorar avisos de actualización de addons concretos, con insignia en la tarjeta del addon instalado para reactivarlos cuando quieras.

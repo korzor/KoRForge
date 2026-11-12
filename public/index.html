@@ -927,21 +927,28 @@
     </div>
   </div>
 
-  <!-- Modal: Progreso de Actualización Masiva de Addons (El Botón Mágico) -->
+  <!-- Modal: Actualización Masiva de Addons (Selector, Paralelo, Cancelar, Revertir, Ignorar) -->
   <div class="app-modal-backdrop" id="bulkUpdateModal" style="display: none;">
-    <div class="app-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bulkModalTitle">
+    <div class="app-modal-dialog bulk-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="bulkModalTitle">
       <div class="app-modal-header">
         <div class="modal-title-wrap">
           <span class="modal-icon">⚡</span>
           <div>
             <h3 id="bulkModalTitle" data-i18n="bulk_title">Bulk Addon Update</h3>
-            <span class="modal-sub" id="bulkModalSub" data-i18n="bulk_sub">Updating your addons to the latest version...</span>
+            <span class="modal-sub" id="bulkModalSub" data-i18n="bulk_sub_select">Select which addons you want to update or ignore</span>
           </div>
         </div>
-        <button class="btn-modal-close" id="btnCloseBulkModalX" data-i18n-title="upd_btn_close" style="display: none;">✕</button>
+        <button class="btn-modal-close" id="btnCloseBulkModalX" data-i18n-title="upd_btn_close">✕</button>
       </div>
       <div class="app-modal-body">
-        <div class="update-progress-wrap update-progress-wrap--mb">
+        <div class="bulk-select-toolbar" id="bulkSelectToolbar">
+          <label class="bulk-select-all-label">
+            <input type="checkbox" id="bulkSelectAllChk" checked>
+            <span data-i18n="bulk_select_all">Select all</span>
+          </label>
+          <span class="bulk-selected-count" id="bulkSelectedCount"></span>
+        </div>
+        <div class="update-progress-wrap update-progress-wrap--mb" id="bulkProgressWrap" style="display: none;">
           <div class="update-progress-bar">
             <div class="update-progress-fill" id="bulkProgressFill" style="width: 0%;"></div>
           </div>
@@ -949,8 +956,10 @@
         </div>
         <div id="bulkUpdateResultsList" class="bulk-results"></div>
       </div>
-      <div class="app-modal-footer">
-        <button class="btn btn-primary" id="btnCloseBulkModal" style="display: none;" data-i18n="bulk_btn_done">✓ Done</button>
+      <div class="app-modal-footer bulk-modal-footer">
+        <button class="btn btn-secondary" id="btnRollbackAllBulk" style="display: none;" data-i18n="bulk_btn_rollback_all">↩️ Revert all</button>
+        <button class="btn btn-secondary" id="btnCloseBulkModal" data-i18n="bulk_btn_close">Close</button>
+        <button class="btn btn-gold" id="btnStartSelectedBulk" data-i18n-skip>Update selected</button>
       </div>
     </div>
   </div>

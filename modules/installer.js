@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const net = require('net');
+const crypto = require('crypto');
 const dns = require('dns').promises;
 const AdmZip = require('adm-zip');
 
@@ -84,7 +85,7 @@ async function validarUrlDescarga(url) {
 /**
  * Descarga siguiendo redirecciones a mano: cada salto se valida antes de pedirlo y hay un tope.
  */
-async function descargarConValidacion(url) {
+async function descargarConValidacion(url, signal) {
   let actual = String(url);
   for (let salto = 0; salto < 5; salto++) {
     const v = await validarUrlDescarga(actual);
@@ -93,6 +94,7 @@ async function descargarConValidacion(url) {
     }
     const res = await fetch(actual, {
       redirect: 'manual',
+      signal,
       headers: { 'User-Agent': 'KoRForge-AddonManager/1.0 (Windows NT 10.0; Win64; x64)' }
     });
     if ([301, 302, 303, 307, 308].includes(res.status)) {
@@ -107,11 +109,11 @@ async function descargarConValidacion(url) {
 }
 
 // Downloads a file from a URL to a target local path
-async function downloadFile(url, targetPath, onProgress) {
+async function downloadFile(url, targetPath, onProgress, signal) {
   /* K14 (auditoría 22-10-2026): tope de descarga por addon (300 MB) para que un paquete gigante
      no llene el disco antes de la comprobación del zip. */
   const TAMANO_MAX_DESCARGA = 300 * 1024 * 1024;
-  const res = await descargarConValidacion(url);
+  const res = await descargarConValidacion(url, signal);
 
   if (!res.ok) {
     throw new Error(`Error en descarga HTTP ${res.status}: ${res.statusText}`);
@@ -121,17 +123,27 @@ async function downloadFile(url, targetPath, onProgress) {
   const reader = res.body.getReader();
   let recibidos = 0;
 
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    const trozo = Buffer.from(value);
-    recibidos += trozo.length;
-    if (recibidos > TAMANO_MAX_DESCARGA) {
-      fileStream.end();
-      try { fs.rmSync(targetPath, { force: true }); } catch (_) {}
-      throw new Error('El paquete supera el tope de descarga (300 MB).');
+  try {
+    while (true) {
+      if (signal && signal.aborted) {
+        const abortErr = new Error('Descarga cancelada');
+        abortErr.name = 'AbortError';
+        throw abortErr;
+      }
+      const { done, value } = await reader.read();
+      if (done) break;
+      const trozo = Buffer.from(value);
+      recibidos += trozo.length;
+      if (recibidos > TAMANO_MAX_DESCARGA) {
+        throw new Error('El paquete supera el tope de descarga (300 MB).');
+      }
+      fileStream.write(trozo);
     }
-    fileStream.write(trozo);
+  } catch (err) {
+    try { reader.cancel().catch(() => {}); } catch (_) {}
+    fileStream.destroy();
+    try { fs.rmSync(targetPath, { force: true }); } catch (_) {}
+    throw err;
   }
 
   await new Promise((resolve, reject) => {
@@ -272,7 +284,7 @@ async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon', optio
     fs.mkdirSync(addonsDir, { recursive: true });
   }
 
-  const tempExtractDir = path.join(os.tmpdir(), `korforge_${Date.now()}`);
+  const tempExtractDir = path.join(os.tmpdir(), `korforge_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`);
   fs.mkdirSync(tempExtractDir, { recursive: true });
 
   try {
@@ -360,27 +372,30 @@ async function installFromZip(zipPath, addonsDir, addonHintName = 'Addon', optio
 }
 
 // High-level install workflow from any URL (GitHub, direct zip, or CurseForge)
-async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon', options = {}) {
+async function downloadAddonZip(rawUrl, options = {}) {
   /* K6: la URL de entrada también se valida (la ruta del API ya responde 400 antes, esto es la
      segunda barrera por si se llama desde otro sitio). */
   const validacionEntrada = await validarUrlDescarga(rawUrl);
   if (!validacionEntrada.ok) {
     throw new Error(`err_bad_url: URL de descarga no permitida (${validacionEntrada.motivo}).`);
   }
-
   let downloadUrl = rawUrl;
   if (rawUrl.includes('github.com')) {
     downloadUrl = await resolveGitHubRelease(rawUrl);
   }
+  const tempZipPath = path.join(os.tmpdir(), `korforge_dl_${Date.now()}_${crypto.randomUUID().slice(0, 8)}.zip`);
+  await downloadFile(downloadUrl, tempZipPath, null, options.signal);
+  return { tempZipPath, sourceUrl: downloadUrl };
+}
 
-  const tempZipPath = path.join(os.tmpdir(), `korforge_dl_${Date.now()}.zip`);
+async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon', options = {}) {
+  const { tempZipPath, sourceUrl } = await downloadAddonZip(rawUrl, options);
   try {
-    await downloadFile(downloadUrl, tempZipPath);
     const installed = await installFromZip(tempZipPath, addonsDir, nameHint, options);
     return {
       success: true,
       installedFolders: installed,
-      sourceUrl: downloadUrl
+      sourceUrl
     };
   } finally {
     try {
@@ -390,6 +405,7 @@ async function installFromUrl(rawUrl, addonsDir, nameHint = 'Addon', options = {
 }
 
 module.exports = {
+  downloadAddonZip,
   installFromUrl,
   installFromZip,
   inspectZipTocs,

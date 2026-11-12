@@ -1699,6 +1699,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <span>${T('card_btn_update')}</span>
         </button>
       ` : '';
+      const ignoredPillHtml = (addon.updateIgnored && addon.modId) ? `
+        <button type="button" class="btn-card-ignored-updates" data-modid="${addon.modId}" data-name="${escapeHtml(addon.title || addon.actualName)}" title="${T('card_updates_ignored_hint')}">
+          ${T('card_updates_ignored')}
+        </button>
+      ` : '';
 
       const dispAddonVer = formatVersionDisplay(addon.version);
       const prefixV = (dispAddonVer && !dispAddonVer.toLowerCase().startsWith('v') && /^\d/.test(dispAddonVer)) ? 'v' : '';
@@ -1731,6 +1736,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="cf-card-meta-col">
               <div class="cf-card-stats">
                 ${updatePillHtml}
+                ${ignoredPillHtml}
                 ${addon.dependencies && addon.dependencies.length > 0 ? `<span class="installed-deps-tag" title="${T('card_deps_hint', { deps: addon.dependencies.join(', ') })}">🔗 ${addon.dependencies.join(', ')}</span>` : ''}
               </div>
             </div>
@@ -1821,7 +1827,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       card.addEventListener('click', (e) => {
-        if (e.target.closest('.switch') || e.target.closest('.addon-submodules-badge') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action')) return;
+        if (e.target.closest('.switch') || e.target.closest('.addon-submodules-badge') || e.target.closest('.installed-btn-action') || e.target.closest('.btn-addon-update-single') || e.target.closest('.btn-card-update') || e.target.closest('.btn-card-update-action') || e.target.closest('.btn-card-ignored-updates')) return;
         openThisAddonDetail();
       });
 
@@ -4507,11 +4513,154 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnUpdateAllAddons = document.getElementById('btnUpdateAllAddons');
 
   const bulkUpdateModal = document.getElementById('bulkUpdateModal');
+  const bulkModalSub = document.getElementById('bulkModalSub');
+  const bulkSelectToolbar = document.getElementById('bulkSelectToolbar');
+  const bulkSelectAllChk = document.getElementById('bulkSelectAllChk');
+  const bulkSelectedCount = document.getElementById('bulkSelectedCount');
+  const bulkProgressWrap = document.getElementById('bulkProgressWrap');
   const bulkProgressFill = document.getElementById('bulkProgressFill');
   const bulkProgressInfo = document.getElementById('bulkProgressInfo');
   const bulkUpdateResultsList = document.getElementById('bulkUpdateResultsList');
+  const btnStartSelectedBulk = document.getElementById('btnStartSelectedBulk');
+  const btnRollbackAllBulk = document.getElementById('btnRollbackAllBulk');
   const btnCloseBulkModal = document.getElementById('btnCloseBulkModal');
   const btnCloseBulkModalX = document.getElementById('btnCloseBulkModalX');
+
+  let bulkUpdateState = 'select';
+  let bulkAbortController = null;
+  let bulkSessionId = null;
+  let bulkSelectedModIds = new Set();
+  let bulkRowStates = new Map();
+
+  function refreshBulkBanner() {
+    if (availableAddonUpdates.length > 0) {
+      if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'flex';
+      if (bulkUpdateSummary) {
+        bulkUpdateSummary.textContent = T('bulk_summary_count', { count: availableAddonUpdates.length });
+      }
+    } else {
+      if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
+    }
+  }
+
+  function updateBulkSelectionUI() {
+    const total = availableAddonUpdates.length;
+    const selected = availableAddonUpdates.filter(u => bulkSelectedModIds.has(String(u.modId))).length;
+    if (bulkSelectAllChk) {
+      bulkSelectAllChk.checked = total > 0 && selected === total;
+      bulkSelectAllChk.indeterminate = selected > 0 && selected < total;
+    }
+    if (bulkSelectedCount) {
+      bulkSelectedCount.textContent = T('bulk_selected_count', { selected, total });
+    }
+    if (btnStartSelectedBulk) {
+      btnStartSelectedBulk.disabled = selected === 0;
+      btnStartSelectedBulk.textContent = T('bulk_btn_update_selected', { count: selected });
+    }
+  }
+
+  function updateBulkFooterButtons() {
+    if (bulkUpdateState === 'select') {
+      if (bulkSelectToolbar) bulkSelectToolbar.style.display = 'flex';
+      if (bulkProgressWrap) bulkProgressWrap.style.display = 'none';
+      if (bulkModalSub) bulkModalSub.textContent = T('bulk_sub_select');
+      if (btnStartSelectedBulk) btnStartSelectedBulk.style.display = 'inline-flex';
+      if (btnRollbackAllBulk) btnRollbackAllBulk.style.display = 'none';
+      if (btnCloseBulkModal) {
+        btnCloseBulkModal.style.display = 'inline-flex';
+        btnCloseBulkModal.disabled = false;
+        btnCloseBulkModal.className = 'btn btn-secondary';
+        btnCloseBulkModal.textContent = T('bulk_btn_close');
+      }
+      updateBulkSelectionUI();
+    } else if (bulkUpdateState === 'running') {
+      if (bulkSelectToolbar) bulkSelectToolbar.style.display = 'none';
+      if (bulkProgressWrap) bulkProgressWrap.style.display = 'block';
+      if (bulkModalSub) bulkModalSub.textContent = T('bulk_sub');
+      if (btnStartSelectedBulk) btnStartSelectedBulk.style.display = 'none';
+      if (btnRollbackAllBulk) btnRollbackAllBulk.style.display = 'none';
+      if (btnCloseBulkModal) {
+        btnCloseBulkModal.style.display = 'inline-flex';
+        btnCloseBulkModal.disabled = false;
+        btnCloseBulkModal.className = 'btn btn-danger';
+        btnCloseBulkModal.textContent = T('bulk_btn_cancel');
+      }
+    } else {
+      if (bulkSelectToolbar) bulkSelectToolbar.style.display = 'none';
+      if (bulkProgressWrap) bulkProgressWrap.style.display = 'block';
+      if (btnStartSelectedBulk) btnStartSelectedBulk.style.display = 'none';
+      const hasRollbackable = Array.from(bulkRowStates.values()).some(st => st.canRollback && !st.reverted);
+      if (btnRollbackAllBulk) btnRollbackAllBulk.style.display = hasRollbackable ? 'inline-flex' : 'none';
+      if (btnCloseBulkModal) {
+        btnCloseBulkModal.style.display = 'inline-flex';
+        btnCloseBulkModal.disabled = false;
+        btnCloseBulkModal.className = 'btn btn-primary';
+        btnCloseBulkModal.textContent = T('bulk_btn_done');
+      }
+    }
+  }
+
+  function renderBulkSelectList() {
+    if (!bulkUpdateResultsList) return;
+    bulkUpdateResultsList.innerHTML = '';
+    for (const u of availableAddonUpdates) {
+      const modIdStr = String(u.modId);
+      const row = document.createElement('div');
+      row.className = 'bulk-addon-row';
+      row.dataset.modid = modIdStr;
+      row.innerHTML = `
+        <div class="bulk-addon-left">
+          <input type="checkbox" class="bulk-addon-check" data-modid="${modIdStr}" ${bulkSelectedModIds.has(modIdStr) ? 'checked' : ''}>
+          <div class="bulk-addon-info">
+            <div class="bulk-addon-name">${escapeHtml(u.name)}</div>
+            <div class="bulk-addon-versions">${escapeHtml(u.currentVersion || '?')} ➔ ${escapeHtml(u.newVersion || '?')}</div>
+          </div>
+        </div>
+        <div class="bulk-addon-actions">
+          <button type="button" class="btn-bulk-row-action btn-bulk-ignore" data-modid="${modIdStr}" title="${escapeHtml(T('bulk_btn_ignore_hint'))}">🔕 ${escapeHtml(T('bulk_btn_ignore'))}</button>
+        </div>
+      `;
+      bulkUpdateResultsList.appendChild(row);
+    }
+    updateBulkFooterButtons();
+  }
+
+  function renderBulkRunningList(selectedUpdates) {
+    if (!bulkUpdateResultsList) return;
+    bulkUpdateResultsList.innerHTML = '';
+    bulkRowStates.clear();
+    for (const u of selectedUpdates) {
+      const modIdStr = String(u.modId);
+      bulkRowStates.set(modIdStr, { modId: u.modId, name: u.name, status: 'pending', canRollback: false, reverted: false });
+      const row = document.createElement('div');
+      row.className = 'bulk-addon-row';
+      row.dataset.modid = modIdStr;
+      row.innerHTML = `
+        <div class="bulk-addon-left">
+          <div class="bulk-addon-info">
+            <div class="bulk-addon-name">${escapeHtml(u.name)}</div>
+            <div class="bulk-addon-versions">${escapeHtml(u.currentVersion || '?')} ➔ ${escapeHtml(u.newVersion || '?')}</div>
+          </div>
+        </div>
+        <div class="bulk-addon-actions">
+          <span class="bulk-addon-status">${escapeHtml(T('bulk_status_pending'))}</span>
+        </div>
+      `;
+      bulkUpdateResultsList.appendChild(row);
+    }
+  }
+
+  function setBulkRowStatus(modId, html, statusClass, canRollback = false) {
+    const modIdStr = String(modId);
+    const row = bulkUpdateResultsList?.querySelector(`.bulk-addon-row[data-modid="${modIdStr}"]`);
+    if (!row) return;
+    const actions = row.querySelector('.bulk-addon-actions');
+    if (!actions) return;
+    const rollbackBtn = canRollback
+      ? `<button type="button" class="btn-bulk-row-action btn-bulk-rollback" data-modid="${modIdStr}" title="${escapeHtml(T('bulk_btn_rollback_hint'))}">↩️ ${escapeHtml(T('bulk_btn_rollback'))}</button>`
+      : '';
+    actions.innerHTML = `<span class="bulk-addon-status ${statusClass}">${html}</span>${rollbackBtn}`;
+  }
 
   async function checkAddonUpdates(silent = false) {
     if (!silent) showToast(T('toast_checking_addons'), 'info');
@@ -4519,19 +4668,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(`/api/addons/check-updates?gameId=${encodeURIComponent(currentActiveGame)}`);
       const data = await res.json();
       availableAddonUpdates = data.updates || [];
-
+      refreshBulkBanner();
       if (availableAddonUpdates.length > 0) {
-        if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'flex';
-        if (bulkUpdateSummary) {
-          bulkUpdateSummary.textContent = T('bulk_summary_count', { count: availableAddonUpdates.length });
-        }
         if (!silent) showToast(T('toast_updates_found', { count: availableAddonUpdates.length }), 'warning');
       } else {
-        if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
         if (!silent) showToast(T('toast_all_up_to_date'), 'success');
       }
-
-      // Re-render installed addons to show update pills
       renderInstalledAddons('all', document.getElementById('searchInput')?.value || '');
     } catch (err) {
       if (!silent) showToast(T('toast_check_addons_error'), 'error');
@@ -4540,15 +4682,126 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnCheckAddonUpdates?.addEventListener('click', () => checkAddonUpdates(false));
 
-  btnUpdateAllAddons?.addEventListener('click', async () => {
+  btnUpdateAllAddons?.addEventListener('click', () => {
     if (availableAddonUpdates.length === 0) return;
-
+    bulkUpdateState = 'select';
+    bulkSessionId = null;
+    bulkSelectedModIds = new Set(availableAddonUpdates.map(u => String(u.modId)));
+    renderBulkSelectList();
     if (bulkUpdateModal) abrirModalDialogo(bulkUpdateModal);
+  });
+
+  bulkSelectAllChk?.addEventListener('change', () => {
+    if (bulkUpdateState !== 'select') return;
+    if (bulkSelectAllChk.checked) {
+      bulkSelectedModIds = new Set(availableAddonUpdates.map(u => String(u.modId)));
+    } else {
+      bulkSelectedModIds.clear();
+    }
+    renderBulkSelectList();
+  });
+
+  bulkUpdateResultsList?.addEventListener('change', (e) => {
+    const chk = e.target.closest('.bulk-addon-check');
+    if (!chk || bulkUpdateState !== 'select') return;
+    const modIdStr = chk.getAttribute('data-modid');
+    if (chk.checked) bulkSelectedModIds.add(modIdStr);
+    else bulkSelectedModIds.delete(modIdStr);
+    updateBulkSelectionUI();
+  });
+
+  bulkUpdateResultsList?.addEventListener('click', async (e) => {
+    const ignoreBtn = e.target.closest('.btn-bulk-ignore');
+    if (ignoreBtn && bulkUpdateState === 'select') {
+      const modId = ignoreBtn.getAttribute('data-modid');
+      const addon = availableAddonUpdates.find(u => String(u.modId) === String(modId));
+      try {
+        await fetch('/api/addons/ignore-update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ modId, gameId: currentActiveGame, ignored: true })
+        });
+        availableAddonUpdates = availableAddonUpdates.filter(u => String(u.modId) !== String(modId));
+        bulkSelectedModIds.delete(String(modId));
+        refreshBulkBanner();
+        showToast(T('toast_update_ignored', { name: addon ? addon.name : modId }), 'info');
+        loadInstalledAddons();
+        if (availableAddonUpdates.length === 0) {
+          cerrarModalDialogo(bulkUpdateModal);
+        } else {
+          renderBulkSelectList();
+        }
+      } catch (_) {}
+      return;
+    }
+
+    const rollbackBtn = e.target.closest('.btn-bulk-rollback');
+    if (rollbackBtn && bulkSessionId) {
+      const modId = rollbackBtn.getAttribute('data-modid');
+      rollbackBtn.disabled = true;
+      try {
+        const res = await fetch('/api/addons/rollback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: bulkSessionId, modId, gameId: currentActiveGame })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.error || 'Error');
+        const st = bulkRowStates.get(String(modId));
+        if (st) st.reverted = true;
+        setBulkRowStatus(modId, `↩️ ${escapeHtml(T('bulk_status_reverted'))}`, 'is-reverted', false);
+        updateBulkFooterButtons();
+        showToast(T('toast_rollback_ok', { count: data.revertedCount || 1 }), 'info');
+        await loadInstalledAddons();
+        checkAddonUpdates(true);
+      } catch (err) {
+        rollbackBtn.disabled = false;
+        showToast(T('toast_rollback_error', { message: err.message }), 'error');
+      }
+    }
+  });
+
+  btnRollbackAllBulk?.addEventListener('click', async () => {
+    if (!bulkSessionId) return;
+    btnRollbackAllBulk.disabled = true;
+    try {
+      const res = await fetch('/api/addons/rollback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionId: bulkSessionId, modId: 'all', gameId: currentActiveGame })
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || 'Error');
+      for (const id of (data.revertedModIds || [])) {
+        const st = bulkRowStates.get(String(id));
+        if (st) st.reverted = true;
+        setBulkRowStatus(id, `↩️ ${escapeHtml(T('bulk_status_reverted'))}`, 'is-reverted', false);
+      }
+      updateBulkFooterButtons();
+      showToast(T('toast_rollback_ok', { count: data.revertedCount || 0 }), 'info');
+      await loadInstalledAddons();
+      checkAddonUpdates(true);
+    } catch (err) {
+      showToast(T('toast_rollback_error', { message: err.message }), 'error');
+    } finally {
+      btnRollbackAllBulk.disabled = false;
+    }
+  });
+
+  btnStartSelectedBulk?.addEventListener('click', async () => {
+    const selectedUpdates = availableAddonUpdates.filter(u => bulkSelectedModIds.has(String(u.modId)));
+    if (selectedUpdates.length === 0) return;
+
+    bulkUpdateState = 'running';
+    bulkSessionId = null;
+    bulkAbortController = new AbortController();
     if (bulkProgressFill) bulkProgressFill.style.width = '0%';
     if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_starting');
-    if (bulkUpdateResultsList) bulkUpdateResultsList.innerHTML = '';
-    if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'none';
-    if (btnCloseBulkModalX) btnCloseBulkModalX.style.display = 'none';
+    renderBulkRunningList(selectedUpdates);
+    updateBulkFooterButtons();
+
+    const succeededModIds = new Set();
+    let finalData = null;
 
     try {
       const res = await fetch('/api/addons/update-all?stream=1', {
@@ -4557,8 +4810,9 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           'Accept': 'application/x-ndjson'
         },
+        signal: bulkAbortController.signal,
         body: JSON.stringify({
-          updates: availableAddonUpdates,
+          updates: selectedUpdates,
           gameId: currentActiveGame
         })
       });
@@ -4567,8 +4821,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const errJson = await res.json().catch(() => ({}));
         throw new Error(errJson.error || `HTTP ${res.status}`);
       }
-
-      let finalData = null;
 
       if (res.body && typeof res.body.getReader === 'function') {
         const reader = res.body.getReader();
@@ -4587,7 +4839,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let evt;
             try { evt = JSON.parse(line); } catch (_) { continue; }
 
-            if (evt.type === 'item_start') {
+            if (evt.type === 'start' && evt.sessionId) {
+              bulkSessionId = evt.sessionId;
+            } else if (evt.type === 'item_start') {
               if (bulkProgressFill) bulkProgressFill.style.width = `${evt.percent}%`;
               if (bulkProgressInfo) {
                 bulkProgressInfo.textContent = T('bulk_updating_item', {
@@ -4596,54 +4850,102 @@ document.addEventListener('DOMContentLoaded', () => {
                   total: evt.total
                 });
               }
-            } else if (evt.type === 'item_done') {
+              if (evt.modId) setBulkRowStatus(evt.modId, `⏳ ${escapeHtml(T('bulk_status_downloading'))}`, 'is-running', false);
+            } else if (evt.type === 'item_done' && evt.result) {
               if (bulkProgressFill) bulkProgressFill.style.width = `${evt.percent}%`;
-              if (bulkUpdateResultsList && evt.result) {
-                const r = evt.result;
-                const row = document.createElement('div');
-                row.style.padding = '4px 0';
-                row.style.color = r.success ? '#4ade80' : '#f87171';
-                row.innerHTML = `${r.success ? '✓' : '✗'} <strong>${escapeHtml(r.name)}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? mensajeDeError(r) : escapeHtml(r.error)})`}`;
-                bulkUpdateResultsList.appendChild(row);
-                bulkUpdateResultsList.scrollTop = bulkUpdateResultsList.scrollHeight;
+              const r = evt.result;
+              if (r.sessionId) bulkSessionId = r.sessionId;
+              const st = bulkRowStates.get(String(r.modId));
+              if (r.success) {
+                succeededModIds.add(String(r.modId));
+                if (st) { st.status = 'ok'; st.canRollback = !!r.canRollback; }
+                setBulkRowStatus(r.modId, `✓ ${escapeHtml(T('bulk_item_ok'))}`, 'is-ok', !!r.canRollback);
+              } else if (r.cancelled) {
+                if (st) st.status = 'cancelled';
+                setBulkRowStatus(r.modId, `⏹️ ${escapeHtml(T('bulk_status_cancelled'))}`, 'is-cancelled', false);
+              } else {
+                if (st) st.status = 'err';
+                const errTxt = r.code ? mensajeDeError(r) : escapeHtml(r.error);
+                setBulkRowStatus(r.modId, `✗ ${errTxt}`, 'is-err', false);
               }
             } else if (evt.type === 'done') {
               finalData = evt;
+              if (evt.sessionId) bulkSessionId = evt.sessionId;
             }
           }
         }
       } else {
         finalData = await res.json();
-        if (bulkUpdateResultsList && Array.isArray(finalData.results)) {
-          bulkUpdateResultsList.innerHTML = finalData.results.map(r => `
-            <div style="padding: 4px 0; color: ${r.success ? '#4ade80' : '#f87171'};">
-              ${r.success ? '✓' : '✗'} <strong>${escapeHtml(r.name)}</strong> ${r.success ? T('bulk_item_ok') : `(${r.code ? mensajeDeError(r) : escapeHtml(r.error)})`}
-            </div>
-          `).join('');
-        }
+        if (finalData && finalData.sessionId) bulkSessionId = finalData.sessionId;
       }
 
-      if (bulkProgressFill) bulkProgressFill.style.width = '100%';
+      bulkUpdateState = (finalData && finalData.cancelled) ? 'cancelled' : 'done';
+      if (bulkProgressFill) bulkProgressFill.style.width = finalData && finalData.cancelled ? bulkProgressFill.style.width : '100%';
       if (bulkProgressInfo && finalData) {
-        bulkProgressInfo.textContent = T('bulk_done', { updated: finalData.updatedCount || 0, failed: finalData.failedCount || 0 });
+        bulkProgressInfo.textContent = finalData.cancelled
+          ? T('bulk_cancelled_summary', { updated: finalData.updatedCount || 0, cancelled: finalData.cancelledCount || 0, failed: finalData.failedCount || 0 })
+          : T('bulk_done', { updated: finalData.updatedCount || 0, failed: finalData.failedCount || 0 });
       }
-
-      availableAddonUpdates = [];
-      if (bulkUpdateBanner) bulkUpdateBanner.style.display = 'none';
-      if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'inline-flex';
-      if (btnCloseBulkModalX) btnCloseBulkModalX.style.display = 'block';
-
-      loadInstalledAddons();
     } catch (err) {
-      if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_error', { message: err.message });
-      if (btnCloseBulkModal) btnCloseBulkModal.style.display = 'inline-flex';
-      if (btnCloseBulkModalX) btnCloseBulkModalX.style.display = 'block';
+      if (err.name === 'AbortError') {
+        bulkUpdateState = 'cancelled';
+        for (const [id, st] of bulkRowStates.entries()) {
+          if (st.status === 'pending') {
+            st.status = 'cancelled';
+            setBulkRowStatus(id, `⏹️ ${escapeHtml(T('bulk_status_cancelled'))}`, 'is-cancelled', false);
+          }
+        }
+        if (bulkProgressInfo) {
+          bulkProgressInfo.textContent = T('bulk_cancelled_summary', {
+            updated: succeededModIds.size,
+            cancelled: Array.from(bulkRowStates.values()).filter(x => x.status === 'cancelled').length,
+            failed: Array.from(bulkRowStates.values()).filter(x => x.status === 'err').length
+          });
+        }
+      } else {
+        bulkUpdateState = 'done';
+        if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_error', { message: err.message });
+      }
+    } finally {
+      bulkAbortController = null;
+      availableAddonUpdates = availableAddonUpdates.filter(u => !succeededModIds.has(String(u.modId)));
+      refreshBulkBanner();
+      updateBulkFooterButtons();
+      loadInstalledAddons();
     }
   });
 
-  const closeBulkModal = () => { cerrarModalDialogo(bulkUpdateModal); };
-  btnCloseBulkModal?.addEventListener('click', closeBulkModal);
-  btnCloseBulkModalX?.addEventListener('click', closeBulkModal);
+  function handleBulkCancelOrClose() {
+    if (bulkUpdateState === 'running') {
+      if (bulkAbortController) bulkAbortController.abort();
+      if (btnCloseBulkModal) {
+        btnCloseBulkModal.disabled = true;
+        btnCloseBulkModal.textContent = T('bulk_btn_cancelling');
+      }
+    } else {
+      cerrarModalDialogo(bulkUpdateModal);
+    }
+  }
+  btnCloseBulkModal?.addEventListener('click', handleBulkCancelOrClose);
+  btnCloseBulkModalX?.addEventListener('click', handleBulkCancelOrClose);
+
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.btn-card-ignored-updates');
+    if (!btn) return;
+    e.stopPropagation();
+    const modId = btn.getAttribute('data-modid');
+    const name = btn.getAttribute('data-name') || modId;
+    try {
+      await fetch('/api/addons/ignore-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ modId, gameId: currentActiveGame, ignored: false })
+      });
+      showToast(T('toast_update_unignored', { name }), 'success');
+      await loadInstalledAddons();
+      checkAddonUpdates(true);
+    } catch (_) {}
+  });
 
   // Single Addon Update from card
   document.addEventListener('click', async (e) => {
