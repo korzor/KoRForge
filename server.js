@@ -1894,11 +1894,18 @@ async function checkGitHubRelease() {
     const lastThreeNotes = validReleases.slice(0, 3).map(r => {
       const ver = String(r.tag_name || '').trim();
       const fecha = r.published_at ? ` (${r.published_at.substring(0, 10)})` : '';
-      const body = String(r.body || '').trim()
-        .split('\n')
-        .filter(line => !/^##\s+KoRForge/i.test(line.trim()))
-        .join('\n')
-        .trim();
+      const cleanLines = [];
+      for (const rawLine of String(r.body || '').split(/\r?\n/)) {
+        const t = rawLine.trim();
+        if (!t) { cleanLines.push(''); continue; }
+        if (/^#{1,6}\s*(KoRForge|Titulo:|Novedades)/i.test(t)) continue;
+        if (/^#{1,6}\s*(Archivos de esta versi[oó]n|Files in this release|Instalaci[oó]n|Descargas)/i.test(t)) break;
+        if (/^Los hashes de cada binario/i.test(t)) break;
+        if (/KoRForge-[\d.]+-(Windows\.exe|Linux\.AppImage)|SHA256SUMS\.txt/i.test(t)) continue;
+        if (/^[-*_]{3,}$/.test(t)) continue;
+        cleanLines.push(rawLine.replace(/^#{1,6}\s*/, ''));
+      }
+      const body = cleanLines.join('\n').trim();
       return `### ${ver}${fecha}\n${body || `KoRForge ${ver}`}`;
     }).join('\n\n');
 

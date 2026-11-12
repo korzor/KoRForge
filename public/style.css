@@ -5620,3 +5620,25 @@ select:focus-visible {
   border-color: rgba(245, 158, 11, 0.65);
   color: #fde68a;
 }
+.release-version-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 6px 0;
+  padding-bottom: 5px;
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+.release-version-header:first-child { margin-top: 2px; }
+.release-version-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #fde68a;
+}
+.release-version-date {
+  font-size: 0.74rem;
+  color: #94a3b8;
+}

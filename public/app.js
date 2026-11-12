@@ -4308,19 +4308,26 @@ document.addEventListener('DOMContentLoaded', () => {
     for (let rawLine of lines) {
       let line = rawLine.trim();
       if (!line) continue;
+      if (/^#{1,6}\s*(KoRForge|Titulo:)/i.test(line)) continue;
+      if (/^#{1,6}\s*(Archivos de esta versi[o\u00f3]n|Files in this release|Instalaci[o\u00f3]n)/i.test(line)) break;
+      if (/KoRForge-[\d.]+-(Windows\.exe|Linux\.AppImage)|SHA256SUMS\.txt|^Los hashes de cada binario/i.test(line)) continue;
 
-      // Omitir títulos principales redundantes (ya mostrados en la cabecera del modal)
-      if (line.match(/^##\s+KoRForge/i)) continue;
-
-      // Subtítulos
-      if (line.startsWith('### ') || line.startsWith('## ')) {
+      const verMatch = line.match(/^#{0,6}\s*(v\d+\.\d+\.\d+)(?:\s*\((\d{4}-\d{2}-\d{2})\))?$/i);
+      if (verMatch) {
         if (inList) { html += '</ul>'; inList = false; }
-        const title = line.replace(/^#+\s*/, '');
-        html += `<h3>${formatInlineMd(title)}</h3>`;
+        const ver = verMatch[1];
+        const fecha = verMatch[2] ? `<span class="release-version-date">📅 ${verMatch[2]}</span>` : '';
+        html += `<div class="release-version-header"><span class="release-version-badge">🚀 ${formatInlineMd(ver)}</span>${fecha}</div>`;
         continue;
       }
 
-      // Elementos de lista
+      if (/^#{1,6}\s+/.test(line)) {
+        if (inList) { html += '</ul>'; inList = false; }
+        const title = line.replace(/^#+\s*/, '');
+        html += `<h3>✨ ${formatInlineMd(title)}</h3>`;
+        continue;
+      }
+
       if (line.startsWith('- ') || line.startsWith('* ')) {
         if (!inList) { html += '<ul>'; inList = true; }
         const item = line.replace(/^[-*]\s+/, '');
@@ -4328,7 +4335,6 @@ document.addEventListener('DOMContentLoaded', () => {
         continue;
       }
 
-      // Texto normal
       if (inList) { html += '</ul>'; inList = false; }
       html += `<p style="margin-bottom: 6px; color: #94a3b8;">${formatInlineMd(line)}</p>`;
     }
@@ -4367,7 +4373,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   btnCloseUpdateModal?.addEventListener('click', closeUpdateModal);
   btnCopyReleaseNotes?.addEventListener('click', async () => {
-    const raw = (appUpdateData && appUpdateData.releaseNotes) ? String(appUpdateData.releaseNotes).trim() : (modalReleaseNotes?.innerText || '').trim();
+    const raw = (modalReleaseNotes?.innerText || '').trim() || String(appUpdateData?.releaseNotes || '').replace(/^#{1,6}\s*/gm, '').replace(/\*\*(.*?)\*\*/g, '$1').trim();
     if (!raw) return;
     try {
       if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
