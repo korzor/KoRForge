@@ -824,8 +824,9 @@ app.get('/api/addons/check-updates', async (req, res) => {
 
     const addons = scanner.scanAddons(dir, gameId);
     const ignoredSet = getIgnoredModIds(gameId);
-    const enabledAddons = addons.filter(a => a.enabled);
+    const enabledAddons = addons.filter(a => a.enabled && !a.isSubmodule);
     const updates = [];
+    const seenModIds = new Set();
     let checkedCount = 0;
     let regMutex = Promise.resolve();
 
@@ -881,16 +882,19 @@ app.get('/api/addons/check-updates', async (req, res) => {
             const hasDifferentVer = !isSameVer && curVer && curVer !== 'N/A' && !addon.fileId;
 
             if (hasNewerId || hasDifferentVer) {
-              updates.push({
-                modId,
-                name: addon.title || addon.actualName,
-                folderName: addon.folderName,
-                currentVersion: addon.version,
-                newVersion: latestFile.displayName || 'Última versión',
-                newFileId: latestFile.id,
-                downloadUrl: latestFile.downloadUrl,
-                fileLength: latestFile.fileLength
-              });
+              if (!seenModIds.has(Number(modId))) {
+                seenModIds.add(Number(modId));
+                updates.push({
+                  modId,
+                  name: addon.title || addon.actualName,
+                  folderName: addon.folderName,
+                  currentVersion: addon.version,
+                  newVersion: latestFile.displayName || 'Última versión',
+                  newFileId: latestFile.id,
+                  downloadUrl: latestFile.downloadUrl,
+                  fileLength: latestFile.fileLength
+                });
+              }
             }
           }
         } catch (_) {}
@@ -927,9 +931,10 @@ app.post('/api/addons/ignore-update', (req, res) => {
 // API: Bulk Update Addons (descargas en paralelo + cancelación limpia + snapshot para rollback)
 app.post('/api/addons/update-all', async (req, res) => {
   const abortController = new AbortController();
-  let streamFinished = false;
-  req.on('close', () => {
-    if (!streamFinished) abortController.abort();
+  res.on('close', () => {
+    if (!res.writableEnded) {
+      abortController.abort();
+    }
   });
 
   try {
