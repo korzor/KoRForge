@@ -4174,6 +4174,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalVerArrow = document.getElementById('modalVerArrow');
   const modalNotesTitle = document.getElementById('modalNotesTitle');
   const modalReleaseNotes = document.getElementById('modalReleaseNotes');
+  const btnCopyReleaseNotes = document.getElementById('btnCopyReleaseNotes');
   let appUpdateData = null;
   let versionInstalada = '';
 
@@ -4262,12 +4263,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (modalVerArrow) modalVerArrow.style.display = hayNueva ? '' : 'none';
     if (modalNewVerCol) modalNewVerCol.style.display = hayNueva ? '' : 'none';
     if (modalNotesTitle) modalNotesTitle.textContent = hayNueva ? T('upd_notes_title_new') : T('upd_notes_title_latest');
+    const tieneNotas = !!(appUpdateData && appUpdateData.releaseNotes);
     if (modalReleaseNotes) {
-      if (hayNueva || (appUpdateData && appUpdateData.releaseNotes)) {
+      if (hayNueva || tieneNotas) {
         modalReleaseNotes.innerHTML = formatReleaseNotes(appUpdateData && appUpdateData.releaseNotes);
       } else {
         modalReleaseNotes.innerHTML = `<p style="color:#94a3b8;">${T('upd_notes_offline')}</p>`;
       }
+    }
+    if (btnCopyReleaseNotes) {
+      btnCopyReleaseNotes.style.display = (hayNueva || tieneNotas) ? 'inline-flex' : 'none';
+      btnCopyReleaseNotes.textContent = T('upd_btn_copy_notes');
     }
     if (updateProgressWrap) updateProgressWrap.style.display = 'none';
     if (btnDownloadUpdate) {
@@ -4360,6 +4366,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   btnCloseUpdateModal?.addEventListener('click', closeUpdateModal);
+  btnCopyReleaseNotes?.addEventListener('click', async () => {
+    const raw = (appUpdateData && appUpdateData.releaseNotes) ? String(appUpdateData.releaseNotes).trim() : (modalReleaseNotes?.innerText || '').trim();
+    if (!raw) return;
+    try {
+      if (navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+        await navigator.clipboard.writeText(raw);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = raw;
+        ta.style.position = 'fixed';
+        ta.style.opacity = '0';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        ta.remove();
+      }
+      showToast(T('upd_toast_notes_copied'), 'success');
+      btnCopyReleaseNotes.textContent = '✓';
+      setTimeout(() => { if (btnCopyReleaseNotes) btnCopyReleaseNotes.textContent = T('upd_btn_copy_notes'); }, 1500);
+    } catch (_) {}
+  });
   btnDismissUpdate?.addEventListener('click', closeUpdateModal);
   updateModal?.addEventListener('click', (e) => {
     if (e.target === updateModal) closeUpdateModal();

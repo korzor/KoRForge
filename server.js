@@ -1865,24 +1865,24 @@ async function checkGitHubRelease() {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 4000);
 
-    const ghRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases/latest`, {
+    const ghRes = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/releases?per_page=6`, {
       signal: controller.signal,
       headers
     });
     clearTimeout(timeoutId);
 
     if (!ghRes.ok) return null;
-    const release = await ghRes.json();
-    if (!release || !release.tag_name) return null;
+    const rawList = await ghRes.json();
+    const validReleases = (Array.isArray(rawList) ? rawList : []).filter(r =>
+      r && !r.draft && !r.prerelease && r.tag_name && /^\d+\.\d+\.\d+$/.test(String(r.tag_name).replace(/^v/i, '').trim())
+    );
+    const release = validReleases[0];
+    if (!release) return null;
 
     const remoteVersion = String(release.tag_name || '').replace(/^v/i, '').trim();
     /* K5 (auditoría 22-10-2026): solo se ofrece una versión con formato x.y.z y la descarga se
        construye SIEMPRE desde el release oficial de esa versión (no se usa la URL de un asset
        cualquiera ni la que mande el cliente). */
-    if (!/^\d+\.\d+\.\d+$/.test(remoteVersion)) {
-      console.warn('[KoRForge Updates] El release no tiene una version valida:', release.tag_name);
-      return null;
-    }
     const updateAvailable = compareVersions(remoteVersion, APP_VERSION) > 0;
 
     const plataforma = process.platform === 'linux' ? 'linux' : 'win32';
@@ -1891,6 +1891,17 @@ async function checkGitHubRelease() {
        no rompe la actualizacion de nadie. */
     const downloadUrl = updater.urlDelAssetEnRelease(release, remoteVersion, plataforma);
 
+    const lastThreeNotes = validReleases.slice(0, 3).map(r => {
+      const ver = String(r.tag_name || '').trim();
+      const fecha = r.published_at ? ` (${r.published_at.substring(0, 10)})` : '';
+      const body = String(r.body || '').trim()
+        .split('\n')
+        .filter(line => !/^##\s+KoRForge/i.test(line.trim()))
+        .join('\n')
+        .trim();
+      return `### ${ver}${fecha}\n${body || `KoRForge ${ver}`}`;
+    }).join('\n\n');
+
     return {
       source: 'github',
       checked: true,
@@ -1898,7 +1909,7 @@ async function checkGitHubRelease() {
       currentVersion: APP_VERSION,
       remoteVersion,
       downloadUrl,
-      releaseNotes: release.body || `KoRForge ${release.tag_name} disponible en GitHub.`,
+      releaseNotes: lastThreeNotes || `KoRForge ${release.tag_name} disponible en GitHub.`,
       date: release.published_at ? release.published_at.substring(0, 10) : ''
     };
   } catch (err) {
