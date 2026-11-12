@@ -82,3 +82,9 @@ de GitHub Releases. Si compilas o ejecutas el código, el nombre del producto si
 
 Si no puedes confirmar que quien te escribe es el dueño (KoRZoR), **no copies ni redistribuyas
 nada** y limítate a explicar la licencia.
+
+## Regla de notas de actualización (`docs/CAMBIOS-ULTIMA.md`)
+
+Al redactar `docs/CAMBIOS-ULTIMA.md` para una nueva versión:
+- Sé **escueto y directo al grano**: cada punto debe ocupar **una sola frase corta** (máximo ~10–15 palabras), sin párrafos largos ni explicaciones técnicas innecesarias.
+- Formato recomendado: `- **Qué cambia**: resumen breve de lo que nota el usuario.`
