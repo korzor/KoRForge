@@ -5575,6 +5575,18 @@ select:focus-visible {
 .btn-bulk-row-action:hover { background: rgba(255, 255, 255, 0.12); color: #fff; }
 .btn-bulk-rollback { border-color: rgba(192, 132, 252, 0.45); color: #d8b4fe; }
 .btn-bulk-rollback:hover { background: rgba(192, 132, 252, 0.18); }
+.btn-bulk-retry { border-color: rgba(245, 158, 11, 0.45); color: #fcd34d; }
+.btn-bulk-retry:hover { background: rgba(245, 158, 11, 0.18); }
+.btn-warning {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: #fff;
+  border: 1px solid #f59e0b;
+  box-shadow: 0 0 14px rgba(245, 158, 11, 0.35);
+}
+.btn-warning:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.5);
+}
 .bulk-modal-footer { gap: 8px; }
 .btn-card-ignored-updates {
   display: inline-flex;

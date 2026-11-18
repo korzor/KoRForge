@@ -4556,6 +4556,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const bulkUpdateResultsList = document.getElementById('bulkUpdateResultsList');
   const btnStartSelectedBulk = document.getElementById('btnStartSelectedBulk');
   const btnRollbackAllBulk = document.getElementById('btnRollbackAllBulk');
+  const btnRetryFailedBulk = document.getElementById('btnRetryFailedBulk');
   const btnCloseBulkModal = document.getElementById('btnCloseBulkModal');
   const btnCloseBulkModalX = document.getElementById('btnCloseBulkModalX');
 
@@ -4599,6 +4600,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bulkModalSub) bulkModalSub.textContent = T('bulk_sub_select');
       if (btnStartSelectedBulk) btnStartSelectedBulk.style.display = 'inline-flex';
       if (btnRollbackAllBulk) btnRollbackAllBulk.style.display = 'none';
+      if (btnRetryFailedBulk) btnRetryFailedBulk.style.display = 'none';
       if (btnCloseBulkModal) {
         btnCloseBulkModal.style.display = 'inline-flex';
         btnCloseBulkModal.disabled = false;
@@ -4612,6 +4614,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bulkModalSub) bulkModalSub.textContent = T('bulk_sub');
       if (btnStartSelectedBulk) btnStartSelectedBulk.style.display = 'none';
       if (btnRollbackAllBulk) btnRollbackAllBulk.style.display = 'none';
+      if (btnRetryFailedBulk) btnRetryFailedBulk.style.display = 'none';
       if (btnCloseBulkModal) {
         btnCloseBulkModal.style.display = 'inline-flex';
         btnCloseBulkModal.disabled = false;
@@ -4623,7 +4626,9 @@ document.addEventListener('DOMContentLoaded', () => {
       if (bulkProgressWrap) bulkProgressWrap.style.display = 'block';
       if (btnStartSelectedBulk) btnStartSelectedBulk.style.display = 'none';
       const hasRollbackable = Array.from(bulkRowStates.values()).some(st => st.canRollback && !st.reverted);
+      const hasFailed = Array.from(bulkRowStates.values()).some(st => st.status === 'err');
       if (btnRollbackAllBulk) btnRollbackAllBulk.style.display = hasRollbackable ? 'inline-flex' : 'none';
+      if (btnRetryFailedBulk) btnRetryFailedBulk.style.display = hasFailed ? 'inline-flex' : 'none';
       if (btnCloseBulkModal) {
         btnCloseBulkModal.style.display = 'inline-flex';
         btnCloseBulkModal.disabled = false;
@@ -4664,7 +4669,14 @@ document.addEventListener('DOMContentLoaded', () => {
     bulkRowStates.clear();
     for (const u of selectedUpdates) {
       const modIdStr = String(u.modId);
-      bulkRowStates.set(modIdStr, { modId: u.modId, name: u.name, status: 'pending', canRollback: false, reverted: false });
+      bulkRowStates.set(modIdStr, {
+        modId: u.modId,
+        name: u.name,
+        status: 'pending',
+        canRollback: false,
+        reverted: false,
+        updateObj: u
+      });
       const row = document.createElement('div');
       row.className = 'bulk-addon-row';
       row.dataset.modid = modIdStr;
@@ -4683,7 +4695,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function setBulkRowStatus(modId, html, statusClass, canRollback = false) {
+  function setBulkRowStatus(modId, html, statusClass, canRollback = false, canRetry = false, errTooltip = '') {
     const modIdStr = String(modId);
     const row = bulkUpdateResultsList?.querySelector(`.bulk-addon-row[data-modid="${modIdStr}"]`);
     if (!row) return;
@@ -4692,7 +4704,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const rollbackBtn = canRollback
       ? `<button type="button" class="btn-bulk-row-action btn-bulk-rollback" data-modid="${modIdStr}" title="${escapeHtml(T('bulk_btn_rollback_hint'))}">↩️ ${escapeHtml(T('bulk_btn_rollback'))}</button>`
       : '';
-    actions.innerHTML = `<span class="bulk-addon-status ${statusClass}">${html}</span>${rollbackBtn}`;
+    const retryBtn = canRetry
+      ? `<button type="button" class="btn-bulk-row-action btn-bulk-retry" data-modid="${modIdStr}" title="${escapeHtml(T('bulk_btn_retry_one_hint'))}">🔄 ${escapeHtml(T('bulk_btn_retry_one'))}</button>`
+      : '';
+    const tooltipAttr = errTooltip ? ` title="${escapeHtml(errTooltip)}"` : '';
+    actions.innerHTML = `<span class="bulk-addon-status ${statusClass}"${tooltipAttr}>${html}</span>${retryBtn}${rollbackBtn}`;
   }
 
   async function checkAddonUpdates(silent = false) {
@@ -4768,6 +4784,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    const retryRowBtn = e.target.closest('.btn-bulk-retry');
+    if (retryRowBtn && bulkUpdateState !== 'running') {
+      const modId = retryRowBtn.getAttribute('data-modid');
+      const st = bulkRowStates.get(String(modId));
+      if (st && st.updateObj) {
+        executeBulkUpdate([st.updateObj], true);
+      }
+      return;
+    }
+
     const rollbackBtn = e.target.closest('.btn-bulk-rollback');
     if (rollbackBtn && bulkSessionId) {
       const modId = rollbackBtn.getAttribute('data-modid');
@@ -4821,16 +4847,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  btnStartSelectedBulk?.addEventListener('click', async () => {
-    const selectedUpdates = availableAddonUpdates.filter(u => bulkSelectedModIds.has(String(u.modId)));
-    if (selectedUpdates.length === 0) return;
+  async function executeBulkUpdate(itemsToUpdate, isRetry = false) {
+    if (!itemsToUpdate || itemsToUpdate.length === 0) return;
 
     bulkUpdateState = 'running';
-    bulkSessionId = null;
     bulkAbortController = new AbortController();
-    if (bulkProgressFill) bulkProgressFill.style.width = '0%';
+    if (!isRetry) {
+      bulkSessionId = null;
+      if (bulkProgressFill) bulkProgressFill.style.width = '0%';
+      renderBulkRunningList(itemsToUpdate);
+    } else {
+      for (const u of itemsToUpdate) {
+        const modIdStr = String(u.modId);
+        const st = bulkRowStates.get(modIdStr);
+        if (st) {
+          st.status = 'pending';
+          st.canRollback = false;
+        }
+        setBulkRowStatus(modIdStr, `⏳ ${escapeHtml(T('bulk_status_pending'))}`, 'is-pending', false);
+      }
+      if (bulkProgressFill) bulkProgressFill.style.width = '0%';
+    }
     if (bulkProgressInfo) bulkProgressInfo.textContent = T('bulk_starting');
-    renderBulkRunningList(selectedUpdates);
     updateBulkFooterButtons();
 
     const succeededModIds = new Set();
@@ -4845,7 +4883,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
         signal: bulkAbortController.signal,
         body: JSON.stringify({
-          updates: selectedUpdates,
+          updates: itemsToUpdate,
           gameId: currentActiveGame
         })
       });
@@ -4897,9 +4935,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (st) st.status = 'cancelled';
                 setBulkRowStatus(r.modId, `⏹️ ${escapeHtml(T('bulk_status_cancelled'))}`, 'is-cancelled', false);
               } else {
-                if (st) st.status = 'err';
-                const errTxt = r.code ? mensajeDeError(r) : escapeHtml(r.error);
-                setBulkRowStatus(r.modId, `✗ ${errTxt}`, 'is-err', false);
+                if (st) { st.status = 'err'; st.error = r.error; st.code = r.code; }
+                const errTxt = r.code ? mensajeDeError(r) : escapeHtml(r.error || '');
+                setBulkRowStatus(r.modId, `✗ ${errTxt}`, 'is-err', false, true, r.error || '');
               }
             } else if (evt.type === 'done') {
               finalData = evt;
@@ -4914,10 +4952,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       bulkUpdateState = (finalData && finalData.cancelled) ? 'cancelled' : 'done';
       if (bulkProgressFill) bulkProgressFill.style.width = finalData && finalData.cancelled ? bulkProgressFill.style.width : '100%';
-      if (bulkProgressInfo && finalData) {
-        bulkProgressInfo.textContent = finalData.cancelled
-          ? T('bulk_cancelled_summary', { updated: finalData.updatedCount || 0, cancelled: finalData.cancelledCount || 0, failed: finalData.failedCount || 0 })
-          : T('bulk_done', { updated: finalData.updatedCount || 0, failed: finalData.failedCount || 0 });
+      if (bulkProgressInfo) {
+        const totalOk = Array.from(bulkRowStates.values()).filter(x => x.status === 'ok').length;
+        const totalErr = Array.from(bulkRowStates.values()).filter(x => x.status === 'err').length;
+        const totalCancelled = Array.from(bulkRowStates.values()).filter(x => x.status === 'cancelled').length;
+        bulkProgressInfo.textContent = (finalData && finalData.cancelled)
+          ? T('bulk_cancelled_summary', { updated: totalOk, cancelled: totalCancelled, failed: totalErr })
+          : T('bulk_done', { updated: totalOk, failed: totalErr });
       }
     } catch (err) {
       if (err.name === 'AbortError') {
@@ -4930,7 +4971,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         if (bulkProgressInfo) {
           bulkProgressInfo.textContent = T('bulk_cancelled_summary', {
-            updated: succeededModIds.size,
+            updated: Array.from(bulkRowStates.values()).filter(x => x.status === 'ok').length,
             cancelled: Array.from(bulkRowStates.values()).filter(x => x.status === 'cancelled').length,
             failed: Array.from(bulkRowStates.values()).filter(x => x.status === 'err').length
           });
@@ -4945,6 +4986,21 @@ document.addEventListener('DOMContentLoaded', () => {
       refreshBulkBanner();
       updateBulkFooterButtons();
       loadInstalledAddons();
+    }
+  }
+
+  btnStartSelectedBulk?.addEventListener('click', () => {
+    const selectedUpdates = availableAddonUpdates.filter(u => bulkSelectedModIds.has(String(u.modId)));
+    executeBulkUpdate(selectedUpdates, false);
+  });
+
+  btnRetryFailedBulk?.addEventListener('click', () => {
+    if (bulkUpdateState === 'running') return;
+    const failedItems = Array.from(bulkRowStates.values())
+      .filter(st => st.status === 'err' && st.updateObj)
+      .map(st => st.updateObj);
+    if (failedItems.length > 0) {
+      executeBulkUpdate(failedItems, true);
     }
   });
 

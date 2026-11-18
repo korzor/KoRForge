@@ -108,8 +108,8 @@ async function descargarConValidacion(url, signal) {
   throw new Error('Demasiadas redirecciones en la descarga del addon.');
 }
 
-// Downloads a file from a URL to a target local path
-async function downloadFile(url, targetPath, onProgress, signal) {
+// Downloads a file from a URL to a target local path (un intento)
+async function downloadFileUnaVez(url, targetPath, onProgress, signal) {
   /* K14 (auditoría 22-10-2026): tope de descarga por addon (300 MB) para que un paquete gigante
      no llene el disco antes de la comprobación del zip. */
   const TAMANO_MAX_DESCARGA = 300 * 1024 * 1024;
@@ -151,6 +151,33 @@ async function downloadFile(url, targetPath, onProgress, signal) {
     fileStream.on('finish', resolve);
     fileStream.on('error', reject);
   });
+}
+
+// Downloads a file from a URL to a target local path con reintentos automáticos
+async function downloadFile(url, targetPath, onProgress, signal) {
+  const MAX_INTENTOS = 3;
+  let ultimoError = null;
+  for (let intento = 1; intento <= MAX_INTENTOS; intento++) {
+    try {
+      if (signal && signal.aborted) {
+        const abortErr = new Error('Descarga cancelada');
+        abortErr.name = 'AbortError';
+        throw abortErr;
+      }
+      await downloadFileUnaVez(url, targetPath, onProgress, signal);
+      return;
+    } catch (err) {
+      ultimoError = err;
+      if (err.name === 'AbortError' || (signal && signal.aborted)) throw err;
+      if (err.message && (err.message.includes('Descarga no permitida') || err.message.includes('tope de descarga'))) {
+        throw err;
+      }
+      if (intento < MAX_INTENTOS) {
+        await new Promise((r) => setTimeout(r, intento * 1000));
+      }
+    }
+  }
+  throw ultimoError;
 }
 
 // Resolves a GitHub repository link to its latest release zip
